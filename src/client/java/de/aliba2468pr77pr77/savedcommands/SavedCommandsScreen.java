@@ -11,6 +11,7 @@ import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 
+import java.util.Collections;
 import java.util.List;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
@@ -35,11 +36,12 @@ public class SavedCommandsScreen extends Screen {
         int listWidth = this.width;
         int listHeight = this.height - 60;
         int listTop = 50;
-        int itemHeight = 20;
+        int itemHeight = 30;
 
-        this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, listTop + listHeight, itemHeight);
+        this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, itemHeight, 0);
 
         this.commandList.addCommand("/say hello");
+        this.commandList.children().get(0).name = "Test!";
         this.commandList.addCommand("/tp @p ~ ~1 ~");
 
         this.addSelectableChild(this.commandList);
@@ -49,7 +51,7 @@ public class SavedCommandsScreen extends Screen {
         this.setInitialFocus(this.SearchBar);
     }
 
-    private void UpdateSearch(String searchContent){
+    private void UpdateSearch(String searchContent) {
 
     }
 
@@ -61,8 +63,8 @@ public class SavedCommandsScreen extends Screen {
     }
 
     private static class CommandList extends ElementListWidget<CommandList.CommandEntry> {
-        public CommandList(MinecraftClient client, int width, int height, int top, int bottom, int itemHeight) {
-            super(client, width, height, top, bottom, itemHeight);
+        public CommandList(MinecraftClient client, int width, int height, int top, int itemHeight, int headerHeight) {
+            super(client, width, height, top, itemHeight, headerHeight);
         }
 
         @Override
@@ -81,6 +83,7 @@ public class SavedCommandsScreen extends Screen {
 
         public static class CommandEntry extends ElementListWidget.Entry<CommandEntry> implements Element, Selectable {
             private final String command;
+            String name = null;
 
             public CommandEntry(String command) {
                 this.command = command;
@@ -89,14 +92,14 @@ public class SavedCommandsScreen extends Screen {
 
             @Override
             public List<? extends Element> children() {
-                return List.of();
+                return Collections.emptyList();
             }
 
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (button == 0) {
-                    LOGGER.info("Click!");
+                    LOGGER.info("Clicked on " + this.command);
                     return true;
                 }
                 return false;
@@ -104,12 +107,32 @@ public class SavedCommandsScreen extends Screen {
 
             @Override
             public List<? extends Selectable> selectableChildren() {
-                return List.of();
+                return Collections.emptyList();
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickProgress) {
-                context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, Text.literal(this.command), x + 3, y + 3, 0xFFFFFF);
+            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
+                               int mouseX, int mouseY, boolean hovered, float tickProgress) {
+                MinecraftClient client = MinecraftClient.getInstance();
+                context.fill(x, y, x + entryWidth, y + entryHeight, 0x44000000);
+
+                if (this.name == null) {
+                    int fontHeight = client.textRenderer.fontHeight;
+                    int textX = x + 3;
+                    int textY = y + (entryHeight - fontHeight) / 2 + 1;
+
+                    context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFFFFFFF);
+                } else {
+                    int fontHeight = client.textRenderer.fontHeight;
+                    int textX = x + 3;
+                    int textY = y + (entryHeight - fontHeight * 2 - 2) / 2 + 1;
+
+                    context.drawTextWithShadow(client.textRenderer, Text.literal(this.name), textX, textY, 0xFFFFFFFF);
+
+                    textY += fontHeight + 2;
+
+                    context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFBBBBBB);
+                }
             }
 
             @Override
