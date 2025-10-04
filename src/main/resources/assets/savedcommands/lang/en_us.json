@@ -1,5 +1,6 @@
 {
-  "button.savedcommands.opencommandscreen": "Saved Commands",
+  "key.savedcommands.opencommandscreen": "Open Saved Commands",
+  "category.savedcommands": "Saved Commands",
   "screen.savedcommands.commandscreentitle": "Saved Commands",
   "screen.savedcommands.searchsavebar": "Search for commands or add new ones"
 }

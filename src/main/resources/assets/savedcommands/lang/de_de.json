@@ -1,5 +1,6 @@
 {
-  "button.savedcommands.opencommandscreen": "Gespeicherte Kommandos",
+  "key.savedcommands.opencommandscreen": "Gespeicherte Kommandos öffnen",
+  "category.savedcommands": "Gespeicherte Kommandos (Saved Commands)",
   "screen.savedcommands.commandscreentitle": "Gespeicherte Kommandos",
   "screen.savedcommands.searchsavebar": "Nach Kommandos suchen oder neue hinzufügen"
 }

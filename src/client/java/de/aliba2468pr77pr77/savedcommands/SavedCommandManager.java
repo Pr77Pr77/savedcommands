@@ -17,7 +17,7 @@ public class SavedCommandManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final Path filePath;
-    private SavedCommandsData data;
+    public SavedCommandsData data;
 
     public SavedCommandManager(String World) {
         Path configDir = FabricLoader.getInstance().getConfigDir();
@@ -38,10 +38,6 @@ public class SavedCommandManager {
 
     public static class SavedCommandsData {
         public List<CommandData> commands = new ArrayList<>();
-    }
-
-    public synchronized List<CommandData> getCommands() {
-        return new ArrayList<>(data.commands);
     }
 
     public synchronized void addCommand(String command, String name) {

@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.text.Text;
@@ -17,6 +18,7 @@ import net.minecraft.util.Formatting;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
@@ -66,7 +68,7 @@ public class SavedCommandsScreen extends Screen {
         this.SearchBar = new TextFieldWidget(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
         this.SearchBar.setMaxLength(256);
         this.SearchBar.setDrawsBackground(true);
-        this.SearchBar.setChangedListener(this::UpdateSearch);
+        this.SearchBar.setChangedListener(this::updateSearch);
         this.SearchBar.setFocusUnlocked(false);
         this.addDrawableChild(this.SearchBar);
 
@@ -77,6 +79,7 @@ public class SavedCommandsScreen extends Screen {
                 b -> {
                     LOGGER.info("Add command button clicked!");
                     commandManager.addCommand(SearchBar.getText(), null);
+                    SearchBar.setText("");
                 }
         ).dimensions(20 + this.width - 40 - 20, 20, 20, 20).build();
 
@@ -89,24 +92,42 @@ public class SavedCommandsScreen extends Screen {
 
         this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, itemHeight, 0);
 
-        this.commandList.addCategoryTitle("/say");
-        this.commandList.addCommand("/say hello");
-        if (this.commandList.children().get(1) instanceof CommandEntry comEntry) {
-            comEntry.name = "Test!";
-        }
-
-        this.commandList.addCategoryTitle("/tp");
-        this.commandList.addCommand("/tp @p ~ ~1 ~");
+        updateSearch(SearchBar.getText());
 
         this.addSelectableChild(this.commandList);
     }
 
-    protected void setInitialFocus() {
-        this.setInitialFocus(this.SearchBar);
+    private void addCommandRightPlace(SavedCommandManager.CommandData data){
+        String commandBase;
+        if(data.command.contains(" ")){
+            commandBase = data.command.substring(0, data.command.indexOf(" "));
+        } else {
+            commandBase = data.command;
+        }
+        for (int i = 0; i < commandList.children().size(); i++){
+            if (this.commandList.children().get(i) instanceof CategoryTitleEntry TitleEntry) {
+                if(Objects.equals(TitleEntry.categoryTitle, commandBase)){
+                    this.commandList.children().add(i+1, new CommandEntry(data.command, data.name));
+                    return;
+                }
+            }
+        }
+        // If the for loop didn't find the category, create it!
+        this.commandList.children().addFirst(new CategoryTitleEntry(commandBase));
+        this.commandList.children().add(1, new CommandEntry(data.command, data.name));
     }
 
-    private void UpdateSearch(String searchContent) {
+    public void updateSearch(String search){
+        commandList.children().clear();
+        for (SavedCommandManager.CommandData data : commandManager.data.commands){
+            if(data.command.contains(search)){
+                addCommandRightPlace(data);
+            }
+        }
+    }
 
+    protected void setInitialFocus() {
+        this.setInitialFocus(this.SearchBar);
     }
 
     @Override
@@ -144,10 +165,11 @@ public class SavedCommandsScreen extends Screen {
 
     public static class CommandEntry extends BaseEntry {
         private final String command;
-        String name = null;
+        String name;
 
-        public CommandEntry(String command) {
+        public CommandEntry(String command, String name) {
             this.command = command;
+            this.name = name;
         }
 
         @Override
@@ -155,6 +177,15 @@ public class SavedCommandsScreen extends Screen {
             MinecraftClient client = MinecraftClient.getInstance();
             if (button == 0) {
                 LOGGER.info("Clicked on command " + this.command);
+                if (client.player != null) {
+                    ClientPlayerEntity player = client.player;
+                    if(this.command.charAt(0) == '/') {
+                        player.networkHandler.sendChatCommand(this.command.substring(1));
+                    } else {
+                        player.networkHandler.sendChatMessage(this.command);
+                    }
+                }
+                MinecraftClient.getInstance().setScreen(null);
                 return true;
             }
             return false;
@@ -239,14 +270,6 @@ public class SavedCommandsScreen extends Screen {
         @Override
         public int getRowWidth() {
             return this.width - 10;
-        }
-
-        public void addCommand(String command) {
-            this.addEntry(new CommandEntry(command));
-        }
-
-        public void addCategoryTitle(String categoryTitle) {
-            this.addEntry(new CategoryTitleEntry(categoryTitle));
         }
 
         @Override
