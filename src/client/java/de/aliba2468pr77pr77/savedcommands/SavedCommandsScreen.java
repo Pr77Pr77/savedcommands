@@ -1,5 +1,6 @@
 package de.aliba2468pr77pr77.savedcommands;
 
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -86,7 +87,7 @@ public class SavedCommandsScreen extends Screen {
         this.addDrawableChild(this.AddButton);
 
         int listWidth = this.width;
-        int listHeight = this.height - 60;
+        int listHeight = this.height - 50;
         int listTop = 50;
         int itemHeight = 30;
 
@@ -97,31 +98,38 @@ public class SavedCommandsScreen extends Screen {
         this.addSelectableChild(this.commandList);
     }
 
-    private void addCommandRightPlace(SavedCommandManager.CommandData data){
+    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList) {
         String commandBase;
-        if(data.command.contains(" ")){
+        if (data.command.contains(" ")) {
             commandBase = data.command.substring(0, data.command.indexOf(" "));
         } else {
             commandBase = data.command;
         }
-        for (int i = 0; i < commandList.children().size(); i++){
+        for (int i = 0; i < commandList.children().size(); i++) {
             if (this.commandList.children().get(i) instanceof CategoryTitleEntry TitleEntry) {
-                if(Objects.equals(TitleEntry.categoryTitle, commandBase)){
-                    this.commandList.children().add(i+1, new CommandEntry(data.command, data.name));
+                if (Objects.equals(TitleEntry.categoryTitle, commandBase)) {
+                    this.commandList.children().add(i + 1, new CommandEntry(data.command, data.name, indexDataList));
                     return;
                 }
             }
         }
         // If the for loop didn't find the category, create it!
         this.commandList.children().addFirst(new CategoryTitleEntry(commandBase));
-        this.commandList.children().add(1, new CommandEntry(data.command, data.name));
+        this.commandList.children().add(1, new CommandEntry(data.command, data.name, indexDataList));
     }
 
-    public void updateSearch(String search){
+    public void updateSearch(String search) {
+        // remove all buttons in a loop
+        for (BaseEntry entry : commandList.children()) {
+            if (entry instanceof CommandEntry comEntry) {
+                Screens.getButtons(this).remove(comEntry.deleteButton);
+            }
+        }
         commandList.children().clear();
-        for (SavedCommandManager.CommandData data : commandManager.data.commands){
-            if(data.command.contains(search)){
-                addCommandRightPlace(data);
+        for (int i = 0; i < commandManager.data.commands.size(); i++) {
+            SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
+            if (data.command.contains(search)) {
+                addCommandRightPlace(data, i);
             }
         }
     }
@@ -132,6 +140,13 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // set all buttons to not visible in a loop
+        for (BaseEntry entry : commandList.children()) {
+            if (entry instanceof CommandEntry comEntry) {
+                comEntry.deleteButton.visible = false;
+            }
+        }
+
         this.commandList.render(context, mouseX, mouseY, delta);
 
         super.render(context, mouseX, mouseY, delta);
@@ -163,13 +178,32 @@ public class SavedCommandsScreen extends Screen {
         }
     }
 
-    public static class CommandEntry extends BaseEntry {
+    public class CommandEntry extends BaseEntry {
         private final String command;
         String name;
+        int indexDataList;
+        ButtonWidget deleteButton;
 
-        public CommandEntry(String command, String name) {
+        public CommandEntry(String command, String name, int indexDataList) {
             this.command = command;
             this.name = name;
+            this.indexDataList = indexDataList;
+
+            deleteButton = ButtonWidget.builder(
+                    Text.literal("-"),
+                    b -> {
+                        LOGGER.info("Delete command button clicked for " + indexDataList);
+                        commandManager.removeCommand(indexDataList);
+                        updateSearch(SearchBar.getText());
+
+                        assert MinecraftClient.getInstance().currentScreen != null;
+                        Screens.getButtons(MinecraftClient.getInstance().currentScreen).remove(deleteButton);
+                    }
+            ).build();
+            deleteButton.visible = false;
+
+            assert MinecraftClient.getInstance().currentScreen != null;
+            Screens.getButtons(MinecraftClient.getInstance().currentScreen).add(deleteButton);
         }
 
         @Override
@@ -179,7 +213,7 @@ public class SavedCommandsScreen extends Screen {
                 LOGGER.info("Clicked on command " + this.command);
                 if (client.player != null) {
                     ClientPlayerEntity player = client.player;
-                    if(this.command.charAt(0) == '/') {
+                    if (this.command.charAt(0) == '/') {
                         player.networkHandler.sendChatCommand(this.command.substring(1));
                     } else {
                         player.networkHandler.sendChatMessage(this.command);
@@ -214,6 +248,9 @@ public class SavedCommandsScreen extends Screen {
 
                 context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFBBBBBB);
             }
+
+            deleteButton.setDimensionsAndPosition(20, 20, 20 + entryWidth - 40 - 20, y + (entryHeight - 20) / 2);
+            deleteButton.visible = true;
         }
 
         @Override
