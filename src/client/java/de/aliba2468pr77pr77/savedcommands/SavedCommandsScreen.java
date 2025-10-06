@@ -17,6 +17,7 @@ import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 
 import java.util.Collections;
 import java.util.List;
@@ -190,21 +191,14 @@ public class SavedCommandsScreen extends Screen {
         private final String command;
         String name;
         int indexDataList;
-        ButtonWidget deleteButton;
+        IconButton deleteButton;
 
         public CommandEntry(String command, String name, int indexDataList) {
             this.command = command;
             this.name = name;
             this.indexDataList = indexDataList;
 
-            deleteButton = ButtonWidget.builder(
-                    Text.literal("-"),
-                    b -> {
-                        LOGGER.info("Delete command button clicked for " + indexDataList);
-                        commandManager.removeCommand(indexDataList);
-                        updateSearch(SearchBar.getText());
-                    }
-            ).build();
+            deleteButton = new IconButton(0, 0, 20, 20, Identifier.of("savedcommands", "textures/gui/trash_can.png"), null);
             deleteButton.visible = false;
 
             assert MinecraftClient.getInstance().currentScreen != null;
@@ -217,9 +211,11 @@ public class SavedCommandsScreen extends Screen {
             }
             MinecraftClient client = MinecraftClient.getInstance();
             if (deleteButton.isHovered()) {
-                LOGGER.info("Clicked on delete " + this.command);
-                deleteButton.onPress();
+                LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
                 client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+
+                commandManager.removeCommand(indexDataList);
+                updateSearch(SearchBar.getText());
                 return true;
             }
             LOGGER.info("Clicked on command " + this.command);
@@ -259,7 +255,7 @@ public class SavedCommandsScreen extends Screen {
                 context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFBBBBBB);
             }
 
-            deleteButton.setDimensionsAndPosition(20, 20, entryWidth - 20, y + (entryHeight - 20) / 2);
+            deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
             deleteButton.visible = true;
         }
 
