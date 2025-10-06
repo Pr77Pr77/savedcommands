@@ -12,7 +12,9 @@ import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ServerInfo;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -100,17 +102,17 @@ public class SavedCommandsScreen extends Screen {
         this.addSelectableChild(this.commandList);
     }
 
-    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList){
+    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList) {
         String commandBase;
-        if(data.command.contains(" ")){
+        if (data.command.contains(" ")) {
             commandBase = data.command.substring(0, data.command.indexOf(" "));
         } else {
             commandBase = data.command;
         }
-        for (int i = 0; i < commandList.children().size(); i++){
+        for (int i = 0; i < commandList.children().size(); i++) {
             if (this.commandList.children().get(i) instanceof CategoryTitleEntry TitleEntry) {
-                if(Objects.equals(TitleEntry.categoryTitle, commandBase)){
-                    this.commandList.children().add(i+1, new CommandEntry(data.command, data.name, indexDataList));
+                if (Objects.equals(TitleEntry.categoryTitle, commandBase)) {
+                    this.commandList.children().add(i + 1, new CommandEntry(data.command, data.name, indexDataList));
                     return;
                 }
             }
@@ -120,11 +122,11 @@ public class SavedCommandsScreen extends Screen {
         this.commandList.children().add(1, new CommandEntry(data.command, data.name, indexDataList));
     }
 
-    public void updateSearch(String search){
+    public void updateSearch(String search) {
         commandList.children().clear();
-        for (int i = 0; i < commandManager.data.commands.size(); i++){
+        for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
-            if(data.command.contains(search)){
+            if (data.command.contains(search)) {
                 addCommandRightPlace(data, i);
             }
         }
@@ -210,21 +212,27 @@ public class SavedCommandsScreen extends Screen {
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button != 0) {
+                return false;
+            }
             MinecraftClient client = MinecraftClient.getInstance();
-            if (button == 0) {
-                LOGGER.info("Clicked on command " + this.command);
-                if (client.player != null) {
-                    ClientPlayerEntity player = client.player;
-                    if(this.command.charAt(0) == '/') {
-                        player.networkHandler.sendChatCommand(this.command.substring(1));
-                    } else {
-                        player.networkHandler.sendChatMessage(this.command);
-                    }
-                }
-                MinecraftClient.getInstance().setScreen(null);
+            if (deleteButton.isHovered()) {
+                LOGGER.info("Clicked on delete " + this.command);
+                deleteButton.onPress();
+                client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
             }
-            return false;
+            LOGGER.info("Clicked on command " + this.command);
+            if (client.player != null) {
+                ClientPlayerEntity player = client.player;
+                if (this.command.charAt(0) == '/') {
+                    player.networkHandler.sendChatCommand(this.command.substring(1));
+                } else {
+                    player.networkHandler.sendChatMessage(this.command);
+                }
+            }
+            MinecraftClient.getInstance().setScreen(null);
+            return true;
         }
 
         @Override
@@ -251,7 +259,7 @@ public class SavedCommandsScreen extends Screen {
                 context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFBBBBBB);
             }
 
-            deleteButton.setDimensionsAndPosition(20, 20, 20 + entryWidth - 40 - 20, y + (entryHeight - 20) / 2);
+            deleteButton.setDimensionsAndPosition(20, 20, entryWidth - 20, y + (entryHeight - 20) / 2);
             deleteButton.visible = true;
         }
 
@@ -275,7 +283,6 @@ public class SavedCommandsScreen extends Screen {
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            MinecraftClient client = MinecraftClient.getInstance();
             if (button == 0) {
                 LOGGER.info("Clicked on category title " + this.categoryTitle);
                 return true;
