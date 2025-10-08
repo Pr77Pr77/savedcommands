@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 
 public class SavedCommandsScreen extends Screen {
     protected TextFieldWidget SearchBar;
@@ -143,6 +144,7 @@ public class SavedCommandsScreen extends Screen {
         for (BaseEntry entry : commandList.children()) {
             if (entry instanceof CommandEntry comEntry) {
                 comEntry.deleteButton.visible = false;
+                comEntry.editButton.visible = false;
             }
         }
 
@@ -153,6 +155,7 @@ public class SavedCommandsScreen extends Screen {
         for (BaseEntry e : this.commandList.children()) {
             if (e instanceof CommandEntry comEntry) {
                 comEntry.deleteButton.render(context, mouseX, mouseY, delta);
+                comEntry.editButton.render(context, mouseX, mouseY, delta);
             }
         }
 
@@ -192,14 +195,18 @@ public class SavedCommandsScreen extends Screen {
         String name;
         int indexDataList;
         IconButton deleteButton;
+        IconButton editButton;
 
         public CommandEntry(String command, String name, int indexDataList) {
             this.command = command;
             this.name = name;
             this.indexDataList = indexDataList;
 
-            deleteButton = new IconButton(0, 0, 20, 20, Identifier.of("savedcommands", "textures/gui/trash_can.png"), null);
+            deleteButton = new IconButton(0, 0, 20, 20, Identifier.of(MOD_ID, "textures/gui/trash_can.png"), null);
             deleteButton.visible = false;
+
+            editButton = new IconButton(0, 0, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), null);
+            editButton.visible = false;
 
             assert MinecraftClient.getInstance().currentScreen != null;
         }
@@ -216,6 +223,13 @@ public class SavedCommandsScreen extends Screen {
 
                 commandManager.removeCommand(indexDataList);
                 updateSearch(SearchBar.getText());
+                return true;
+            }
+            if (editButton.isHovered()) {
+                LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
+                client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+
+                // TODO: Open edit screen.
                 return true;
             }
             LOGGER.info("Clicked on command " + this.command);
@@ -257,6 +271,9 @@ public class SavedCommandsScreen extends Screen {
 
             deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
             deleteButton.visible = true;
+
+            editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
+            editButton.visible = true;
         }
 
         @Override
