@@ -41,6 +41,9 @@ public class SavedCommandManager {
     }
 
     public synchronized void addCommand(String command, String name) {
+        if(command == null || command.isEmpty()){
+            return;
+        }
         data.commands.add(new CommandData(command, name));
         saveAsync();
     }
