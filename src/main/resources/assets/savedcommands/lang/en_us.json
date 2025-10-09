@@ -2,5 +2,8 @@
   "key.savedcommands.opencommandscreen": "Open Saved Commands",
   "category.savedcommands": "Saved Commands",
   "screen.savedcommands.commandscreentitle": "Saved Commands",
-  "screen.savedcommands.searchsavebar": "Search for commands or add new ones"
+  "screen.savedcommands.searchsavebar": "Search for commands or add new ones",
+  "screen.savedcommands.editpopup": "Edit Command",
+  "screen.savedcommands.command": "Command",
+  "screen.savedcommands.name": "Name"
 }

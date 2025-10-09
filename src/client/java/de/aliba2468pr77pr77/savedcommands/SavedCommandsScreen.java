@@ -229,7 +229,7 @@ public class SavedCommandsScreen extends Screen {
                 LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
                 client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
-                // TODO: Open edit screen.
+                client.setScreen(new EditCommandScreen(client.currentScreen, commandManager.data.commands.get(indexDataList)));
                 return true;
             }
             LOGGER.info("Clicked on command " + this.command);

@@ -2,5 +2,8 @@
   "key.savedcommands.opencommandscreen": "Gespeicherte Kommandos öffnen",
   "category.savedcommands": "Gespeicherte Kommandos (Saved Commands)",
   "screen.savedcommands.commandscreentitle": "Gespeicherte Kommandos",
-  "screen.savedcommands.searchsavebar": "Nach Kommandos suchen oder neue hinzufügen"
+  "screen.savedcommands.searchsavebar": "Nach Kommandos suchen oder neue hinzufügen",
+  "screen.savedcommands.editpopup": "Kommando bearbeiten",
+  "screen.savedcommands.command": "Kommando",
+  "screen.savedcommands.name": "Name"
 }
