@@ -10,20 +10,24 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Objects;
+
 public class EditCommandScreen extends Screen {
     private final Screen parent;
     private ButtonWidget closeButton;
     private TextFieldWidget commandTextField;
     private TextFieldWidget nameTextField;
     final private SavedCommandManager.CommandData data;
+    final private SavedCommandManager manager;
 
     int popupW;
     int popupH;
     int popupX;
     int popupY;
 
-    public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
+    public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data, SavedCommandManager manager) {
         super(Text.translatable("screen.savedcommands.editpopup"));
+        this.manager = manager;
         this.parent = parent;
         this.data = data;
     }
@@ -37,9 +41,7 @@ public class EditCommandScreen extends Screen {
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        this.closeButton = ButtonWidget.builder(Text.translatable("gui.done"), b -> {
-            MinecraftClient.getInstance().setScreen(parent);
-        }).dimensions(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.closeButton = ButtonWidget.builder(Text.translatable("gui.done"), b -> exit()).dimensions(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
 
         this.addDrawableChild(this.closeButton);
 
@@ -47,7 +49,7 @@ public class EditCommandScreen extends Screen {
         this.commandTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40, popupW - 40, 20, Text.translatable("screen.savedcommands.command"));
         this.commandTextField.setMaxLength(256);
         this.commandTextField.setDrawsBackground(true);
-        this.commandTextField.setFocusUnlocked(false);
+        this.commandTextField.setFocusUnlocked(true);
         if (data.command != null) {
             this.commandTextField.setText(data.command);
         }
@@ -56,7 +58,7 @@ public class EditCommandScreen extends Screen {
         this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 80, popupW - 40, 20, Text.translatable("screen.savedcommands.command"));
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setDrawsBackground(true);
-        this.nameTextField.setFocusUnlocked(false);
+        this.nameTextField.setFocusUnlocked(true);
         if (data.name != null) {
             this.nameTextField.setText(data.name);
         }
@@ -114,9 +116,25 @@ public class EditCommandScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
-            MinecraftClient.getInstance().setScreen(parent);
+            exit();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private void exit(){
+        if(commandTextField.getText() != null && !Objects.equals(commandTextField.getText(), "")) {
+            data.command = commandTextField.getText();
+        }
+        if(nameTextField.getText() == null || Objects.equals(nameTextField.getText(), "")) {
+            data.name = null;
+        } else {
+            data.name = nameTextField.getText();
+        }
+        manager.saveAsync();
+        MinecraftClient.getInstance().setScreen(parent);
+        if(parent instanceof SavedCommandsScreen commandParent) {
+            commandParent.reloadCommands();
+        }
     }
 }

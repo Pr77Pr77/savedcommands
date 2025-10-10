@@ -82,7 +82,7 @@ public class SavedCommandManager {
         }
     }
 
-    private void saveAsync() {
+    void saveAsync() {
         SavedCommandsData snapshot;
         synchronized (this) {
             snapshot = new SavedCommandsData();
