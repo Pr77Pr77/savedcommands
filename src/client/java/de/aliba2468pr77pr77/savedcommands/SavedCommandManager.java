@@ -3,6 +3,7 @@ package de.aliba2468pr77pr77.savedcommands;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.util.InputUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,13 +27,31 @@ public class SavedCommandManager {
         load();
     }
 
-    public static class CommandData{
+    public static class CommandData {
         public String command;
         public String name;
+        public keybindCombination keybinds;
 
-        CommandData(String command, String name){
+        CommandData(String command, String name) {
             this.command = command;
             this.name = name;
+        }
+
+        public static class keybindCombination {
+            public List<String> keybindType = new ArrayList<>();
+            public List<Integer> keybindCode = new ArrayList<>();
+
+            public List<InputUtil.Key> toKeys() {
+                List<InputUtil.Key> keybinds = new ArrayList<>();
+                for (int i = 0; i < keybindCode.size(); i++) {
+                    keybinds.add(InputUtil.Type.valueOf(keybindType.get(i)).createFromCode(keybindCode.get(i)));
+                }
+                return keybinds;
+            }
+
+            public boolean isEmptyOrNull(){
+                return this.keybindCode == null || this.keybindType == null || this.keybindCode.isEmpty() || this.keybindType.isEmpty();
+            }
         }
     }
 
@@ -41,7 +60,7 @@ public class SavedCommandManager {
     }
 
     public synchronized void addCommand(String command, String name) {
-        if(command == null || command.isEmpty()){
+        if (command == null || command.isEmpty()) {
             return;
         }
         data.commands.add(new CommandData(command, name));
