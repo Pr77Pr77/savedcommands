@@ -3,12 +3,17 @@ package de.aliba2468pr77pr77.savedcommands;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
+
 public class SavedCommandsClient implements ClientModInitializer {
     public static KeyBinding OpenCommandScreen;
+    public static SavedCommandManager commandManager;
+    public static List<InputUtil.Key> pressedPartialCombination;
 
     @Override
     public void onInitializeClient() {
@@ -27,6 +32,10 @@ public class SavedCommandsClient implements ClientModInitializer {
                     }
                 });
             }
+        });
+
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            commandManager = new SavedCommandManager();
         });
     }
 }

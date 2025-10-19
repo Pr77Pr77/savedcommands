@@ -3,7 +3,10 @@ package de.aliba2468pr77pr77.savedcommands;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.server.integrated.IntegratedServer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +28,44 @@ public class SavedCommandManager {
         Path myDir = configDir.resolve(MOD_ID);
         this.filePath = myDir.resolve(World + ".json");
         load();
+    }
+
+    public SavedCommandManager() {
+        Path configDir = FabricLoader.getInstance().getConfigDir();
+        Path myDir = configDir.resolve(MOD_ID);
+        this.filePath = myDir.resolve(getWorldOrServerId() + ".json");
+        load();
+    }
+
+    public static String getWorldOrServerId() {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        // Integrated server
+        IntegratedServer integrated = client.getServer();
+        if (integrated != null) {
+            try {
+                Object saveProps = integrated.getSaveProperties();
+                if (saveProps != null) {
+                    java.lang.reflect.Method m = saveProps.getClass().getMethod("getLevelName");
+                    Object levelName = m.invoke(saveProps);
+                    if (levelName != null) return "singleplayer/" + levelName;
+                }
+            } catch (NoSuchMethodException e) {
+                return "singleplayer/unknown";
+            } catch (Throwable t) {
+                t.printStackTrace();
+                return "singleplayer/unknown";
+            }
+        }
+
+        // External multiplayer
+        ServerInfo server = client.getCurrentServerEntry();
+        if (server != null) {
+            return "multiplayer/" + server.address;
+        }
+
+        // No world open
+        return "none";
     }
 
     public static class CommandData {

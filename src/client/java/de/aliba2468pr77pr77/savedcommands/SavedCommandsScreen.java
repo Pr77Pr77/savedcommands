@@ -11,9 +11,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -25,12 +23,12 @@ import java.util.Objects;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 
 public class SavedCommandsScreen extends Screen {
     protected TextFieldWidget SearchBar;
     ButtonWidget AddButton;
     CommandList commandList;
-    SavedCommandManager commandManager;
 
     int listWidth;
     int listHeight;
@@ -39,37 +37,6 @@ public class SavedCommandsScreen extends Screen {
 
     protected SavedCommandsScreen() {
         super(Text.translatable("screen.savedcommands.commandscreentitle"));
-    }
-
-    public static String getWorldOrServerId() {
-        MinecraftClient client = MinecraftClient.getInstance();
-
-        // Integrated server
-        IntegratedServer integrated = client.getServer();
-        if (integrated != null) {
-            try {
-                Object saveProps = integrated.getSaveProperties();
-                if (saveProps != null) {
-                    java.lang.reflect.Method m = saveProps.getClass().getMethod("getLevelName");
-                    Object levelName = m.invoke(saveProps);
-                    if (levelName != null) return "singleplayer/" + levelName;
-                }
-            } catch (NoSuchMethodException e) {
-                return "singleplayer/unknown";
-            } catch (Throwable t) {
-                t.printStackTrace();
-                return "singleplayer/unknown";
-            }
-        }
-
-        // External multiplayer
-        ServerInfo server = client.getCurrentServerEntry();
-        if (server != null) {
-            return "multiplayer/" + server.address;
-        }
-
-        // No world open
-        return "none";
     }
 
     protected void init() {
@@ -81,7 +48,7 @@ public class SavedCommandsScreen extends Screen {
         this.SearchBar.setFocusUnlocked(false);
         this.addDrawableChild(this.SearchBar);
 
-        commandManager = new SavedCommandManager(getWorldOrServerId());
+        commandManager = new SavedCommandManager();
 
         AddButton = ButtonWidget.builder(
                 Text.literal("+"),
@@ -135,7 +102,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     public void reloadCommands(){
-        commandManager = new SavedCommandManager(getWorldOrServerId());
+        commandManager = new SavedCommandManager();
         updateSearch(SearchBar.getText());
     }
 
