@@ -1,8 +1,11 @@
 package de.aliba2468pr77pr77.savedcommands.mixin.client;
 
+import de.aliba2468pr77pr77.savedcommands.EditCommandScreen;
 import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.option.KeybindsScreen;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -27,7 +30,15 @@ public class KeyboardMixin {
 
     @Inject(method = "onKey(JIIII)V", at = @At("HEAD"), cancellable = true)
     private void onKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().player == null) return;
+        if (MinecraftClient.getInstance().player == null) {
+            return;
+        }
+        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen EditScreen && EditScreen.keybindSetting) {
+            return;
+        }
+        if (MinecraftClient.getInstance().currentScreen instanceof KeybindsScreen EditScreen && EditScreen.selectedKeyBinding != null) {
+            return;
+        }
 
         if (commandManager != null) {
             if (action == GLFW.GLFW_PRESS) {
@@ -44,6 +55,12 @@ public class KeyboardMixin {
                 }
             }
 
+            if (commandManager != null && pressedPartialCombination != null &&
+                    pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(key)) &&
+                    pressedPartialCombination.getFirst() != InputUtil.Type.valueOf("KEYSYM").createFromCode(key)) {
+                ci.cancel();
+            }
+
             if (action == GLFW.GLFW_RELEASE) {
                 if (pressedPartialCombination != null &&
                         pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(key))) {
@@ -51,6 +68,12 @@ public class KeyboardMixin {
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                         if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
                             LOGGER.info("Combination released/pressed: " + command.command);
+                            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+                            if (command.command.charAt(0) == '/') {
+                                player.networkHandler.sendChatCommand(command.command.substring(1));
+                            } else {
+                                player.networkHandler.sendChatMessage(command.command);
+                            }
                         }
                     }
                     pressedPartialCombination.remove(InputUtil.Type.valueOf("KEYSYM").createFromCode(key));
@@ -59,12 +82,6 @@ public class KeyboardMixin {
                     }
                 }
             }
-        }
-
-        if (commandManager != null && pressedPartialCombination != null &&
-                pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(key)) &&
-                pressedPartialCombination.getFirst() != InputUtil.Type.valueOf("KEYSYM").createFromCode(key)) {
-            ci.cancel();
         }
     }
 }

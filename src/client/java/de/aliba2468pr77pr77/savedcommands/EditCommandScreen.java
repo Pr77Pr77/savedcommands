@@ -24,7 +24,7 @@ public class EditCommandScreen extends Screen {
     private TextFieldWidget commandTextField;
     private TextFieldWidget nameTextField;
     private ButtonWidget keybindButton;
-    private boolean keybindSetting = false;
+    public boolean keybindSetting = false;
     final private SavedCommandManager.CommandData data;
     final private SavedCommandManager manager;
 
