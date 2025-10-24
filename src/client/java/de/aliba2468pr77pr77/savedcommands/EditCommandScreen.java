@@ -24,6 +24,7 @@ public class EditCommandScreen extends Screen {
     private TextFieldWidget commandTextField;
     private TextFieldWidget nameTextField;
     private ButtonWidget keybindButton;
+    private ButtonWidget removeKeybindButton;
     public boolean keybindSetting = false;
     final private SavedCommandManager.CommandData data;
     final private SavedCommandManager manager;
@@ -68,7 +69,7 @@ public class EditCommandScreen extends Screen {
         super.init();
 
         popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(210, this.height - 40);
+        popupH = Math.min(190, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -77,7 +78,7 @@ public class EditCommandScreen extends Screen {
         this.addDrawableChild(this.closeButton);
 
         assert this.client != null;
-        this.commandTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40, popupW - 40, 20, translatable("screen.savedcommands.command"));
+        this.commandTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40, popupW - 40, 20, translatable("advMode.command"));
         this.commandTextField.setMaxLength(256);
         this.commandTextField.setDrawsBackground(true);
         this.commandTextField.setFocusUnlocked(true);
@@ -86,7 +87,7 @@ public class EditCommandScreen extends Screen {
         }
         this.addDrawableChild(this.commandTextField);
 
-        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 80, popupW - 40, 20, translatable("screen.savedcommands.command"));
+        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 80, popupW - 40, 20, translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setDrawsBackground(true);
         this.nameTextField.setFocusUnlocked(true);
@@ -100,9 +101,17 @@ public class EditCommandScreen extends Screen {
             keybindSetting = true;
             keybindButton.setMessage(getKeybindButtonText());
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
-        }).dimensions(popupX + 40, popupY + 120, popupW - 80, 20).build();
+        }).dimensions(popupX + 20, popupY + 125, Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addDrawableChild(this.keybindButton);
+
+        this.removeKeybindButton = ButtonWidget.builder(translatable("screen.savedcommands.remove"), b -> {
+            LOGGER.info("Removing the keybind...");
+            data.keybinds = null;
+            keybindButton.setMessage(getKeybindButtonText());
+        }).dimensions(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 125, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
+
+        this.addDrawableChild(this.removeKeybindButton);
     }
 
     @Override
@@ -116,7 +125,7 @@ public class EditCommandScreen extends Screen {
         ctx.fill(0, 0, this.width, this.height, 0x88000000);
 
         popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(210, this.height - 40);
+        popupH = Math.min(190, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -134,7 +143,7 @@ public class EditCommandScreen extends Screen {
 
         ctx.drawText(
                 this.textRenderer,
-                translatable("screen.savedcommands.command"),
+                translatable("advMode.command"),
                 popupX + 20,
                 popupY + 30,
                 0xFFFFFFFF,
@@ -146,6 +155,15 @@ public class EditCommandScreen extends Screen {
                 translatable("screen.savedcommands.name"),
                 popupX + 20,
                 popupY + 70,
+                0xFFFFFFFF,
+                true
+        );
+
+        ctx.drawText(
+                this.textRenderer,
+                translatable("controls.keybinds.title"),
+                popupX + 20,
+                popupY + 110,
                 0xFFFFFFFF,
                 true
         );
