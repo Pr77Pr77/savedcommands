@@ -4,6 +4,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
@@ -26,7 +27,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 
 public class SavedCommandsScreen extends Screen {
-    protected TextFieldWidget SearchBar;
+    public TextFieldWidget SearchBar;
     ButtonWidget AddButton;
     CommandList commandList;
 
@@ -34,6 +35,8 @@ public class SavedCommandsScreen extends Screen {
     int listHeight;
     int listTop = 50;
     int itemHeight = 30;
+
+    ChatInputSuggestor CommandSuggestor;
 
     protected SavedCommandsScreen() {
         super(Text.translatable("screen.savedcommands.commandscreentitle"));
@@ -56,6 +59,7 @@ public class SavedCommandsScreen extends Screen {
                     LOGGER.info("Add command button clicked!");
                     commandManager.addCommand(SearchBar.getText(), null);
                     SearchBar.setText("");
+                    CommandSuggestor.setWindowActive(false);
                 }
         ).dimensions(20 + this.width - 40 - 20, 20, 20, 20).build();
 
@@ -69,6 +73,11 @@ public class SavedCommandsScreen extends Screen {
         updateSearch(SearchBar.getText());
 
         this.addSelectableChild(this.commandList);
+
+        CommandSuggestor = new ChatInputSuggestor(client, this, SearchBar, textRenderer, false, false, 1, 10, false, 0xD8000000);
+        CommandSuggestor.setCanLeave(false);
+        CommandSuggestor.setWindowActive(true);
+        CommandSuggestor.refresh();
     }
 
     private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList) {
@@ -95,13 +104,47 @@ public class SavedCommandsScreen extends Screen {
         commandList.children().clear();
         for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
-            if (data.command.contains(search)) {
+            if (data.command.toLowerCase().contains(search.toLowerCase()) || (data.name != null && data.name.toLowerCase().contains(search.toLowerCase()))) {
                 addCommandRightPlace(data, i);
             }
         }
+        if (CommandSuggestor != null) {
+            CommandSuggestor.refresh();
+        }
     }
 
-    public void reloadCommands(){
+    public void resize(MinecraftClient client, int width, int height) {
+        if (CommandSuggestor != null) {
+            CommandSuggestor.refresh();
+        }
+        super.resize(client, width, height);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (CommandSuggestor.keyPressed(keyCode, scanCode, modifiers)) {
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (CommandSuggestor.mouseScrolled(verticalAmount)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (CommandSuggestor.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    public void reloadCommands() {
         commandManager = new SavedCommandManager();
         updateSearch(SearchBar.getText());
     }
@@ -132,6 +175,10 @@ public class SavedCommandsScreen extends Screen {
         }
 
         context.disableScissor();
+
+        CommandSuggestor.render(context, mouseX, mouseY);
+
+        context.fill(SearchBar.getX(), SearchBar.getY(), SearchBar.getX() + SearchBar.getWidth(), SearchBar.getY() + SearchBar.getHeight(), 0x44000000);
 
         super.render(context, mouseX, mouseY, delta);
     }

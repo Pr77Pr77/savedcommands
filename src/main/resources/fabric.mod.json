@@ -1,42 +1,42 @@
 {
-	"schemaVersion": 1,
-	"id": "savedcommands",
-	"version": "${version}",
-	"name": "Saved Commands",
-	"description": "This mod lets you save commands for easier access later.",
-	"authors": [
-		"Pr77Pr77",
-        "AliBa2468"
-	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/savedcommands/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"de.aliba2468pr77pr77.savedcommands.SavedCommands"
-		],
-		"client": [
-			"de.aliba2468pr77pr77.savedcommands.SavedCommandsClient"
-		]
-	},
-	"mixins": [
-		"savedcommands.mixins.json",
-		{
-			"config": "savedcommands.client.mixins.json",
-			"environment": "client"
-		}
-	],
-	"depends": {
-		"fabricloader": ">=0.17.2",
-		"minecraft": "~1.21.7",
-		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
-	}
+  "schemaVersion": 1,
+  "id": "savedcommands",
+  "version": "${version}",
+  "name": "Saved Commands",
+  "description": "This mod lets you save commands for easier access later.",
+  "authors": [
+    "Pr77Pr77",
+    "AliBa2468"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/savedcommands/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "de.aliba2468pr77pr77.savedcommands.SavedCommands"
+    ],
+    "client": [
+      "de.aliba2468pr77pr77.savedcommands.SavedCommandsClient"
+    ]
+  },
+  "mixins": [
+    "savedcommands.mixins.json",
+    {
+      "config": "savedcommands.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.7",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
 }
