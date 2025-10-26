@@ -6,8 +6,6 @@ import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -183,7 +181,7 @@ public class SavedCommandsScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    public static class BaseEntry extends ElementListWidget.Entry<BaseEntry> implements Element, Selectable {
+    public static class BaseEntry extends ElementListWidget.Entry<BaseEntry>{
         @Override
         public List<? extends Element> children() {
             return Collections.emptyList();
@@ -197,15 +195,6 @@ public class SavedCommandsScreen extends Screen {
         @Override
         public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                            int mouseX, int mouseY, boolean hovered, float tickProgress) {
-        }
-
-        @Override
-        public SelectionType getType() {
-            return null;
-        }
-
-        @Override
-        public void appendNarrations(NarrationMessageBuilder builder) {
         }
     }
 
@@ -294,16 +283,6 @@ public class SavedCommandsScreen extends Screen {
             editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
             editButton.visible = true;
         }
-
-        @Override
-        public void appendNarrations(NarrationMessageBuilder builder) {
-            if (this.name == null) {
-                builder.put(NarrationPart.TITLE, Text.literal(this.command));
-            } else {
-                builder.put(NarrationPart.TITLE, Text.literal(this.name));
-                builder.put(NarrationPart.HINT, Text.literal(this.command));
-            }
-        }
     }
 
     public static class CategoryTitleEntry extends BaseEntry {
@@ -332,11 +311,6 @@ public class SavedCommandsScreen extends Screen {
             int textY = y + entryHeight - fontHeight - 2;
 
             context.drawTextWithShadow(client.textRenderer, Text.literal(this.categoryTitle).formatted(Formatting.BOLD), textX, textY, 0xFFFFFFFF);
-        }
-
-        @Override
-        public void appendNarrations(NarrationMessageBuilder builder) {
-            builder.put(NarrationPart.TITLE, Text.literal(this.categoryTitle));
         }
     }
 
