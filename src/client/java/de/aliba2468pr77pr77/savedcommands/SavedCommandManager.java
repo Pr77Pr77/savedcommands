@@ -7,12 +7,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.util.WorldSavePath;
 
 import java.io.IOException;
+import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
@@ -41,21 +41,9 @@ public class SavedCommandManager {
         MinecraftClient client = MinecraftClient.getInstance();
 
         // Integrated server
-        IntegratedServer integrated = client.getServer();
-        if (integrated != null) {
-            try {
-                Object saveProps = integrated.getSaveProperties();
-                if (saveProps != null) {
-                    java.lang.reflect.Method m = saveProps.getClass().getMethod("getLevelName");
-                    Object levelName = m.invoke(saveProps);
-                    if (levelName != null) return "singleplayer/" + levelName;
-                }
-            } catch (NoSuchMethodException e) {
-                return "singleplayer/unknown";
-            } catch (Throwable t) {
-                t.printStackTrace();
-                return "singleplayer/unknown";
-            }
+        IntegratedServer integratedServer = client.getServer();
+        if (integratedServer != null) {
+            return "singleplayer/" + integratedServer.getSavePath(WorldSavePath.ROOT).getParent().getFileName().toString();
         }
 
         // External multiplayer
@@ -90,7 +78,7 @@ public class SavedCommandManager {
                 return keybinds;
             }
 
-            public boolean isEmptyOrNull(){
+            public boolean isEmptyOrNull() {
                 return this.keybindCode == null || this.keybindType == null || this.keybindCode.isEmpty() || this.keybindType.isEmpty();
             }
         }
