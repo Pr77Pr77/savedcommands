@@ -26,7 +26,7 @@ public class MouseMixin {
         if (MinecraftClient.getInstance().player == null) {
             return;
         }
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen EditScreen && EditScreen.keybindSetting) {
+        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen EditScreen) {
             return;
         }
         if (MinecraftClient.getInstance().currentScreen instanceof KeybindsScreen EditScreen && EditScreen.selectedKeyBinding != null) {

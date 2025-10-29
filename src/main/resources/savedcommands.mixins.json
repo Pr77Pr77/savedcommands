@@ -3,7 +3,6 @@
 	"package": "de.aliba2468pr77pr77.savedcommands.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

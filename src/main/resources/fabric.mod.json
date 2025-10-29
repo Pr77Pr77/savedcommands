@@ -3,18 +3,18 @@
   "id": "savedcommands",
   "version": "${version}",
   "name": "Saved Commands",
-  "description": "This mod lets you save commands for easier access later.",
+  "description": "This mod lets you save commands and chat messages for easier access later using keyboard shortcuts and the saved commands menu.",
   "authors": [
-    "Pr77Pr77",
-    "AliBa2468"
+    "AliBa2468",
+    "Pr77Pr77"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/Pr77Pr77/savedcommands",
+    "issues": "https://github.com/Pr77Pr77/savedcommands/issues"
   },
-  "license": "CC0-1.0",
+  "license": "GPL-3.0",
   "icon": "assets/savedcommands/icon.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "main": [
       "de.aliba2468pr77pr77.savedcommands.SavedCommands"
@@ -35,8 +35,5 @@
     "minecraft": "~1.21.7",
     "java": ">=21",
     "fabric-api": "*"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
