@@ -9,8 +9,8 @@ saved commands menu.
 This mod is only supported by the Fabric mod loader. For installation guides regarding
 please use the official [Fabric player guides](https://docs.fabricmc.net/players/).
 
-You can download the mod on either [Modrinth]() or on [GitHub](https://github.com/Pr77Pr77/dream-dimensions)
-under [releases](https://github.com/Pr77Pr77/dream-dimensions/releases).
+You can download the mod on either [Modrinth](https://modrinth.com/mod/savedcommands) or on [GitHub](https://github.com/Pr77Pr77/savedcommands)
+under [releases](https://github.com/Pr77Pr77/savedcommands/releases).
 This mod needs the following dependency:
 
 [Fabric API](https://modrinth.com/mod/fabric-api): Version 0.118.1+1.21.7 or newer (for 1.21.7)
@@ -30,13 +30,13 @@ add or edit a name and add or edit the keybind combination (shortcut).
 * Search for commands by entering the query into the top bar.
 
 ![Saved Commands screen](resources/saved-commands-screen-screenshot.png)
-*The Saved Commands screen with some example domain*
+*The Saved Commands screen with some example commands*
 
 ![Search suggestion](resources/search-suggestion-screenshot.png)
 *In the top bar you can get command recommendations like in the chat*
 
 ![Edit command screen](resources/edit-command-screen-screenshot.png)
-*In the edit command screen you can edit the name command and keybind combination*
+*In the edit command screen you can edit the name, command and keybind combination*
 
 > We accept no liability for any damages caused by using this mod. Use at your own risk!
 
