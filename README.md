@@ -30,7 +30,7 @@ add or edit a name and add or edit the keybind combination (shortcut).
 * Search for commands by entering the query into the top bar.
 
 ![Saved Commands screen](resources/saved-commands-screen-screenshot.png)
-*The Saved Commands screen with some example domain*
+*The Saved Commands screen with some example commands*
 
 ![Search suggestion](resources/search-suggestion-screenshot.png)
 *In the top bar you can get command recommendations like in the chat*
