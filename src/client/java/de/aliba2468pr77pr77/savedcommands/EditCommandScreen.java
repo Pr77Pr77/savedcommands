@@ -2,10 +2,12 @@ package de.aliba2468pr77pr77.savedcommands;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -172,59 +174,59 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(button)))) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             }
             data.keybinds.keybindType.add("MOUSE");
-            data.keybinds.keybindCode.add(button);
+            data.keybinds.keybindCode.add(click.button());
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         } else {
-            return super.mouseClicked(mouseX, mouseY, button);
+            return super.mouseClicked(click, doubled);
         }
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(button)) {
+    public boolean mouseReleased(Click click) {
+        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
             manager.saveAsync();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         } else {
-            return super.mouseReleased(mouseX, mouseY, button);
+            return super.mouseReleased(click);
         }
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(keyCode)))) {
+    public boolean keyPressed(KeyInput input) {
+        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             }
             data.keybinds.keybindType.add("KEYSYM");
-            data.keybinds.keybindCode.add(keyCode);
+            data.keybinds.keybindCode.add(input.key());
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
+        if (input.key() == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
             exit();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(keyCode)) {
+    public boolean keyReleased(KeyInput input) {
+        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
             manager.saveAsync();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         } else {
-            return super.keyReleased(keyCode, scanCode, modifiers);
+            return super.keyReleased(input);
         }
     }
 

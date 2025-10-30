@@ -1,6 +1,7 @@
 package de.aliba2468pr77pr77.savedcommands;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
@@ -16,6 +18,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,7 +69,7 @@ public class SavedCommandsScreen extends Screen {
         listWidth = this.width;
         listHeight = this.height - 50;
 
-        this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, itemHeight, 0);
+        this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, itemHeight);
 
         updateSearch(SearchBar.getText());
 
@@ -78,34 +81,35 @@ public class SavedCommandsScreen extends Screen {
         CommandSuggestor.refresh();
     }
 
-    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList) {
+    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList, List<BaseEntry> newList) {
         String commandBase;
         if (data.command.contains(" ")) {
             commandBase = data.command.substring(0, data.command.indexOf(" "));
         } else {
             commandBase = data.command;
         }
-        for (int i = 0; i < commandList.children().size(); i++) {
-            if (this.commandList.children().get(i) instanceof CategoryTitleEntry TitleEntry) {
+        for (int i = 0; i < newList.size(); i++) {
+            if (newList.get(i) instanceof CategoryTitleEntry TitleEntry) {
                 if (Objects.equals(TitleEntry.categoryTitle, commandBase)) {
-                    this.commandList.children().add(i + 1, new CommandEntry(data.command, data.name, indexDataList));
+                    newList.add(i + 1, new CommandEntry(data.command, data.name, indexDataList));
                     return;
                 }
             }
         }
         // If the for loop didn't find the category, create it!
-        this.commandList.children().addFirst(new CategoryTitleEntry(commandBase));
-        this.commandList.children().add(1, new CommandEntry(data.command, data.name, indexDataList));
+        newList.addFirst(new CategoryTitleEntry(commandBase));
+        newList.add(1, new CommandEntry(data.command, data.name, indexDataList));
     }
 
     public void updateSearch(String search) {
-        commandList.children().clear();
+        List<BaseEntry> newList = new ArrayList<>();
         for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
             if (data.command.toLowerCase().contains(search.toLowerCase()) || (data.name != null && data.name.toLowerCase().contains(search.toLowerCase()))) {
-                addCommandRightPlace(data, i);
+                addCommandRightPlace(data, i, newList);
             }
         }
+        commandList.replaceEntries(newList);
         if (CommandSuggestor != null) {
             CommandSuggestor.refresh();
         }
@@ -119,11 +123,11 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (CommandSuggestor.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(KeyInput input) {
+        if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
@@ -135,11 +139,11 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (CommandSuggestor.mouseClicked(mouseX, mouseY, button)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (CommandSuggestor.mouseClicked(click)) {
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     public void reloadCommands() {
@@ -181,7 +185,7 @@ public class SavedCommandsScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    public static class BaseEntry extends ElementListWidget.Entry<BaseEntry>{
+    public static class BaseEntry extends ElementListWidget.Entry<BaseEntry> {
         @Override
         public List<? extends Element> children() {
             return Collections.emptyList();
@@ -193,8 +197,7 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
-                           int mouseX, int mouseY, boolean hovered, float tickProgress) {
+        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
         }
     }
 
@@ -220,8 +223,8 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button != 0) {
+        public boolean mouseClicked(Click click, boolean doubled) {
+            if (click.button() != 0) {
                 return false;
             }
             MinecraftClient client = MinecraftClient.getInstance();
@@ -254,8 +257,12 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
-                           int mouseX, int mouseY, boolean hovered, float tickProgress) {
+        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
+            int x = this.getX() + 2;
+            int y = this.getY() + 2;
+            int entryHeight = this.getHeight() - 4;
+            int entryWidth = this.getWidth();
+
             MinecraftClient client = MinecraftClient.getInstance();
             context.fill(x, y, x + entryWidth, y + entryHeight, 0x44000000);
 
@@ -293,8 +300,8 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button == 0) {
+        public boolean mouseClicked(Click click, boolean doubled) {
+            if (click.button() == 0) {
                 LOGGER.info("Clicked on category title " + this.categoryTitle);
                 return true;
             }
@@ -302,21 +309,25 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
-                           int mouseX, int mouseY, boolean hovered, float tickProgress) {
+        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
             MinecraftClient client = MinecraftClient.getInstance();
 
             int fontHeight = client.textRenderer.fontHeight;
-            int textX = x + 3;
-            int textY = y + entryHeight - fontHeight - 2;
+            int textX = this.getX() + 3;
+            int textY = this.getY() + this.getHeight() - fontHeight - 2;
 
             context.drawTextWithShadow(client.textRenderer, Text.literal(this.categoryTitle).formatted(Formatting.BOLD), textX, textY, 0xFFFFFFFF);
         }
     }
 
     private static class CommandList extends ElementListWidget<BaseEntry> {
-        public CommandList(MinecraftClient client, int width, int height, int top, int itemHeight, int headerHeight) {
-            super(client, width, height, top, itemHeight, headerHeight);
+        public CommandList(MinecraftClient client, int width, int height, int top, int itemHeight) {
+            super(client, width, height, top, itemHeight);
+            this.clearEntries();
+        }
+
+        public void clearEntries(){
+            super.clearEntries();
         }
 
         @Override

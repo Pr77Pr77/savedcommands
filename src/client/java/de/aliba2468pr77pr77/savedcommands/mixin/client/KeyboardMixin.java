@@ -5,6 +5,7 @@ import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
 import net.minecraft.client.Keyboard;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.option.KeybindsScreen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
@@ -21,8 +22,8 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
 @Mixin(Keyboard.class)
 public class KeyboardMixin {
-    @Inject(method = "onKey(JIIII)V", at = @At("HEAD"), cancellable = true)
-    private void onKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
+    @Inject(method = "onKey", at = @At("HEAD"), cancellable = true)
+    private void onKey(long window, int action, KeyInput input, CallbackInfo ci) {
         if (MinecraftClient.getInstance().player == null) {
             return;
         }
@@ -37,13 +38,13 @@ public class KeyboardMixin {
             if (action == GLFW.GLFW_PRESS) {
                 for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                     if (command.keybinds != null && !command.keybinds.isEmptyOrNull()) {
-                        if (pressedPartialCombination != null && pressedPartialCombination.size() < command.keybinds.keybindCode.size() && command.keybinds.keybindCode.get(pressedPartialCombination.size()) == key) {
-                            pressedPartialCombination.add(InputUtil.Type.valueOf("KEYSYM").createFromCode(key));
+                        if (pressedPartialCombination != null && pressedPartialCombination.size() < command.keybinds.keybindCode.size() && command.keybinds.keybindCode.get(pressedPartialCombination.size()) == input.key()) {
+                            pressedPartialCombination.add(InputUtil.Type.valueOf("KEYSYM").createFromCode(input.key()));
                             break;
                         }
-                        if (command.keybinds.keybindCode.getFirst() == key && pressedPartialCombination == null) {
+                        if (command.keybinds.keybindCode.getFirst() == input.key() && pressedPartialCombination == null) {
                             pressedPartialCombination = new ArrayList<>();
-                            pressedPartialCombination.add(InputUtil.Type.valueOf("KEYSYM").createFromCode(key));
+                            pressedPartialCombination.add(InputUtil.Type.valueOf("KEYSYM").createFromCode(input.key()));
                             break;
                         }
                     }
@@ -51,13 +52,13 @@ public class KeyboardMixin {
             }
 
             if (commandManager != null && pressedPartialCombination != null &&
-                    pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(key))) {
+                    pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(input.key()))) {
                 ci.cancel();
             }
 
             if (action == GLFW.GLFW_RELEASE) {
                 if (pressedPartialCombination != null &&
-                        pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(key))) {
+                        pressedPartialCombination.contains(InputUtil.Type.valueOf("KEYSYM").createFromCode(input.key()))) {
                     // after releasing the first key of the combination, search for it in commandManager.data.commands.keybinds:
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                         if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
@@ -70,7 +71,7 @@ public class KeyboardMixin {
                             }
                         }
                     }
-                    pressedPartialCombination.remove(InputUtil.Type.valueOf("KEYSYM").createFromCode(key));
+                    pressedPartialCombination.remove(InputUtil.Type.valueOf("KEYSYM").createFromCode(input.key()));
                     if (pressedPartialCombination.isEmpty()) {
                         pressedPartialCombination = null;
                     }

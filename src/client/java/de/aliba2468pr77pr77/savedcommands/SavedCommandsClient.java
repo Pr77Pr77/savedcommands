@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -17,11 +18,12 @@ public class SavedCommandsClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        KeyBinding.Category SavedcommandsKeyindCategory = new KeyBinding.Category(Identifier.of("savedcommands","savedcommands"));
         OpenCommandScreen = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.savedcommands.opencommandscreen",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_Y, // Y on QWERTY and Z on QWERTZ (key next to T)
-                "category.savedcommands"
+                SavedcommandsKeyindCategory
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
