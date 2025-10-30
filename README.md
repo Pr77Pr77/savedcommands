@@ -13,7 +13,7 @@ You can download the mod on either [Modrinth](https://modrinth.com/mod/savedcomm
 under [releases](https://github.com/Pr77Pr77/savedcommands/releases).
 This mod needs the following dependency:
 
-[Fabric API](https://modrinth.com/mod/fabric-api): Version 0.118.1+1.21.7 or newer (for 1.21.7)
+[Fabric API](https://modrinth.com/mod/fabric-api): Version 0.133.14+1.21.9 or newer (for 1.21.9/1.21.10)
 
 ## Using the mod
 
