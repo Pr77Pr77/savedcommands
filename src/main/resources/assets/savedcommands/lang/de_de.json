@@ -1,6 +1,6 @@
 {
   "key.savedcommands.opencommandscreen": "Gespeicherte Befehle öffnen",
-  "category.savedcommands": "Gespeicherte Befehle (Saved Commands)",
+  "key.category.savedcommands.savedcommands": "Gespeicherte Befehle (Saved Commands)",
   "screen.savedcommands.commandscreentitle": "Gespeicherte Befehle",
   "screen.savedcommands.searchsavebar": "Nach Befehle suchen oder neue hinzufügen",
   "screen.savedcommands.editpopup": "Befehl bearbeiten",
