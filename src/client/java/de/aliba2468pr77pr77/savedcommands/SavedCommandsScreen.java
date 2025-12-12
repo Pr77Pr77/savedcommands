@@ -119,7 +119,7 @@ public class SavedCommandsScreen extends Screen {
         if (CommandSuggestor != null) {
             CommandSuggestor.refresh();
         }
-        super.resize(client, width, height);
+        super.resize(width, height);
     }
 
     @Override
