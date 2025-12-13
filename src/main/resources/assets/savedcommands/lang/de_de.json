@@ -5,5 +5,7 @@
   "screen.savedcommands.searchsavebar": "Nach Befehle suchen oder neue hinzufügen",
   "screen.savedcommands.editpopup": "Befehl bearbeiten",
   "screen.savedcommands.name": "Name",
-  "screen.savedcommands.remove": "Entfernen"
+  "screen.savedcommands.remove": "Entfernen",
+  "screen.savedcommands.duplicateKeybindCombinationSC": "Diese Tastenkombination wird auch verwendet für diese Befehle:",
+  "screen.savedcommands.duplicateKeybindCombinationMC": "Diese Tastenkombination wird auch verwendet für diese Minecraft Tastenbelegungen:"
 }
