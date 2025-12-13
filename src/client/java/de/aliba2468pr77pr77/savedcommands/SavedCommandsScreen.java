@@ -52,8 +52,6 @@ public class SavedCommandsScreen extends Screen {
         this.SearchBar.setFocusUnlocked(false);
         this.addDrawableChild(this.SearchBar);
 
-        commandManager = new SavedCommandManager();
-
         AddButton = ButtonWidget.builder(
                 Text.literal("+"),
                 b -> {
@@ -144,11 +142,6 @@ public class SavedCommandsScreen extends Screen {
             return true;
         }
         return super.mouseClicked(click, doubled);
-    }
-
-    public void reloadCommands() {
-        commandManager = new SavedCommandManager();
-        updateSearch(SearchBar.getText());
     }
 
     protected void setInitialFocus() {
@@ -254,7 +247,7 @@ public class SavedCommandsScreen extends Screen {
                 LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
                 client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
-                client.setScreen(new EditCommandScreen(client.currentScreen, commandManager.data.commands.get(indexDataList), commandManager));
+                client.setScreen(new EditCommandScreen(client.currentScreen, commandManager.data.commands.get(indexDataList)));
                 return true;
             }
             LOGGER.info("Clicked on command " + this.command);
