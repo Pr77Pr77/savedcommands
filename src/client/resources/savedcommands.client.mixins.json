@@ -3,6 +3,7 @@
   "package": "de.aliba2468pr77pr77.savedcommands.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "KeyBindingAccessor",
     "KeyboardMixin",
     "MouseMixin",
     "SearchSuggestor",

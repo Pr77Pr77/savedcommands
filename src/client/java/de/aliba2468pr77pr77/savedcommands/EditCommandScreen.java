@@ -1,13 +1,16 @@
 package de.aliba2468pr77pr77.savedcommands;
 
+import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -16,6 +19,8 @@ import org.lwjgl.glfw.GLFW;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static net.minecraft.text.Text.*;
@@ -30,6 +35,8 @@ public class EditCommandScreen extends Screen {
     public boolean keybindSetting = false;
     final private SavedCommandManager.CommandData data;
     final private SavedCommandManager manager;
+    private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
+    private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
 
     int popupW;
     int popupH;
@@ -43,10 +50,104 @@ public class EditCommandScreen extends Screen {
         this.data = data;
     }
 
+    private void searchConflicts() {
+        KeybindConflictsSavedCommands.clear();
+        KeybindConflictsMinecraft.clear();
+        if (data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
+            // Checking Keybinds of this mod (Only first one)
+            for (SavedCommandManager.CommandData command : manager.data.commands) {
+                if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && Objects.equals(command.keybinds.keybindCode.getFirst(), data.keybinds.keybindCode.getFirst()) &&
+                        Objects.equals(command.keybinds.keybindType.getFirst(), data.keybinds.keybindType.getFirst()) &&
+                        !Objects.equals(command, data)) {
+                    conflictSavedCommands conflict = new conflictSavedCommands();
+                    conflict.conflictingCommand = command;
+
+                    conflict.conflictingKeys = new SavedCommandManager.CommandData.keybindCombination();
+                    boolean differentEndings = false;
+                    for (int keybindIndex = 0; keybindIndex < command.keybinds.keybindType.size() && keybindIndex < data.keybinds.keybindType.size(); keybindIndex++) {
+                        if (Objects.equals(command.keybinds.keybindCode.get(keybindIndex), data.keybinds.keybindCode.get(keybindIndex)) &&
+                                Objects.equals(command.keybinds.keybindType.get(keybindIndex), data.keybinds.keybindType.get(keybindIndex))) {
+                            conflict.conflictingKeys.keybindType.add(keybindIndex, data.keybinds.keybindType.get(keybindIndex));
+                            conflict.conflictingKeys.keybindCode.add(keybindIndex, data.keybinds.keybindCode.get(keybindIndex));
+                        } else {
+                            differentEndings = true;
+                            break;
+                        }
+                    }
+                    if (!differentEndings) {
+                        KeybindConflictsSavedCommands.add(conflict);
+                    }
+                }
+            }
+
+            // Checking Minecraft keybinds
+            for (KeyBinding keybind : MinecraftClient.getInstance().options.allKeys) {
+                if (!keybind.isUnbound() &&
+                        Objects.equals(((KeyBindingAccessor) keybind).getBoundKey(), data.keybinds.toKeys().getFirst())) {
+                    conflictMinecraftKB conflict = new conflictMinecraftKB();
+                    conflict.conflictingKey = data.keybinds.toKeys().getFirst();
+                    conflict.conflictingKeybind = keybind;
+                    KeybindConflictsMinecraft.add(conflict);
+                }
+            }
+
+            MutableText tooltipContent = empty();
+            if (!KeybindConflictsSavedCommands.isEmpty()) {
+                tooltipContent.append(translatable("screen.savedcommands.duplicateKeybindCombinationSC"));
+
+                for (conflictSavedCommands keybindConflictSavedCommands : KeybindConflictsSavedCommands) {
+                    if (keybindConflictSavedCommands.conflictingKeys != null && !keybindConflictSavedCommands.conflictingKeys.isEmptyOrNull()) {
+                        tooltipContent.append(literal("\n"));
+                        boolean OneElemAlreadyAdded = false;
+                        MutableText KeyText = empty();
+                        for (InputUtil.Key Key : keybindConflictSavedCommands.conflictingKeys.toKeys()) {
+                            if (OneElemAlreadyAdded) {
+                                KeyText.append(literal(" + "));
+                            }
+                            KeyText.append(Key.getLocalizedText());
+                            OneElemAlreadyAdded = true;
+                        }
+                        KeyText.append(literal(": "));
+                        tooltipContent.append(KeyText.withColor(0xfffcfc54));
+                        if (keybindConflictSavedCommands.conflictingCommand.name != null && !keybindConflictSavedCommands.conflictingCommand.name.isEmpty()) {
+                            tooltipContent.append(keybindConflictSavedCommands.conflictingCommand.name);
+                        } else {
+                            tooltipContent.append(keybindConflictSavedCommands.conflictingCommand.command);
+                        }
+                    }
+                }
+            }
+
+            if (!KeybindConflictsMinecraft.isEmpty()) {
+                if (!KeybindConflictsSavedCommands.isEmpty()) {
+                    tooltipContent.append(literal("\n"));
+                }
+                tooltipContent.append(translatable("screen.savedcommands.duplicateKeybindCombinationMC"));
+
+                for (conflictMinecraftKB KeybindConflictMinecraft : KeybindConflictsMinecraft) {
+                    if (KeybindConflictMinecraft.conflictingKeybind != null && KeybindConflictMinecraft.conflictingKey != null) {
+                        tooltipContent.append(literal("\n"));
+                        MutableText KeyText = empty();
+                        KeyText.append(KeybindConflictMinecraft.conflictingKey.getLocalizedText());
+                        KeyText.append(literal(": "));
+                        tooltipContent.append(KeyText.withColor(0xfffcfc54));
+                        tooltipContent.append(translatable(KeybindConflictMinecraft.conflictingKeybind.getId()));
+                    }
+                }
+            }
+            if (keybindButton != null) {
+                keybindButton.setTooltip(Tooltip.of(tooltipContent));
+            }
+        }
+    }
+
     private Text getKeybindButtonText() {
         MutableText buttonContent = empty();
+
         if (keybindSetting) {
             buttonContent.append(literal("< ").withColor(0xfffcfc54));
+        } else if (!KeybindConflictsSavedCommands.isEmpty() || !KeybindConflictsMinecraft.isEmpty()) {
+            buttonContent.append(literal("[ ").withColor(0xfffcfc54));
         }
         if (data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             boolean OneElemAlreadyAdded = false;
@@ -62,6 +163,8 @@ public class EditCommandScreen extends Screen {
         }
         if (keybindSetting) {
             buttonContent.append(literal(" >").withColor(0xfffcfc54));
+        } else if (!KeybindConflictsSavedCommands.isEmpty() || !KeybindConflictsMinecraft.isEmpty()) {
+            buttonContent.append(literal(" ]").withColor(0xfffcfc54));
         }
         return buttonContent;
     }
@@ -98,10 +201,13 @@ public class EditCommandScreen extends Screen {
         }
         this.addDrawableChild(this.nameTextField);
 
+        searchConflicts();
+
         this.keybindButton = ButtonWidget.builder(getKeybindButtonText(), b -> {
             LOGGER.info("Changing the keybind...");
             keybindSetting = true;
             keybindButton.setMessage(getKeybindButtonText());
+            keybindButton.setTooltip(Tooltip.of(empty()));
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
         }).dimensions(popupX + 20, popupY + 125, Math.round((popupW - 40) * 0.7F), 20).build();
 
@@ -110,10 +216,14 @@ public class EditCommandScreen extends Screen {
         this.removeKeybindButton = ButtonWidget.builder(translatable("screen.savedcommands.remove"), b -> {
             LOGGER.info("Removing the keybind...");
             data.keybinds = null;
+            searchConflicts();
+            keybindButton.setTooltip(Tooltip.of(empty()));
             keybindButton.setMessage(getKeybindButtonText());
         }).dimensions(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 125, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addDrawableChild(this.removeKeybindButton);
+
+        searchConflicts();
     }
 
     @Override
@@ -193,6 +303,7 @@ public class EditCommandScreen extends Screen {
         if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
             manager.saveAsync();
+            searchConflicts();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         } else {
@@ -223,6 +334,7 @@ public class EditCommandScreen extends Screen {
         if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
             manager.saveAsync();
+            searchConflicts();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         } else {
@@ -244,5 +356,17 @@ public class EditCommandScreen extends Screen {
         if (parent instanceof SavedCommandsScreen commandParent) {
             commandParent.reloadCommands();
         }
+    }
+
+    static class conflictSavedCommands { // Conflict with other keybinds of this mod
+        SavedCommandManager.CommandData conflictingCommand;
+
+        SavedCommandManager.CommandData.keybindCombination conflictingKeys; // Only the ones in both commands
+    }
+
+    static class conflictMinecraftKB { // Conflict with minecraft keybinds
+        KeyBinding conflictingKeybind;
+
+        InputUtil.Key conflictingKey; // Only the one in both commands
     }
 }
