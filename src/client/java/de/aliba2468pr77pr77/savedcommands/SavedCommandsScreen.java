@@ -185,6 +185,20 @@ public class SavedCommandsScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
+    public static String shortenTextIfNeeded(String text, int availableWidth, Formatting formatting){
+        MinecraftClient client = MinecraftClient.getInstance();
+        if(client.textRenderer.getWidth(Text.literal(text).formatted(formatting)) <= availableWidth){
+            return text;
+        }
+        StringBuilder mutableString = new StringBuilder(text);
+        mutableString.delete(mutableString.length()-1, mutableString.length());
+        mutableString.append("…");
+        while(client.textRenderer.getWidth(Text.literal(mutableString.toString()).formatted(formatting)) > availableWidth){
+            mutableString.delete(mutableString.length()-2, mutableString.length()-1);
+        }
+        return mutableString.toString();
+    }
+
     public static class BaseEntry extends ElementListWidget.Entry<BaseEntry> {
         @Override
         public List<? extends Element> children() {
@@ -271,17 +285,17 @@ public class SavedCommandsScreen extends Screen {
                 int textX = x + 3;
                 int textY = y + (entryHeight - fontHeight) / 2 + 1;
 
-                context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFFFFFFF);
+                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.command, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFFFFFFF);
             } else {
                 int fontHeight = client.textRenderer.fontHeight;
                 int textX = x + 3;
                 int textY = y + (entryHeight - fontHeight * 2 - 2) / 2 + 1;
 
-                context.drawTextWithShadow(client.textRenderer, Text.literal(this.name), textX, textY, 0xFFFFFFFF);
+                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.name, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFFFFFFF);
 
                 textY += fontHeight + 2;
 
-                context.drawTextWithShadow(client.textRenderer, Text.literal(this.command), textX, textY, 0xFFBBBBBB);
+                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.command, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFBBBBBB);
             }
 
             deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
@@ -316,7 +330,7 @@ public class SavedCommandsScreen extends Screen {
             int textX = this.getX() + 3;
             int textY = this.getY() + this.getHeight() - fontHeight - 2;
 
-            context.drawTextWithShadow(client.textRenderer, Text.literal(this.categoryTitle).formatted(Formatting.BOLD), textX, textY, 0xFFFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, Formatting.BOLD)).formatted(Formatting.BOLD), textX, textY, 0xFFFFFFFF);
         }
     }
 
