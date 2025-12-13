@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static net.minecraft.text.Text.*;
 
 public class EditCommandScreen extends Screen {
@@ -34,7 +35,6 @@ public class EditCommandScreen extends Screen {
     private ButtonWidget removeKeybindButton;
     public boolean keybindSetting = false;
     final private SavedCommandManager.CommandData data;
-    final private SavedCommandManager manager;
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
 
@@ -43,9 +43,8 @@ public class EditCommandScreen extends Screen {
     int popupX;
     int popupY;
 
-    public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data, SavedCommandManager manager) {
+    public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
         super(translatable("screen.savedcommands.editpopup"));
-        this.manager = manager;
         this.parent = parent;
         this.data = data;
     }
@@ -55,7 +54,7 @@ public class EditCommandScreen extends Screen {
         KeybindConflictsMinecraft.clear();
         if (data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             // Checking Keybinds of this mod (Only first one)
-            for (SavedCommandManager.CommandData command : manager.data.commands) {
+            for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                 if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && Objects.equals(command.keybinds.keybindCode.getFirst(), data.keybinds.keybindCode.getFirst()) &&
                         Objects.equals(command.keybinds.keybindType.getFirst(), data.keybinds.keybindType.getFirst()) &&
                         !Objects.equals(command, data)) {
@@ -302,7 +301,7 @@ public class EditCommandScreen extends Screen {
     public boolean mouseReleased(Click click) {
         if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
-            manager.saveAsync();
+            commandManager.saveAsync();
             searchConflicts();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
@@ -333,7 +332,7 @@ public class EditCommandScreen extends Screen {
     public boolean keyReleased(KeyInput input) {
         if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
-            manager.saveAsync();
+            commandManager.saveAsync();
             searchConflicts();
             keybindButton.setMessage(getKeybindButtonText());
             return true;
@@ -351,10 +350,11 @@ public class EditCommandScreen extends Screen {
         } else {
             data.name = nameTextField.getText();
         }
-        manager.saveAsync();
-        MinecraftClient.getInstance().setScreen(parent);
-        if (parent instanceof SavedCommandsScreen commandParent) {
-            commandParent.reloadCommands();
+        commandManager.saveAsync();
+        if (parent instanceof SavedCommandsScreen) {
+            MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
+        } else {
+            MinecraftClient.getInstance().setScreen(parent);
         }
     }
 
