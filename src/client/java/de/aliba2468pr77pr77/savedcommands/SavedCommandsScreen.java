@@ -9,7 +9,6 @@ import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -29,7 +28,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 
 public class SavedCommandsScreen extends Screen {
-    public TextFieldWidget SearchBar;
+    public TextFieldPlaceholderAlways SearchBar;
     ButtonWidget AddButton;
     CommandList commandList;
 
@@ -48,11 +47,12 @@ public class SavedCommandsScreen extends Screen {
 
     protected void init() {
         assert this.client != null;
-        this.SearchBar = new TextFieldWidget(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
+        this.SearchBar = new TextFieldPlaceholderAlways(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
         this.SearchBar.setMaxLength(256);
         this.SearchBar.setDrawsBackground(true);
         this.SearchBar.setChangedListener(this::updateSearch);
         this.SearchBar.setFocusUnlocked(false);
+        this.SearchBar.setPlaceholder(Text.translatable("screen.savedcommands.searchsavebar"));
         this.addDrawableChild(this.SearchBar);
 
         AddButton = ButtonWidget.builder(
@@ -145,6 +145,10 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyInput input) {
+        if(input.isEnter()){
+            commandManager.addCommand(SearchBar.getText(), null);
+            SearchBar.setText("");
+        }
         if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
