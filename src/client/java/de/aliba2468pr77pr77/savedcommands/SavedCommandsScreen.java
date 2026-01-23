@@ -17,6 +17,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,8 @@ public class SavedCommandsScreen extends Screen {
 
     ChatInputSuggestor CommandSuggestor;
 
+    @Nullable Element focused;
+
     protected SavedCommandsScreen() {
         super(Text.translatable("screen.savedcommands.commandscreentitle"));
     }
@@ -58,7 +61,6 @@ public class SavedCommandsScreen extends Screen {
                     LOGGER.info("Add command button clicked!");
                     commandManager.addCommand(SearchBar.getText(), null);
                     SearchBar.setText("");
-                    CommandSuggestor.setWindowActive(false);
                 }
         ).dimensions(20 + this.width - 40 - 20, 20, 20, 20).build();
 
@@ -77,6 +79,27 @@ public class SavedCommandsScreen extends Screen {
         CommandSuggestor.setCanLeave(false);
         CommandSuggestor.setWindowActive(true);
         CommandSuggestor.refresh();
+    }
+
+    @Override
+    public @Nullable Element getFocused() {
+        return this.focused;
+    }
+
+    @Override
+    public void setFocused(@Nullable Element focused) {
+        if (this.focused != focused) {
+            if (this.focused != null) {
+                this.focused.setFocused(false);
+                if (this.focused.isFocused()) {
+                    return; // Return if still focused
+                }
+            }
+            if (focused != null) {
+                focused.setFocused(true);
+            }
+            this.focused = focused;
+        }
     }
 
     private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList, List<BaseEntry> newList) {
@@ -113,7 +136,7 @@ public class SavedCommandsScreen extends Screen {
         }
     }
 
-    public void resize(MinecraftClient client, int width, int height) {
+    public void resize(int width, int height) {
         if (CommandSuggestor != null) {
             CommandSuggestor.refresh();
         }
@@ -178,16 +201,16 @@ public class SavedCommandsScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
-    public static String shortenTextIfNeeded(String text, int availableWidth, Formatting formatting){
+    public static String shortenTextIfNeeded(String text, int availableWidth, Formatting formatting) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if(client.textRenderer.getWidth(Text.literal(text).formatted(formatting)) <= availableWidth){
+        if (client.textRenderer.getWidth(Text.literal(text).formatted(formatting)) <= availableWidth) {
             return text;
         }
         StringBuilder mutableString = new StringBuilder(text);
-        mutableString.delete(mutableString.length()-1, mutableString.length());
+        mutableString.delete(mutableString.length() - 1, mutableString.length());
         mutableString.append("…");
-        while(client.textRenderer.getWidth(Text.literal(mutableString.toString()).formatted(formatting)) > availableWidth){
-            mutableString.delete(mutableString.length()-2, mutableString.length()-1);
+        while (client.textRenderer.getWidth(Text.literal(mutableString.toString()).formatted(formatting)) > availableWidth) {
+            mutableString.delete(mutableString.length() - 2, mutableString.length() - 1);
         }
         return mutableString.toString();
     }
@@ -333,7 +356,7 @@ public class SavedCommandsScreen extends Screen {
             this.clearEntries();
         }
 
-        public void clearEntries(){
+        public void clearEntries() {
             super.clearEntries();
         }
 
