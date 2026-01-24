@@ -4,6 +4,8 @@ import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -15,6 +17,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
@@ -29,7 +32,7 @@ import static net.minecraft.text.Text.*;
 public class EditCommandScreen extends Screen {
     private final Screen parent;
     private ButtonWidget closeButton;
-    private TextFieldWidget commandTextField;
+    public TextFieldWidget commandTextField;
     private TextFieldWidget nameTextField;
     private ButtonWidget keybindButton;
     private ButtonWidget removeKeybindButton;
@@ -38,10 +41,12 @@ public class EditCommandScreen extends Screen {
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
 
-    int popupW;
-    int popupH;
-    int popupX;
-    int popupY;
+    ChatInputSuggestor CommandSuggestor;
+
+    public int popupW;
+    public int popupH;
+    public int popupX;
+    public int popupY;
 
     public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
         super(translatable("screen.savedcommands.editpopup"));
@@ -223,6 +228,12 @@ public class EditCommandScreen extends Screen {
         this.addDrawableChild(this.removeKeybindButton);
 
         searchConflicts();
+
+        CommandSuggestor = new ChatInputSuggestor(client, this, commandTextField, textRenderer, false, false, 1, 10, false, 0xD8000000);
+        CommandSuggestor.setCanLeave(false);
+        CommandSuggestor.setWindowActive(true);
+        CommandSuggestor.refresh();
+        commandTextField.setChangedListener((String text) -> CommandSuggestor.refresh());
     }
 
     @Override
@@ -280,6 +291,14 @@ public class EditCommandScreen extends Screen {
         );
 
         super.render(ctx, mouseX, mouseY, delta);
+
+        CommandSuggestor.render(ctx, mouseX, mouseY);
+    }
+
+    @Override
+    public void setFocused(@Nullable Element focused) {
+        CommandSuggestor.setWindowActive(focused == commandTextField);
+        super.setFocused(focused);
     }
 
     @Override
@@ -292,9 +311,11 @@ public class EditCommandScreen extends Screen {
             data.keybinds.keybindCode.add(click.button());
             keybindButton.setMessage(getKeybindButtonText());
             return true;
-        } else {
-            return super.mouseClicked(click, doubled);
         }
+        if (CommandSuggestor.mouseClicked(click)) {
+            return true;
+        }
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -311,6 +332,14 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (CommandSuggestor.mouseScrolled(verticalAmount)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
     public boolean keyPressed(KeyInput input) {
         if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
@@ -319,6 +348,9 @@ public class EditCommandScreen extends Screen {
             data.keybinds.keybindType.add("KEYSYM");
             data.keybinds.keybindCode.add(input.key());
             keybindButton.setMessage(getKeybindButtonText());
+            return true;
+        }
+        if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
         if (input.key() == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
