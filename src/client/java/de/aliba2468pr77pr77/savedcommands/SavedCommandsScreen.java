@@ -145,7 +145,7 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyInput input) {
-        if(input.isEnter()){
+        if (input.isEnter()) {
             commandManager.addCommand(SearchBar.getText(), null);
             SearchBar.setText("");
         }
