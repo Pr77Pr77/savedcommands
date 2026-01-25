@@ -7,5 +7,15 @@
   "screen.savedcommands.name": "Name",
   "screen.savedcommands.remove": "Entfernen",
   "screen.savedcommands.duplicateKeybindCombinationSC": "Diese Tastenkombination wird auch verwendet für diese Befehle:",
-  "screen.savedcommands.duplicateKeybindCombinationMC": "Diese Tastenkombination wird auch verwendet für diese Minecraft Tastenbelegungen:"
+  "screen.savedcommands.duplicateKeybindCombinationMC": "Diese Tastenkombination wird auch verwendet für diese Minecraft Tastenbelegungen:",
+  "screen.savedcommands.variables": "Variablen",
+  "screen.savedcommands.editvariable": "Variable Bearbeiten",
+  "screen.savedcommands.createvariable": "Variable Erstellen",
+  "screen.savedcommands.abbreviation": "Abkürzung",
+  "screen.savedcommands.vartype": "Variablentyp",
+  "screen.savedcommands.vartype.string": "Eigene Zeichenfolge",
+  "screen.savedcommands.vartype.int": "Eigene Ganzzahl",
+  "screen.savedcommands.vartype.float": "Eigene Gleitkommazahl",
+  "screen.savedcommands.vartype.itemhand": "Gegenstands-ID in der Hand",
+  "screen.savedcommands.defaultvalue": "Standartwert"
 }
