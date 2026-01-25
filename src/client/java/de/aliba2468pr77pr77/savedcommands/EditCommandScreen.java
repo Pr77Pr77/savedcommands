@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.Element;
+import net.minecraft.client.gui.cursor.StandardCursors;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -15,6 +16,8 @@ import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.Nullable;
@@ -26,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static net.minecraft.text.Text.*;
 
@@ -40,6 +44,9 @@ public class EditCommandScreen extends Screen {
     final private SavedCommandManager.CommandData data;
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
+
+    private ButtonWidget addVariableButton;
+    char VariablePlaceholder = '\u200C'; // Added in front of the abbreviation to ensure that it is a variable
 
     ChatInputSuggestor CommandSuggestor;
 
@@ -178,7 +185,7 @@ public class EditCommandScreen extends Screen {
         super.init();
 
         popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(190, this.height - 40);
+        popupH = Math.min(230, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -196,7 +203,31 @@ public class EditCommandScreen extends Screen {
         }
         this.addDrawableChild(this.commandTextField);
 
-        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 80, popupW - 40, 20, translatable("screen.savedcommands.name"));
+        this.addVariableButton = ButtonWidget.builder(Text.literal("+"), b -> {
+            LOGGER.info("Creating Variable...");
+            MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data));
+        }).dimensions(popupX + 20, popupY + 85, 20, 20).build();
+        this.addDrawableChild(this.addVariableButton);
+
+        commandTextField.addFormatter(this::getVariableFormatter);
+        if (data.variables != null) {
+            for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
+                int finalVariableIndex = variableIndex;
+                ButtonWidget variableButton = ButtonWidget.builder(Text.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), bu -> {
+                    LOGGER.info("Adding Variable " + finalVariableIndex);
+                    commandTextField.setText(commandTextField.getText().substring(0, commandTextField.getCursor()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getText().substring(commandTextField.getCursor()));
+                }).dimensions(popupX + 20 + 25 + 45 * variableIndex, popupY + 85, 20, 20).build();
+                this.addDrawableChild(variableButton);
+
+                ButtonWidget variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), b -> {
+                    LOGGER.info("Editing Variable...");
+                    MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
+                });
+                this.addDrawableChild(variableEditButton);
+            }
+        }
+
+        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 120, popupW - 40, 20, translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setDrawsBackground(true);
         this.nameTextField.setFocusUnlocked(true);
@@ -213,7 +244,7 @@ public class EditCommandScreen extends Screen {
             keybindButton.setMessage(getKeybindButtonText());
             keybindButton.setTooltip(Tooltip.of(empty()));
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
-        }).dimensions(popupX + 20, popupY + 125, Math.round((popupW - 40) * 0.7F), 20).build();
+        }).dimensions(popupX + 20, popupY + 165, Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addDrawableChild(this.keybindButton);
 
@@ -223,7 +254,7 @@ public class EditCommandScreen extends Screen {
             searchConflicts();
             keybindButton.setTooltip(Tooltip.of(empty()));
             keybindButton.setMessage(getKeybindButtonText());
-        }).dimensions(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 125, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
+        }).dimensions(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 165, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addDrawableChild(this.removeKeybindButton);
 
@@ -236,10 +267,33 @@ public class EditCommandScreen extends Screen {
         commandTextField.setChangedListener((String text) -> CommandSuggestor.refresh());
     }
 
+    private @Nullable OrderedText getVariableFormatter(String original, int firstCharacterIndex) {
+        if (original.contains(String.valueOf(VariablePlaceholder))) {
+            List<OrderedText> textList = new ArrayList<>();
+            int index = original.indexOf(VariablePlaceholder);
+            int ContinuingIndex = 0;
+            while (index != -1) {
+                int finalIndex = index;
+                if (data.variables.stream().anyMatch(v -> original.length() > finalIndex + 1 && v.abbreviation == original.charAt(finalIndex + 1))) {
+                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex, index), Style.EMPTY));
+                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(index, index + 2), Style.EMPTY.withBold(true)));
+                    ContinuingIndex = index + 2;
+                }
+
+                index = original.indexOf(VariablePlaceholder, index + 1);
+            }
+            textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex), Style.EMPTY));
+            return OrderedText.concat(textList);
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         if (this.parent != null) {
             this.parent.render(ctx, mouseX, mouseY, delta);
+            ctx.setCursor(StandardCursors.ARROW);
         } else {
             this.renderBackground(ctx, mouseX, mouseY, delta);
         }
@@ -247,7 +301,7 @@ public class EditCommandScreen extends Screen {
         ctx.fill(0, 0, this.width, this.height, 0x88000000);
 
         popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(190, this.height - 40);
+        popupH = Math.min(230, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -274,9 +328,18 @@ public class EditCommandScreen extends Screen {
 
         ctx.drawText(
                 this.textRenderer,
+                translatable("screen.savedcommands.variables"),
+                popupX + 20,
+                popupY + 75,
+                0xFFFFFFFF,
+                true
+        );
+
+        ctx.drawText(
+                this.textRenderer,
                 translatable("screen.savedcommands.name"),
                 popupX + 20,
-                popupY + 70,
+                popupY + 110,
                 0xFFFFFFFF,
                 true
         );
@@ -285,7 +348,7 @@ public class EditCommandScreen extends Screen {
                 this.textRenderer,
                 translatable("controls.keybinds.title"),
                 popupX + 20,
-                popupY + 110,
+                popupY + 150,
                 0xFFFFFFFF,
                 true
         );

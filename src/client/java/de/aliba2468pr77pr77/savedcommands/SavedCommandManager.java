@@ -7,6 +7,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.text.Text;
 import net.minecraft.util.WorldSavePath;
 
 import java.io.IOException;
@@ -60,6 +61,7 @@ public class SavedCommandManager {
         public String command;
         public String name;
         public keybindCombination keybinds;
+        public List<variable> variables;
 
         CommandData(String command, String name) {
             this.command = command;
@@ -81,6 +83,40 @@ public class SavedCommandManager {
             public boolean isEmptyOrNull() {
                 return this.keybindCode == null || this.keybindType == null || this.keybindCode.isEmpty() || this.keybindType.isEmpty();
             }
+        }
+
+        public static class variable {
+            public String name;
+            public Character abbreviation;
+
+            public types type;
+            public Object defaultValue;
+
+            public enum types {
+                STRING("screen.savedcommands.vartype.string"),
+                INT("screen.savedcommands.vartype.int"),
+                FLOAT("screen.savedcommands.vartype.float"),
+
+                PLAYERPOSX("argument.entity.options.x.description"),
+                PLAYERPOSY("argument.entity.options.y.description"),
+                PLAYERPOSZ("argument.entity.options.z.description"),
+                ITEMHAND("screen.savedcommands.vartype.itemhand");
+
+                private final String translationKey;
+
+                types(String translationKey) {
+                    this.translationKey = translationKey;
+                }
+
+                public String getTranslationKey() {
+                    return translationKey;
+                }
+
+                public Text getText() {
+                    return Text.translatable(translationKey);
+                }
+            }
+
         }
     }
 

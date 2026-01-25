@@ -7,5 +7,15 @@
   "screen.savedcommands.name": "Name",
   "screen.savedcommands.remove": "Remove",
   "screen.savedcommands.duplicateKeybindCombinationSC": "This key combination is also used for these commands:",
-  "screen.savedcommands.duplicateKeybindCombinationMC": "This key combination is also used for these Minecraft keybinds:"
+  "screen.savedcommands.duplicateKeybindCombinationMC": "This key combination is also used for these Minecraft keybinds:",
+  "screen.savedcommands.variables": "Variables",
+  "screen.savedcommands.editvariable": "Edit Variable",
+  "screen.savedcommands.createvariable": "Create Variable",
+  "screen.savedcommands.abbreviation": "Abbreviation",
+  "screen.savedcommands.vartype": "Variable type",
+  "screen.savedcommands.vartype.string": "Custom string",
+  "screen.savedcommands.vartype.int": "Custom integer",
+  "screen.savedcommands.vartype.float": "Custom floating point",
+  "screen.savedcommands.vartype.itemhand": "Item-ID in the hand",
+  "screen.savedcommands.defaultvalue": "Default value"
 }
