@@ -17,5 +17,7 @@
   "screen.savedcommands.vartype.int": "Eigene Ganzzahl",
   "screen.savedcommands.vartype.float": "Eigene Gleitkommazahl",
   "screen.savedcommands.vartype.itemhand": "Gegenstands-ID in der Hand",
-  "screen.savedcommands.defaultvalue": "Standartwert"
+  "screen.savedcommands.defaultvalue": "Standartwert",
+  "screen.savedcommands.entervariablevalues": "Variablenwerte eingeben",
+  "screen.savedcommands.send": "Senden"
 }

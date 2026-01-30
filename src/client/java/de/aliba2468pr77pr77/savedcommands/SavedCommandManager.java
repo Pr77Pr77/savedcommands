@@ -4,8 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.WorldSavePath;
@@ -17,6 +20,7 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 
 public class SavedCommandManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -90,22 +94,24 @@ public class SavedCommandManager {
             public Character abbreviation;
 
             public types type;
-            public Object defaultValue;
+            public String defaultValue;
 
             public enum types {
-                STRING("screen.savedcommands.vartype.string"),
-                INT("screen.savedcommands.vartype.int"),
-                FLOAT("screen.savedcommands.vartype.float"),
+                STRING("screen.savedcommands.vartype.string", true),
+                INT("screen.savedcommands.vartype.int", true),
+                FLOAT("screen.savedcommands.vartype.float", true),
 
-                PLAYERPOSX("argument.entity.options.x.description"),
-                PLAYERPOSY("argument.entity.options.y.description"),
-                PLAYERPOSZ("argument.entity.options.z.description"),
-                ITEMHAND("screen.savedcommands.vartype.itemhand");
+                PLAYERPOSX("argument.entity.options.x.description", false),
+                PLAYERPOSY("argument.entity.options.y.description", false),
+                PLAYERPOSZ("argument.entity.options.z.description", false),
+                ITEMHAND("screen.savedcommands.vartype.itemhand", false);
 
                 private final String translationKey;
+                final boolean userEditable;
 
-                types(String translationKey) {
+                types(String translationKey, boolean userEditable) {
                     this.translationKey = translationKey;
+                    this.userEditable = userEditable;
                 }
 
                 public String getTranslationKey() {
@@ -136,6 +142,66 @@ public class SavedCommandManager {
         if (index >= 0 && index < data.commands.size()) {
             data.commands.remove(index);
             saveAsync();
+        }
+    }
+
+    public static void sendCommandAndInsertVariables(SavedCommandManager.CommandData command, Screen parentScreen) {
+        if (MinecraftClient.getInstance().player == null) {
+            return;
+        }
+        if (command.variables == null || command.variables.isEmpty() && command.command.contains(String.valueOf(VariablePlaceholder))) {
+            sendCommand(command.command);
+        } else { // There are variables
+            StringBuilder insertedCommand = new StringBuilder();
+            int index = command.command.indexOf(VariablePlaceholder);
+            int ContinuingIndex = 0;
+            List<CommandData.variable> userEditableVariablesLeft = new ArrayList<>();
+            while (index != -1) {
+                int finalIndex = index;
+                Optional<CommandData.variable> optionalVariable = command.variables.stream().filter(v -> command.command.length() > finalIndex + 1 && v.abbreviation == command.command.charAt(finalIndex + 1)).findFirst();
+                if (optionalVariable.isPresent()) {
+                    if (!optionalVariable.get().type.userEditable) {
+                        insertedCommand.append(command.command.substring(ContinuingIndex, index));
+                        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+                        switch (optionalVariable.get().type) {
+                            case ITEMHAND:
+                                insertedCommand.append(Registries.ITEM.getId(player.getMainHandStack().getItem()));
+                                break;
+                            case PLAYERPOSX:
+                                insertedCommand.append(player.getBlockX());
+                                break;
+                            case PLAYERPOSY:
+                                insertedCommand.append(player.getBlockY());
+                                break;
+                            case PLAYERPOSZ:
+                                insertedCommand.append(player.getBlockZ());
+                                break;
+                        }
+                        ContinuingIndex = index + 2;
+                    } else if (!userEditableVariablesLeft.contains(optionalVariable.get())) {
+                        userEditableVariablesLeft.add(optionalVariable.get());
+                    }
+                }
+
+                index = command.command.indexOf(VariablePlaceholder, index + 1);
+            }
+            insertedCommand.append(command.command.substring(ContinuingIndex));
+
+            if (!userEditableVariablesLeft.isEmpty()) {
+                MinecraftClient.getInstance().setScreen(new InputVariableScreen(insertedCommand.toString(), userEditableVariablesLeft, parentScreen));
+            } else {
+                sendCommand(insertedCommand.toString());
+            }
+        }
+    }
+
+    public static void sendCommand(String command) {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        assert player != null;
+        if (command.charAt(0) == '/') {
+            player.networkHandler.sendChatCommand(command.substring(1));
+        } else {
+            player.networkHandler.sendChatMessage(command);
         }
     }
 

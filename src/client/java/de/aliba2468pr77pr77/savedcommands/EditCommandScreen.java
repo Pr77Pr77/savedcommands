@@ -21,7 +21,6 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
@@ -30,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static net.minecraft.text.Text.*;
 
@@ -46,7 +46,6 @@ public class EditCommandScreen extends Screen {
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
 
     private ButtonWidget addVariableButton;
-    char VariablePlaceholder = '\u200C'; // Added in front of the abbreviation to ensure that it is a variable
 
     ChatInputSuggestor CommandSuggestor;
 
@@ -291,21 +290,10 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        if (this.parent != null) {
-            this.parent.render(ctx, mouseX, mouseY, delta);
-            ctx.setCursor(StandardCursors.ARROW);
-        } else {
-            this.renderBackground(ctx, mouseX, mouseY, delta);
-        }
-
-        ctx.fill(0, 0, this.width, this.height, 0x88000000);
-
         popupW = Math.min(300, this.width - 40);
         popupH = Math.min(230, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
-
-        ctx.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
 
         int textWidth = this.textRenderer.getWidth(title);
         ctx.drawText(
@@ -356,6 +344,19 @@ public class EditCommandScreen extends Screen {
         super.render(ctx, mouseX, mouseY, delta);
 
         CommandSuggestor.render(ctx, mouseX, mouseY);
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        if (parent == null) {
+            super.renderBackground(context, mouseX, mouseY, deltaTicks);
+        } else {
+            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
+            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
+            context.setCursor(StandardCursors.ARROW);
+            context.fill(0, 0, this.width, this.height, 0x88000000);
+            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+        }
     }
 
     @Override
@@ -416,7 +417,7 @@ public class EditCommandScreen extends Screen {
         if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
-        if (input.key() == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
+        if (input.isEscape() && this.shouldCloseOnEsc()) {
             exit();
             return true;
         }
