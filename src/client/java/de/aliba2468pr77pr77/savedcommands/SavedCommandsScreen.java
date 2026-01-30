@@ -10,7 +10,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
@@ -278,15 +277,8 @@ public class SavedCommandsScreen extends Screen {
                 return true;
             }
             LOGGER.info("Clicked on command " + this.command);
-            if (client.player != null) {
-                ClientPlayerEntity player = client.player;
-                if (this.command.charAt(0) == '/') {
-                    player.networkHandler.sendChatCommand(this.command.substring(1));
-                } else {
-                    player.networkHandler.sendChatMessage(this.command);
-                }
-            }
             MinecraftClient.getInstance().setScreen(null);
+            SavedCommandManager.sendCommandAndInsertVariables(commandManager.data.commands.get(indexDataList), null);
             return true;
         }
 

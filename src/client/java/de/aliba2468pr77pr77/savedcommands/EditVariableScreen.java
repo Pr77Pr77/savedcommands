@@ -14,7 +14,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 
@@ -34,7 +33,7 @@ public class EditVariableScreen extends Screen {
     private TextFieldWidget defaultValueTextField;
 
     private SavedCommandManager.CommandData.@Nullable variable data;
-    private SavedCommandManager.@Nullable CommandData commandData;
+    private final SavedCommandManager.@Nullable CommandData commandData;
 
     public int popupW;
     public int popupH;
@@ -145,7 +144,7 @@ public class EditVariableScreen extends Screen {
                                         case PLAYERPOSX:
                                             this.defaultValueTextField.setTextPredicate(text -> true);
                                             if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getX()));
+                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockX()));
                                             } else {
                                                 this.defaultValueTextField.setText("");
                                             }
@@ -154,7 +153,7 @@ public class EditVariableScreen extends Screen {
                                         case PLAYERPOSY:
                                             this.defaultValueTextField.setTextPredicate(text -> true);
                                             if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getY()));
+                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockY()));
                                             } else {
                                                 this.defaultValueTextField.setText("");
                                             }
@@ -163,7 +162,7 @@ public class EditVariableScreen extends Screen {
                                         case PLAYERPOSZ:
                                             this.defaultValueTextField.setTextPredicate(text -> true);
                                             if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getZ()));
+                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockZ()));
                                             } else {
                                                 this.defaultValueTextField.setText("");
                                             }
@@ -178,7 +177,7 @@ public class EditVariableScreen extends Screen {
         this.defaultValueTextField.setDrawsBackground(true);
         this.defaultValueTextField.setFocusUnlocked(true);
         if (data != null && data.name != null) {
-            this.defaultValueTextField.setText((String) data.defaultValue);
+            this.defaultValueTextField.setText(data.defaultValue);
         }
         this.addDrawableChild(this.defaultValueTextField);
 
@@ -187,21 +186,10 @@ public class EditVariableScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        if (this.parent != null) {
-            this.parent.render(ctx, mouseX, mouseY, delta);
-            ctx.setCursor(StandardCursors.ARROW);
-        } else {
-            this.renderBackground(ctx, mouseX, mouseY, delta);
-        }
-
-        ctx.fill(0, 0, this.width, this.height, 0x88000000);
-
         popupW = Math.min(280, this.width - 40);
         popupH = Math.min(190, this.height - 40);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
-
-        ctx.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
 
         int textWidth = this.textRenderer.getWidth(title);
         ctx.drawText(
@@ -244,8 +232,21 @@ public class EditVariableScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        if (parent == null) {
+            super.renderBackground(context, mouseX, mouseY, deltaTicks);
+        } else {
+            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
+            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
+            context.setCursor(StandardCursors.ARROW);
+            context.fill(0, 0, this.width, this.height, 0x88000000);
+            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+        }
+    }
+
+    @Override
     public boolean keyPressed(KeyInput input) {
-        if (input.key() == GLFW.GLFW_KEY_ESCAPE && this.shouldCloseOnEsc()) {
+        if (input.isEscape() && this.shouldCloseOnEsc()) {
             exit();
             return true;
         }

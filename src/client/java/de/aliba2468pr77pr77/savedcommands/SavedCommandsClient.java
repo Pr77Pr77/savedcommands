@@ -16,9 +16,11 @@ public class SavedCommandsClient implements ClientModInitializer {
     public static SavedCommandManager commandManager;
     public static List<InputUtil.Key> pressedPartialCombination;
 
+    final static char VariablePlaceholder = '\u200C'; // Added in front of the abbreviation to ensure that it is a variable
+
     @Override
     public void onInitializeClient() {
-        KeyBinding.Category SavedcommandsKeyindCategory = new KeyBinding.Category(Identifier.of("savedcommands","savedcommands"));
+        KeyBinding.Category SavedcommandsKeyindCategory = new KeyBinding.Category(Identifier.of("savedcommands", "savedcommands"));
         OpenCommandScreen = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.savedcommands.opencommandscreen",
                 InputUtil.Type.KEYSYM,

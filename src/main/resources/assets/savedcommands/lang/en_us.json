@@ -17,5 +17,7 @@
   "screen.savedcommands.vartype.int": "Custom integer",
   "screen.savedcommands.vartype.float": "Custom floating point",
   "screen.savedcommands.vartype.itemhand": "Item-ID in the hand",
-  "screen.savedcommands.defaultvalue": "Default value"
+  "screen.savedcommands.defaultvalue": "Default value",
+  "screen.savedcommands.entervariablevalues": "Enter variable values",
+  "screen.savedcommands.send": "Send"
 }
