@@ -8,6 +8,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandManager.sendCommand;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen.shortenTextIfNeeded;
 import static net.minecraft.text.Text.*;
 
 public class InputVariableScreen extends Screen {
@@ -64,6 +66,9 @@ public class InputVariableScreen extends Screen {
                 variableInputTextFields.getLast().setDrawsBackground(true);
                 variableInputTextFields.getLast().setFocusUnlocked(true);
                 variableInputTextFields.getLast().setText(Variable.defaultValue);
+                if (variableInputTextFields.size() == 1) { // Select the first one
+                    this.setFocused(variableInputTextFields.getFirst());
+                }
                 switch (Variable.type) { // String does not need a statement
                     case INT:
                         variableInputTextFields.getLast().setTextPredicate(text -> text.matches("-?\\d*"));
@@ -105,7 +110,7 @@ public class InputVariableScreen extends Screen {
         for (TextFieldWidget variableInputTextField : variableInputTextFields) {
             ctx.drawText(
                     this.textRenderer,
-                    variableInputTextField.getMessage(),
+                    shortenTextIfNeeded(variableInputTextField.getMessage().getString(), popupW - 25, Formatting.RESET),
                     popupX + 20,
                     variableInputTextField.getY() - 10,
                     0xFFFFFFFF,

@@ -263,7 +263,10 @@ public class EditCommandScreen extends Screen {
         CommandSuggestor.setCanLeave(false);
         CommandSuggestor.setWindowActive(true);
         CommandSuggestor.refresh();
-        commandTextField.setChangedListener((String text) -> CommandSuggestor.refresh());
+        this.commandTextField.setChangedListener((String text) -> {
+            removeOrphanedVariablePlaceholders(text);
+            CommandSuggestor.refresh();
+        });
     }
 
     private @Nullable OrderedText getVariableFormatter(String original, int firstCharacterIndex) {
@@ -274,8 +277,8 @@ public class EditCommandScreen extends Screen {
             while (index != -1) {
                 int finalIndex = index;
                 if (data.variables.stream().anyMatch(v -> original.length() > finalIndex + 1 && v.abbreviation == original.charAt(finalIndex + 1))) {
-                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex, index), Style.EMPTY));
-                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(index, index + 2), Style.EMPTY.withBold(true)));
+                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex, index + 1), Style.EMPTY));
+                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(index + 1, index + 2), Style.EMPTY.withBold(true)));
                     ContinuingIndex = index + 2;
                 }
 
@@ -285,6 +288,29 @@ public class EditCommandScreen extends Screen {
             return OrderedText.concat(textList);
         } else {
             return null;
+        }
+    }
+
+    private void removeOrphanedVariablePlaceholders(String command) {
+        if (command.contains(String.valueOf(VariablePlaceholder))) {
+            StringBuilder cleanCommand = new StringBuilder();
+            int index = command.indexOf(VariablePlaceholder);
+            int ContinuingIndex = 0;
+            while (index != -1) {
+                int finalIndex = index;
+                if (data.variables.stream().noneMatch(v -> command.length() > finalIndex + 1 && v.abbreviation == command.charAt(finalIndex + 1))) {
+                    cleanCommand.append(command.substring(ContinuingIndex, index));
+                    ContinuingIndex = index + 1;
+                }
+
+                index = command.indexOf(VariablePlaceholder, index + 1);
+            }
+            cleanCommand.append(command.substring(ContinuingIndex));
+            if (!cleanCommand.toString().equals(command)) {
+                int cursor = commandTextField.getCursor() - 1;
+                commandTextField.setText(cleanCommand.toString());
+                commandTextField.setCursor(cursor, false);
+            }
         }
     }
 

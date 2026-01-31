@@ -16,7 +16,7 @@ public class SavedCommandsClient implements ClientModInitializer {
     public static SavedCommandManager commandManager;
     public static List<InputUtil.Key> pressedPartialCombination;
 
-    final static char VariablePlaceholder = '\u200C'; // Added in front of the abbreviation to ensure that it is a variable
+    final static char VariablePlaceholder = '\uE177'; // Added in front of the abbreviation to ensure that it is a variable
 
     @Override
     public void onInitializeClient() {

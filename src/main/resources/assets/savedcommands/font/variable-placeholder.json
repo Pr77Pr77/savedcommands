@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "savedcommands:font/variable-placeholder.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\uE177"
+      ]
+    }
+  ]
+}
