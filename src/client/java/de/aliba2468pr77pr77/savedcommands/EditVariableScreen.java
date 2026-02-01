@@ -103,7 +103,7 @@ public class EditVariableScreen extends Screen {
                 closeButton.setMessage(input.isEmpty() || nameTextField.getText().isEmpty() ? translatable("gui.cancel") : translatable("gui.done")));
 
         typeButton =
-                CyclingButtonWidget.builder(SavedCommandManager.CommandData.variable.types::getText, SavedCommandManager.CommandData.variable.types.STRING)
+                CyclingButtonWidget.builder(SavedCommandManager.CommandData.variable.types::getText, (data != null && data.type != null) ? data.type : SavedCommandManager.CommandData.variable.types.STRING)
                         .values(SavedCommandManager.CommandData.variable.types.values())
                         .build(popupX + 20, popupY + 90, popupW - 40, 20, Text.translatable("screen.savedcommands.vartype"),
                                 (btn, value) -> {
