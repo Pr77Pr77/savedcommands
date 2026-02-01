@@ -204,6 +204,7 @@ public class EditCommandScreen extends Screen {
 
         this.addVariableButton = ButtonWidget.builder(Text.literal("+"), b -> {
             LOGGER.info("Creating Variable...");
+            save();
             MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data));
         }).dimensions(popupX + 20, popupY + 85, 20, 20).build();
         this.addDrawableChild(this.addVariableButton);
@@ -220,6 +221,7 @@ public class EditCommandScreen extends Screen {
 
                 ButtonWidget variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), b -> {
                     LOGGER.info("Editing Variable...");
+                    save();
                     MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
                 });
                 this.addDrawableChild(variableEditButton);
@@ -463,7 +465,7 @@ public class EditCommandScreen extends Screen {
         }
     }
 
-    private void exit() {
+    private void save(){
         if (commandTextField.getText() != null && !Objects.equals(commandTextField.getText(), "")) {
             data.command = commandTextField.getText();
         }
@@ -473,6 +475,10 @@ public class EditCommandScreen extends Screen {
             data.name = nameTextField.getText();
         }
         commandManager.saveAsync();
+    }
+
+    private void exit() {
+        save();
         if (parent instanceof SavedCommandsScreen) {
             MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
         } else {
