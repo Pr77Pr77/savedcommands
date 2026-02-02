@@ -32,6 +32,8 @@ public class EditVariableScreen extends Screen {
     CyclingButtonWidget<SavedCommandManager.CommandData.variable.types> typeButton;
     private TextFieldWidget defaultValueTextField;
 
+    private boolean abbreviationExists = false;
+
     private SavedCommandManager.CommandData.@Nullable variable data;
     private final SavedCommandManager.@Nullable CommandData commandData;
 
@@ -97,10 +99,23 @@ public class EditVariableScreen extends Screen {
         }
         this.addDrawableChild(this.abbreviationTextField);
 
-        this.nameTextField.setChangedListener((String input) ->
-                closeButton.setMessage(input.isEmpty() || abbreviationTextField.getText().isEmpty() ? translatable("gui.cancel") : translatable("gui.done")));
-        this.abbreviationTextField.setChangedListener((String input) ->
-                closeButton.setMessage(input.isEmpty() || nameTextField.getText().isEmpty() ? translatable("gui.cancel") : translatable("gui.done")));
+        this.nameTextField.setChangedListener((String input) -> {
+            closeButton.setMessage(input.isEmpty() || abbreviationTextField.getText().isEmpty() || abbreviationExists ? translatable("gui.cancel") : translatable("gui.done"));
+        });
+        this.abbreviationTextField.setChangedListener((String input) -> {
+            if (!input.isEmpty() && commandData != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)))) {
+                abbreviationExists = true;
+                closeButton.setMessage(translatable("gui.cancel"));
+                return;
+            } else {
+                abbreviationExists = false;
+            }
+            if (input.isEmpty() || nameTextField.getText().isEmpty()) {
+                closeButton.setMessage(translatable("gui.cancel"));
+            } else {
+                closeButton.setMessage(translatable("gui.done"));
+            }
+        });
 
         typeButton =
                 CyclingButtonWidget.builder(SavedCommandManager.CommandData.variable.types::getText, (data != null && data.type != null) ? data.type : SavedCommandManager.CommandData.variable.types.STRING)
@@ -219,6 +234,17 @@ public class EditVariableScreen extends Screen {
                 true
         );
 
+        if (abbreviationExists) {
+            ctx.drawText(
+                    this.textRenderer,
+                    translatable("screen.savedcommands.abbreviationAlreadyExists"),
+                    popupX + 20 + client.textRenderer.getWidth(Text.translatable("screen.savedcommands.abbreviation")) + 40,
+                    popupY + 70,
+                    0xfffcfc54,
+                    true
+            );
+        }
+
         ctx.drawText(
                 this.textRenderer,
                 translatable("screen.savedcommands.defaultvalue"),
@@ -247,15 +273,24 @@ public class EditVariableScreen extends Screen {
     @Override
     public boolean keyPressed(KeyInput input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
-            exit();
+            if (data == null) { // New variable
+                exit(false);
+            } else {
+                exit();
+            }
             return true;
         }
         return super.keyPressed(input);
     }
 
     private void exit() {
-        if (!nameTextField.getText().isEmpty() && !abbreviationTextField.getText().isEmpty()) {
-            if (data == null && commandData != null) {
+        exit(true);
+    }
+
+    private void exit(boolean save) {
+        if (!nameTextField.getText().isEmpty() && !abbreviationTextField.getText().isEmpty() && save &&
+                commandData != null && commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0)))) {
+            if (data == null) {
                 if (commandData.variables == null) {
                     commandData.variables = new ArrayList<>();
                 }

@@ -19,5 +19,6 @@
   "screen.savedcommands.vartype.itemhand": "Item-ID in the hand",
   "screen.savedcommands.defaultvalue": "Default value",
   "screen.savedcommands.entervariablevalues": "Enter variable values",
-  "screen.savedcommands.send": "Send"
+  "screen.savedcommands.send": "Send",
+  "screen.savedcommands.abbreviationAlreadyExists": "Abbreviation already in use!"
 }
