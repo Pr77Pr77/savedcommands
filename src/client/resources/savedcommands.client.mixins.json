@@ -6,6 +6,7 @@
     "KeyBindingAccessor",
     "KeyboardMixin",
     "MouseMixin",
+    "SearchSuggestionWindow",
     "SearchSuggestor",
     "SuggestionWindowInvoker"
   ],

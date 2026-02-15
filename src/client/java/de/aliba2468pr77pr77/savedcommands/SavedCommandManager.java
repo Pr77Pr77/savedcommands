@@ -149,7 +149,7 @@ public class SavedCommandManager {
         if (MinecraftClient.getInstance().player == null) {
             return;
         }
-        if (command.variables == null || command.variables.isEmpty() && command.command.contains(String.valueOf(VariablePlaceholder))) {
+        if (command.variables == null || command.variables.isEmpty() || !command.command.contains(String.valueOf(VariablePlaceholder))) {
             sendCommand(command.command);
         } else { // There are variables
             StringBuilder insertedCommand = new StringBuilder();

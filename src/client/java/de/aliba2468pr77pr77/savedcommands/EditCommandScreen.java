@@ -13,11 +13,11 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.Nullable;
@@ -27,6 +27,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
@@ -44,8 +45,8 @@ public class EditCommandScreen extends Screen {
     final private SavedCommandManager.CommandData data;
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
-
     private ButtonWidget addVariableButton;
+    public InsertedVariables insertedVariables;
 
     ChatInputSuggestor CommandSuggestor;
 
@@ -58,6 +59,7 @@ public class EditCommandScreen extends Screen {
         super(translatable("screen.savedcommands.editpopup"));
         this.parent = parent;
         this.data = data;
+        insertedVariables = new InsertedVariables();
     }
 
     private void searchConflicts() {
@@ -209,7 +211,6 @@ public class EditCommandScreen extends Screen {
         }).dimensions(popupX + 20, popupY + 85, 20, 20).build();
         this.addDrawableChild(this.addVariableButton);
 
-        commandTextField.addFormatter(this::getVariableFormatter);
         if (data.variables != null) {
             for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
                 int finalVariableIndex = variableIndex;
@@ -267,29 +268,108 @@ public class EditCommandScreen extends Screen {
         CommandSuggestor.refresh();
         this.commandTextField.setChangedListener((String text) -> {
             removeOrphanedVariablePlaceholders(text);
+            insertedVariables.refresh();
             CommandSuggestor.refresh();
         });
     }
 
-    private @Nullable OrderedText getVariableFormatter(String original, int firstCharacterIndex) {
-        if (original.contains(String.valueOf(VariablePlaceholder))) {
-            List<OrderedText> textList = new ArrayList<>();
-            int index = original.indexOf(VariablePlaceholder);
-            int ContinuingIndex = 0;
-            while (index != -1) {
-                int finalIndex = index;
-                if (data.variables.stream().anyMatch(v -> original.length() > finalIndex + 1 && v.abbreviation == original.charAt(finalIndex + 1))) {
-                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex, index + 1), Style.EMPTY));
-                    textList.add(OrderedText.styledForwardsVisitedString(original.substring(index + 1, index + 2), Style.EMPTY.withBold(true)));
-                    ContinuingIndex = index + 2;
+    public class InsertedVariables {
+        String insertedVariableText;
+        int cursor;
+
+        public void refresh() {
+            refresh(null);
+        }
+
+        public Integer refresh(Integer insertedIndex) {
+            String original = commandTextField.getText();
+            if (data.variables == null || data.variables.isEmpty() || !original.contains(String.valueOf(VariablePlaceholder))) {
+                insertedVariableText = original;
+                cursor = commandTextField.getCursor();
+                return insertedIndex;
+            } else { // There are variables
+                StringBuilder insertedCommand = new StringBuilder();
+                int index = original.indexOf(VariablePlaceholder);
+                int ContinuingIndex = 0;
+                boolean cursorSet = false;
+                Integer newIndex = null;
+                while (index != -1) {
+                    int finalIndex = index;
+                    Optional<SavedCommandManager.CommandData.variable> optionalVariable = data.variables.stream().filter(v -> original.length() > finalIndex + 1 && v.abbreviation == original.charAt(finalIndex + 1)).findFirst();
+                    if (optionalVariable.isPresent()) {
+                        if (ContinuingIndex - 1 <= commandTextField.getCursor() && index >= commandTextField.getCursor() && !cursorSet) {
+                            cursor = insertedCommand.length() + (commandTextField.getCursor() - ContinuingIndex);
+                            cursorSet = true;
+                        }
+
+                        if (insertedIndex != null && insertedCommand.length() <= insertedIndex && insertedCommand.length() + (index - ContinuingIndex) >= insertedIndex) {
+                            newIndex = ContinuingIndex + (insertedIndex - insertedCommand.length());
+                        }
+
+                        insertedCommand.append(original.substring(ContinuingIndex, index));
+                        int insertedIndexVariable = insertedCommand.length();
+                        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+                        assert player != null;
+                        switch (optionalVariable.get().type) {
+                            case ITEMHAND:
+                                insertedCommand.append(Registries.ITEM.getId(player.getMainHandStack().getItem()));
+                                break;
+                            case PLAYERPOSX:
+                                insertedCommand.append(player.getBlockX());
+                                break;
+                            case PLAYERPOSY:
+                                insertedCommand.append(player.getBlockY());
+                                break;
+                            case PLAYERPOSZ:
+                                insertedCommand.append(player.getBlockZ());
+                                break;
+                            default:
+                                insertedCommand.append(optionalVariable.get().defaultValue);
+                        }
+
+                        if (insertedIndex != null && insertedIndexVariable <= insertedIndex && insertedCommand.length() > insertedIndex) {
+                            newIndex = index;
+                        }
+                        // Hallo -X Bla -Y ÖÖÖ -Z LLLL
+                        // Hallo 123456 Bla 123456 ÖÖÖ 78901 LLLL
+
+                        ContinuingIndex = index + 2;
+                    }
+
+                    index = original.indexOf(VariablePlaceholder, index + 1);
                 }
 
-                index = original.indexOf(VariablePlaceholder, index + 1);
+                if (ContinuingIndex - 1 <= commandTextField.getCursor() && !cursorSet) {
+                    cursor = insertedCommand.length() + (commandTextField.getCursor() - ContinuingIndex);
+                }
+                if (newIndex == null && insertedIndex != null && insertedCommand.length() <= insertedIndex) {
+                    newIndex = ContinuingIndex + (insertedIndex - insertedCommand.length());
+                }
+
+                insertedCommand.append(original.substring(ContinuingIndex));
+
+                insertedVariableText = insertedCommand.toString();
+
+                return newIndex;
             }
-            textList.add(OrderedText.styledForwardsVisitedString(original.substring(ContinuingIndex), Style.EMPTY));
-            return OrderedText.concat(textList);
-        } else {
-            return null;
+        }
+
+        public String getText() {
+            if (insertedVariableText == null) {
+                refresh();
+            }
+            return insertedVariableText;
+        }
+
+        public int getCursor() {
+            if (insertedVariableText == null) {
+                refresh();
+            }
+            return cursor;
+        }
+
+        public int getUninsertedIndex(int insertedIndex) {
+            return refresh(insertedIndex);
         }
     }
 
@@ -465,7 +545,7 @@ public class EditCommandScreen extends Screen {
         }
     }
 
-    private void save(){
+    private void save() {
         if (commandTextField.getText() != null && !Objects.equals(commandTextField.getText(), "")) {
             data.command = commandTextField.getText();
         }
