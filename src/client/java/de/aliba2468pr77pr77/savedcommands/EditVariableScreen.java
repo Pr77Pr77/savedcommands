@@ -103,7 +103,7 @@ public class EditVariableScreen extends Screen {
             closeButton.setMessage(input.isEmpty() || abbreviationTextField.getText().isEmpty() || abbreviationExists ? translatable("gui.cancel") : translatable("gui.done"));
         });
         this.abbreviationTextField.setChangedListener((String input) -> {
-            if (!input.isEmpty() && commandData != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)))) {
+            if (!input.isEmpty() && commandData != null && commandData.variables != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)))) {
                 abbreviationExists = true;
                 closeButton.setMessage(translatable("gui.cancel"));
                 return;
@@ -183,6 +183,15 @@ public class EditVariableScreen extends Screen {
                                             }
                                             this.defaultValueTextField.setEditable(false);
                                             break;
+                                    }
+
+                                    if (nameTextField.getText().isEmpty() ||
+                                            SavedCommandManager.CommandData.variable.types.byTranslation(nameTextField.getText()).isPresent()) {
+                                        nameTextField.setText(value.userEditable ? "" : Text.translatable(value.getTranslationKey()).getString());
+                                    }
+                                    if (abbreviationTextField.getText().isEmpty() ||
+                                            SavedCommandManager.CommandData.variable.types.byAbbreviationTranslation(abbreviationTextField.getText()).isPresent()) {
+                                        abbreviationTextField.setText(value.userEditable ? "" : Text.translatable(value.getAbbreviationTranslationKey()).getString());
                                     }
                                 });
         this.addDrawableChild(this.typeButton);
@@ -289,7 +298,7 @@ public class EditVariableScreen extends Screen {
 
     private void exit(boolean save) {
         if (!nameTextField.getText().isEmpty() && !abbreviationTextField.getText().isEmpty() && save &&
-                commandData != null && commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0)))) {
+                commandData != null && (commandData.variables == null || commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0))))) {
             if (data == null) {
                 if (commandData.variables == null) {
                     commandData.variables = new ArrayList<>();

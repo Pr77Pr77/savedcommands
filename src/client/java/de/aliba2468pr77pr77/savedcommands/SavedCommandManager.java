@@ -101,25 +101,49 @@ public class SavedCommandManager {
                 INT("screen.savedcommands.vartype.int", true),
                 FLOAT("screen.savedcommands.vartype.float", true),
 
-                PLAYERPOSX("argument.entity.options.x.description", false),
-                PLAYERPOSY("argument.entity.options.y.description", false),
-                PLAYERPOSZ("argument.entity.options.z.description", false),
-                ITEMHAND("screen.savedcommands.vartype.itemhand", false);
+                PLAYERPOSX("argument.entity.options.x.description", false, "screen.savedcommands.vartype.abbreviation.x"),
+                PLAYERPOSY("argument.entity.options.y.description", false, "screen.savedcommands.vartype.abbreviation.y"),
+                PLAYERPOSZ("argument.entity.options.z.description", false, "screen.savedcommands.vartype.abbreviation.z"),
+                ITEMHAND("screen.savedcommands.vartype.itemhand", false, "screen.savedcommands.vartype.abbreviation.itemhand");
 
                 private final String translationKey;
                 final boolean userEditable;
+                private final String abbreviationTranslationKey;
+
+                types(String translationKey, boolean userEditable, String abbreviationTranslationKey) {
+                    this.translationKey = translationKey;
+                    this.userEditable = userEditable;
+                    this.abbreviationTranslationKey = abbreviationTranslationKey;
+                }
 
                 types(String translationKey, boolean userEditable) {
                     this.translationKey = translationKey;
                     this.userEditable = userEditable;
+                    this.abbreviationTranslationKey = null;
                 }
 
                 public String getTranslationKey() {
                     return translationKey;
                 }
 
+                public String getAbbreviationTranslationKey() {
+                    return abbreviationTranslationKey;
+                }
+
                 public Text getText() {
                     return Text.translatable(translationKey);
+                }
+
+                public static Optional<types> byTranslation(String text) {
+                    return Arrays.stream(values())
+                            .filter(t -> text.equals(Text.translatable(t.translationKey).getString()))
+                            .findFirst();
+                }
+
+                public static Optional<types> byAbbreviationTranslation(String text) {
+                    return Arrays.stream(values())
+                            .filter(t -> t.abbreviationTranslationKey != null && text.equals(Text.translatable(t.abbreviationTranslationKey).getString()))
+                            .findFirst();
                 }
             }
 
