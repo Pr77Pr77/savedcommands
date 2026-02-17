@@ -168,6 +168,25 @@ public class SavedCommandsScreen extends Screen {
         return super.mouseClicked(click, doubled);
     }
 
+    @Override
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+        if (commandList.isHovered()) {
+            return commandList.mouseDragged(click, offsetX, offsetY);
+        } else {
+            return super.mouseDragged(click, offsetX, offsetY);
+        }
+    }
+
+    @Override
+    public boolean mouseReleased(Click click) {
+        if (commandList.isHovered()) {
+            commandList.onRelease(click);
+            return true;
+        } else {
+            return super.mouseReleased(click);
+        }
+    }
+
     protected void setInitialFocus() {
         this.setInitialFocus(this.SearchBar);
     }
