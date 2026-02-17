@@ -154,12 +154,14 @@ public class SavedCommandManager {
         public List<CommandData> commands = new ArrayList<>();
     }
 
-    public synchronized void addCommand(String command, String name) {
+    public synchronized CommandData addCommand(String command, String name) {
         if (command == null || command.isEmpty()) {
-            return;
+            return null;
         }
-        data.commands.add(new CommandData(command, name));
+        CommandData newCommand = new CommandData(command, name);
+        data.commands.add(newCommand);
         saveAsync();
+        return newCommand;
     }
 
     public synchronized void removeCommand(int index) {
