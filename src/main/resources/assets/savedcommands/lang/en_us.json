@@ -24,5 +24,7 @@
   "screen.savedcommands.defaultvalue": "Default value",
   "screen.savedcommands.entervariablevalues": "Enter variable values",
   "screen.savedcommands.send": "Send",
-  "screen.savedcommands.abbreviationAlreadyExists": "Abbreviation already in use!"
+  "screen.savedcommands.abbreviationAlreadyExists": "Abbreviation already in use!",
+  "screen.savedcommands.emptyCommandHeader": "No command or text entered!",
+  "screen.savedcommands.emptyCommandMessage": "Please enter the command or text first!"
 }

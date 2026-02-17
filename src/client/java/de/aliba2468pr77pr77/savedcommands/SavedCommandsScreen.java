@@ -58,8 +58,7 @@ public class SavedCommandsScreen extends Screen {
                 Text.literal("+"),
                 b -> {
                     LOGGER.info("Add command button clicked!");
-                    commandManager.addCommand(SearchBar.getText(), null);
-                    SearchBar.setText("");
+                    addCommand();
                 }
         ).dimensions(20 + this.width - 40 - 20, 20, 20, 20).build();
 
@@ -145,8 +144,7 @@ public class SavedCommandsScreen extends Screen {
     @Override
     public boolean keyPressed(KeyInput input) {
         if (input.isEnter()) {
-            commandManager.addCommand(SearchBar.getText(), null);
-            SearchBar.setText("");
+            addCommand();
         }
         if (CommandSuggestor.keyPressed(input)) {
             return true;
@@ -216,6 +214,11 @@ public class SavedCommandsScreen extends Screen {
             mutableString.delete(mutableString.length() - 2, mutableString.length() - 1);
         }
         return mutableString.toString();
+    }
+
+    public void addCommand() {
+        MinecraftClient.getInstance().setScreen(new EditCommandScreen(this, commandManager.addCommand(SearchBar.getText(), null)));
+        SearchBar.setText("");
     }
 
     public static class BaseEntry extends ElementListWidget.Entry<BaseEntry> {

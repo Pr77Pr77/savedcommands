@@ -42,7 +42,7 @@ public class EditCommandScreen extends Screen {
     private ButtonWidget keybindButton;
     private ButtonWidget removeKeybindButton;
     public boolean keybindSetting = false;
-    final private SavedCommandManager.CommandData data;
+    private SavedCommandManager.CommandData data;
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
     private ButtonWidget addVariableButton;
@@ -65,7 +65,7 @@ public class EditCommandScreen extends Screen {
     private void searchConflicts() {
         KeybindConflictsSavedCommands.clear();
         KeybindConflictsMinecraft.clear();
-        if (data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
+        if (data != null && data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             // Checking Keybinds of this mod (Only first one)
             for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                 if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && Objects.equals(command.keybinds.keybindCode.getFirst(), data.keybinds.keybindCode.getFirst()) &&
@@ -161,7 +161,7 @@ public class EditCommandScreen extends Screen {
         } else if (!KeybindConflictsSavedCommands.isEmpty() || !KeybindConflictsMinecraft.isEmpty()) {
             buttonContent.append(literal("[ ").withColor(0xfffcfc54));
         }
-        if (data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
+        if (data != null && data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             boolean OneElemAlreadyAdded = false;
             for (InputUtil.Key Key : data.keybinds.toKeys()) {
                 if (OneElemAlreadyAdded) {
@@ -199,19 +199,21 @@ public class EditCommandScreen extends Screen {
         this.commandTextField.setMaxLength(256);
         this.commandTextField.setDrawsBackground(true);
         this.commandTextField.setFocusUnlocked(true);
-        if (data.command != null) {
+        if (data != null && data.command != null) {
             this.commandTextField.setText(data.command);
         }
         this.addDrawableChild(this.commandTextField);
 
         this.addVariableButton = ButtonWidget.builder(Text.literal("+"), b -> {
             LOGGER.info("Creating Variable...");
-            save();
+            if(!save(true)){
+                return;
+            }
             MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data));
         }).dimensions(popupX + 20, popupY + 85, 20, 20).build();
         this.addDrawableChild(this.addVariableButton);
 
-        if (data.variables != null) {
+        if (data != null && data.variables != null) {
             for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
                 int finalVariableIndex = variableIndex;
                 ButtonWidget variableButton = ButtonWidget.builder(Text.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), bu -> {
@@ -222,7 +224,9 @@ public class EditCommandScreen extends Screen {
 
                 ButtonWidget variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), b -> {
                     LOGGER.info("Editing Variable...");
-                    save();
+                    if(!save(true)){
+                        return;
+                    }
                     MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
                 });
                 this.addDrawableChild(variableEditButton);
@@ -233,7 +237,7 @@ public class EditCommandScreen extends Screen {
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setDrawsBackground(true);
         this.nameTextField.setFocusUnlocked(true);
-        if (data.name != null) {
+        if (data != null && data.name != null) {
             this.nameTextField.setText(data.name);
         }
         this.addDrawableChild(this.nameTextField);
@@ -241,16 +245,25 @@ public class EditCommandScreen extends Screen {
         searchConflicts();
 
         this.keybindButton = ButtonWidget.builder(getKeybindButtonText(), b -> {
-            LOGGER.info("Changing the keybind...");
+            if(!save(true)){
+                return;
+            }
             keybindSetting = true;
             keybindButton.setMessage(getKeybindButtonText());
             keybindButton.setTooltip(Tooltip.of(empty()));
+            if(data == null){
+                return;
+            }
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
+            LOGGER.info("Changing the keybind...");
         }).dimensions(popupX + 20, popupY + 165, Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addDrawableChild(this.keybindButton);
 
         this.removeKeybindButton = ButtonWidget.builder(translatable("screen.savedcommands.remove"), b -> {
+            if(data == null){
+                return;
+            }
             LOGGER.info("Removing the keybind...");
             data.keybinds = null;
             searchConflicts();
@@ -265,12 +278,23 @@ public class EditCommandScreen extends Screen {
         CommandSuggestor = new ChatInputSuggestor(client, this, commandTextField, textRenderer, false, false, 1, 10, false, 0xD8000000);
         CommandSuggestor.setCanLeave(false);
         CommandSuggestor.setWindowActive(true);
-        CommandSuggestor.refresh();
         this.commandTextField.setChangedListener((String text) -> {
+            if (text.isEmpty()) {
+                closeButton.setMessage(translatable("gui.cancel"));
+            } else {
+                closeButton.setMessage(translatable("gui.done"));
+            }
             removeOrphanedVariablePlaceholders(text);
             insertedVariables.refresh();
             CommandSuggestor.refresh();
         });
+        if (commandTextField.getText().isEmpty()) {
+            closeButton.setMessage(translatable("gui.cancel"));
+        } else {
+            closeButton.setMessage(translatable("gui.done"));
+        }
+        insertedVariables.refresh();
+        CommandSuggestor.refresh();
     }
 
     public class InsertedVariables {
@@ -283,7 +307,7 @@ public class EditCommandScreen extends Screen {
 
         public Integer refresh(Integer insertedIndex) {
             String original = commandTextField.getText();
-            if (data.variables == null || data.variables.isEmpty() || !original.contains(String.valueOf(VariablePlaceholder))) {
+            if (data == null || data.variables == null || data.variables.isEmpty() || !original.contains(String.valueOf(VariablePlaceholder))) {
                 insertedVariableText = original;
                 cursor = commandTextField.getCursor();
                 return insertedIndex;
@@ -380,7 +404,7 @@ public class EditCommandScreen extends Screen {
             int ContinuingIndex = 0;
             while (index != -1) {
                 int finalIndex = index;
-                if (data.variables.stream().noneMatch(v -> command.length() > finalIndex + 1 && v.abbreviation == command.charAt(finalIndex + 1))) {
+                if (data != null && data.variables.stream().noneMatch(v -> command.length() > finalIndex + 1 && v.abbreviation == command.charAt(finalIndex + 1))) {
                     cleanCommand.append(command.substring(ContinuingIndex, index));
                     ContinuingIndex = index + 1;
                 }
@@ -475,7 +499,7 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
+        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             }
@@ -492,7 +516,7 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean mouseReleased(Click click) {
-        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
+        if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
             commandManager.saveAsync();
             searchConflicts();
@@ -513,7 +537,7 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyInput input) {
-        if (keybindSetting && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
+        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             }
@@ -534,7 +558,7 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean keyReleased(KeyInput input) {
-        if (keybindSetting && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
+        if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
             commandManager.saveAsync();
             searchConflicts();
@@ -545,7 +569,18 @@ public class EditCommandScreen extends Screen {
         }
     }
 
-    private void save() {
+    private boolean save(boolean warnOnEmptyCommandIfNull) {
+        if (data == null) {
+            if (!commandTextField.getText().isEmpty()) {
+                data = commandManager.addCommand(commandTextField.getText(), nameTextField.getText());
+            } else if (warnOnEmptyCommandIfNull) {
+                MinecraftClient.getInstance().setScreen(new PopupWarningScreen(Text.translatable("screen.savedcommands.emptyCommandHeader"),
+                        Text.translatable("screen.savedcommands.emptyCommandMessage"), this));
+                return false;
+            } else {
+                return false;
+            }
+        }
         if (commandTextField.getText() != null && !Objects.equals(commandTextField.getText(), "")) {
             data.command = commandTextField.getText();
         }
@@ -555,10 +590,11 @@ public class EditCommandScreen extends Screen {
             data.name = nameTextField.getText();
         }
         commandManager.saveAsync();
+        return true;
     }
 
     private void exit() {
-        save();
+        save(false);
         if (parent instanceof SavedCommandsScreen) {
             MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
         } else {
