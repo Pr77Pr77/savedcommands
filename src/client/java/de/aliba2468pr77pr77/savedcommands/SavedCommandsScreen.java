@@ -15,7 +15,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,7 +134,7 @@ public class SavedCommandsScreen extends Screen {
         }
     }
 
-    public void resize(int width, int height) {
+    public void resize(MinecraftClient client, int width, int height) {
         if (CommandSuggestor != null) {
             CommandSuggestor.refresh();
         }

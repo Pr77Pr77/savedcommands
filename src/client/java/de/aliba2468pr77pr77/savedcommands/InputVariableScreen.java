@@ -10,8 +10,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -179,7 +178,7 @@ public class InputVariableScreen extends Screen {
         }
     }
 
-    private @NonNull StringBuilder insertVariableValue(int variableIndex, String variableValue, StringBuilder insertedCommand) {
+    private StringBuilder insertVariableValue(int variableIndex, String variableValue, StringBuilder insertedCommand) {
         int index = insertedCommand.indexOf(String.valueOf(
                 new char[]{VariablePlaceholder, userEditableVariablesLeft.get(variableIndex).abbreviation}));
         int ContinuingIndex = 0;

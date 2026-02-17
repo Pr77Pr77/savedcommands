@@ -149,7 +149,8 @@ public class SearchSuggestor {
             method = "highlight",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/brigadier/context/StringRange;getEnd()I"
+                    target = "Lcom/mojang/brigadier/context/StringRange;getEnd()I",
+                    remap = false
             )
     )
     private static int savedcommands$replaceGetEnd(StringRange instance) {
@@ -164,7 +165,8 @@ public class SearchSuggestor {
             method = "highlight",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/brigadier/context/StringRange;getStart()I"
+                    target = "Lcom/mojang/brigadier/context/StringRange;getStart()I",
+                    remap = false
             )
     )
     private static int savedcommands$replaceGetStart(StringRange instance) {
@@ -179,7 +181,8 @@ public class SearchSuggestor {
             method = "highlight",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/brigadier/ImmutableStringReader;getCursor()I"
+                    target = "Lcom/mojang/brigadier/ImmutableStringReader;getCursor()I",
+                    remap = false
             )
     )
     private static int savedcommands$replaceStringReaderGetCursor(ImmutableStringReader instance) {
@@ -194,7 +197,8 @@ public class SearchSuggestor {
             method = "highlight",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/brigadier/ImmutableStringReader;getRemainingLength()I"
+                    target = "Lcom/mojang/brigadier/ImmutableStringReader;getRemainingLength()I",
+                    remap = false
             )
     )
     private static int savedcommands$replaceStringReaderGetRemainingLength(ImmutableStringReader instance) {

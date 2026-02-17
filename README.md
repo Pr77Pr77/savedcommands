@@ -13,7 +13,7 @@ You can download the mod on either [Modrinth](https://modrinth.com/mod/savedcomm
 under [releases](https://github.com/Pr77Pr77/savedcommands/releases).
 This mod needs the following dependency:
 
-[Fabric API](https://modrinth.com/mod/fabric-api): Version 0.133.14+1.21.9 or newer (for 1.21.9/1.21.10)
+[Fabric API](https://modrinth.com/mod/fabric-api) (Please pick an appropriate version for your Minecraft version)
 
 ## Using the mod
 
@@ -22,12 +22,20 @@ To use the mod, open the Saved Commands screen by pressing the keybind
 
 On the Saved Commands screen, you can:
 
-* Add a new command to your saved ones by typing it into the top bar and pressing the "+"-button
+* Add a new command by clicking the "+"-button
 * Edit saved commands by clicking on the pen icon on the right. In the appearing popup, you can edit the command,
-add or edit a name and add or edit the keybind combination (shortcut).
+insert variables, add or edit a name and add or edit the keybind combination (shortcut).
 * Delete saved commands by clicking on the trash can icon on the right.
 * Send and run commands by clicking on them
 * Search for commands by entering the query into the top bar.
+
+Variables can be used to insert player data, like the position and item id of the held item.
+You can also select a data type like string, integer and float, for you to input before sending.
+If you don't know these types, use string because it is the least "strict" one.
+
+> We accept no liability for any damages caused by using this mod. Use at your own risk!
+
+## Screenshots
 
 ![Saved Commands screen](resources/saved-commands-screen-screenshot.png)
 *The Saved Commands screen with some example commands*
@@ -38,7 +46,11 @@ add or edit a name and add or edit the keybind combination (shortcut).
 ![Edit command screen](resources/edit-command-screen-screenshot.png)
 *In the edit command screen you can edit the name, command and keybind combination*
 
-> We accept no liability for any damages caused by using this mod. Use at your own risk!
+![Edit variable screen](resources/edit-variable-screen-screenshot.png)
+*In the edit variable screen you can edit the name, abbreviation, variable type and defult value*
+
+![Input variable screen](resources/input-variable-screen-screenshot.png)
+*Before sending a command or text containing a custom variable, you are prompted to input the values*
 
 ## Working principles
 

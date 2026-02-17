@@ -4,12 +4,13 @@ import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.suggestion.Suggestion;
 import de.aliba2468pr77pr77.savedcommands.EditCommandScreen;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(targets = "net.minecraft.client.gui.screen.ChatInputSuggestor$SuggestionWindow")
+@Mixin(ChatInputSuggestor.SuggestionWindow.class)
 public abstract class SearchSuggestionWindow {
     @Redirect(
             method = {
@@ -69,7 +70,8 @@ public abstract class SearchSuggestionWindow {
             },
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/brigadier/suggestion/Suggestion;apply(Ljava/lang/String;)Ljava/lang/String;"
+                    target = "Lcom/mojang/brigadier/suggestion/Suggestion;apply(Ljava/lang/String;)Ljava/lang/String;",
+                    remap = false
             )
     )
     private String savedcommands$replaceApplySuggestion(Suggestion instance, String input) {

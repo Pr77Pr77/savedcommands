@@ -20,7 +20,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
@@ -354,8 +354,6 @@ public class EditCommandScreen extends Screen {
                         if (insertedIndex != null && insertedIndexVariable <= insertedIndex && insertedCommand.length() > insertedIndex) {
                             newIndex = index;
                         }
-                        // Hallo -X Bla -Y ÖÖÖ -Z LLLL
-                        // Hallo 123456 Bla 123456 ÖÖÖ 78901 LLLL
 
                         ContinuingIndex = index + 2;
                     }

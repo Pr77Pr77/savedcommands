@@ -10,7 +10,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class TextFieldPlaceholderAlways extends TextFieldWidget {
     private @Nullable Text placeholder;
