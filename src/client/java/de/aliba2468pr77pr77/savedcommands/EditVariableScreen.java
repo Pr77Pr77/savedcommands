@@ -103,7 +103,7 @@ public class EditVariableScreen extends Screen {
             closeButton.setMessage(input.isEmpty() || abbreviationTextField.getText().isEmpty() || abbreviationExists ? translatable("gui.cancel") : translatable("gui.done"));
         });
         this.abbreviationTextField.setChangedListener((String input) -> {
-            if (!input.isEmpty() && commandData != null && commandData.variables != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)))) {
+            if (!input.isEmpty() && commandData != null && commandData.variables != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)) && !data.equals(this.data))) {
                 abbreviationExists = true;
                 closeButton.setMessage(translatable("gui.cancel"));
                 return;
@@ -123,67 +123,7 @@ public class EditVariableScreen extends Screen {
                         .build(popupX + 20, popupY + 90, popupW - 40, 20, Text.translatable("screen.savedcommands.vartype"),
                                 (btn, value) -> {
                                     LOGGER.info("Chosen variable: " + value);
-                                    MinecraftClient client = MinecraftClient.getInstance();
-                                    ClientPlayerEntity player = client.player;
-                                    switch (value) {
-                                        case STRING:
-                                            this.defaultValueTextField.setTextPredicate(text -> true);
-                                            this.defaultValueTextField.setEditable(true);
-                                            break;
-                                        case INT:
-                                            this.defaultValueTextField.setTextPredicate(text -> text.matches("-?\\d*"));
-                                            this.defaultValueTextField.setEditable(true);
-                                            this.defaultValueTextField.setText(this.defaultValueTextField.getText()
-                                                    .replaceAll("[^0-9-]", "")
-                                                    .replaceAll("(?<!^)-", "")); // Removing unwanted characters
-                                            break;
-                                        case FLOAT:
-                                            this.defaultValueTextField.setTextPredicate(text ->
-                                                    text.matches("-?(\\d+\\.\\d*|\\d*\\.\\d+|\\d+)?")
-                                            );
-                                            this.defaultValueTextField.setEditable(true);
-                                            this.defaultValueTextField.setText(this.defaultValueTextField.getText()
-                                                    .replaceAll("[^0-9.-]", "")
-                                                    .replaceAll("(?<!^)-", "")
-                                                    .replaceAll("(\\..*)\\.", "$1")); // Removing unwanted characters
-                                            break;
-                                        case ITEMHAND:
-                                            this.defaultValueTextField.setTextPredicate(text -> true);
-                                            this.defaultValueTextField.setEditable(false);
-                                            if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(Registries.ITEM.getId(player.getMainHandStack().getItem())));
-                                            } else {
-                                                this.defaultValueTextField.setText("");
-                                            }
-                                            break;
-                                        case PLAYERPOSX:
-                                            this.defaultValueTextField.setTextPredicate(text -> true);
-                                            if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockX()));
-                                            } else {
-                                                this.defaultValueTextField.setText("");
-                                            }
-                                            this.defaultValueTextField.setEditable(false);
-                                            break;
-                                        case PLAYERPOSY:
-                                            this.defaultValueTextField.setTextPredicate(text -> true);
-                                            if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockY()));
-                                            } else {
-                                                this.defaultValueTextField.setText("");
-                                            }
-                                            this.defaultValueTextField.setEditable(false);
-                                            break;
-                                        case PLAYERPOSZ:
-                                            this.defaultValueTextField.setTextPredicate(text -> true);
-                                            if (player != null) {
-                                                this.defaultValueTextField.setText(String.valueOf(player.getBlockZ()));
-                                            } else {
-                                                this.defaultValueTextField.setText("");
-                                            }
-                                            this.defaultValueTextField.setEditable(false);
-                                            break;
-                                    }
+                                    setDefaultValueLimitations(value);
 
                                     if (nameTextField.getText().isEmpty() ||
                                             SavedCommandManager.CommandData.variable.types.byTranslation(nameTextField.getText()).isPresent()) {
@@ -200,12 +140,77 @@ public class EditVariableScreen extends Screen {
         this.defaultValueTextField.setMaxLength(256);
         this.defaultValueTextField.setDrawsBackground(true);
         this.defaultValueTextField.setFocusUnlocked(true);
-        if (data != null && data.name != null) {
+        if (data != null && data.defaultValue != null) {
             this.defaultValueTextField.setText(data.defaultValue);
+            setDefaultValueLimitations(typeButton.getValue());
         }
         this.addDrawableChild(this.defaultValueTextField);
 
         closeButton.setMessage(nameTextField.getText().isEmpty() || abbreviationTextField.getText().isEmpty() ? translatable("gui.cancel") : translatable("gui.done"));
+    }
+
+    void setDefaultValueLimitations(SavedCommandManager.CommandData.variable.types value) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayerEntity player = client.player;
+        switch (value) {
+            case STRING:
+                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueTextField.setEditable(true);
+                break;
+            case INT:
+                this.defaultValueTextField.setTextPredicate(text -> text.matches("-?\\d*"));
+                this.defaultValueTextField.setEditable(true);
+                this.defaultValueTextField.setText(this.defaultValueTextField.getText()
+                        .replaceAll("[^0-9-]", "")
+                        .replaceAll("(?<!^)-", "")); // Removing unwanted characters
+                break;
+            case FLOAT:
+                this.defaultValueTextField.setTextPredicate(text ->
+                        text.matches("-?(\\d+\\.\\d*|\\d*\\.\\d+|\\d+)?")
+                );
+                this.defaultValueTextField.setEditable(true);
+                this.defaultValueTextField.setText(this.defaultValueTextField.getText()
+                        .replaceAll("[^0-9.-]", "")
+                        .replaceAll("(?<!^)-", "")
+                        .replaceAll("(\\..*)\\.", "$1")); // Removing unwanted characters
+                break;
+            case ITEMHAND:
+                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueTextField.setEditable(false);
+                if (player != null) {
+                    this.defaultValueTextField.setText(String.valueOf(Registries.ITEM.getId(player.getMainHandStack().getItem())));
+                } else {
+                    this.defaultValueTextField.setText("");
+                }
+                break;
+            case PLAYERPOSX:
+                this.defaultValueTextField.setTextPredicate(text -> true);
+                if (player != null) {
+                    this.defaultValueTextField.setText(String.valueOf(player.getBlockX()));
+                } else {
+                    this.defaultValueTextField.setText("");
+                }
+                this.defaultValueTextField.setEditable(false);
+                break;
+            case PLAYERPOSY:
+                this.defaultValueTextField.setTextPredicate(text -> true);
+                if (player != null) {
+                    this.defaultValueTextField.setText(String.valueOf(player.getBlockY()));
+                } else {
+                    this.defaultValueTextField.setText("");
+                }
+                this.defaultValueTextField.setEditable(false);
+                break;
+            case PLAYERPOSZ:
+                this.defaultValueTextField.setTextPredicate(text -> true);
+                if (player != null) {
+                    this.defaultValueTextField.setText(String.valueOf(player.getBlockZ()));
+                } else {
+                    this.defaultValueTextField.setText("");
+                }
+                this.defaultValueTextField.setEditable(false);
+                break;
+        }
     }
 
     @Override
@@ -298,7 +303,7 @@ public class EditVariableScreen extends Screen {
 
     private void exit(boolean save) {
         if (!nameTextField.getText().isEmpty() && !abbreviationTextField.getText().isEmpty() && save &&
-                commandData != null && (commandData.variables == null || commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0))))) {
+                commandData != null && (commandData.variables == null || commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0)) && !data.equals(this.data)))) {
             if (data == null) {
                 if (commandData.variables == null) {
                     commandData.variables = new ArrayList<>();

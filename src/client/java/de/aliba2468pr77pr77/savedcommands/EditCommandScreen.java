@@ -354,8 +354,6 @@ public class EditCommandScreen extends Screen {
                         if (insertedIndex != null && insertedIndexVariable <= insertedIndex && insertedCommand.length() > insertedIndex) {
                             newIndex = index;
                         }
-                        // Hallo -X Bla -Y ÖÖÖ -Z LLLL
-                        // Hallo 123456 Bla 123456 ÖÖÖ 78901 LLLL
 
                         ContinuingIndex = index + 2;
                     }
