@@ -46,7 +46,11 @@ public class SavedCommandsScreen extends Screen {
 
     protected void init() {
         assert this.client != null;
-        this.SearchBar = new TextFieldPlaceholderAlways(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
+        if (this.SearchBar == null) {
+            this.SearchBar = new TextFieldPlaceholderAlways(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
+        } else {
+            this.SearchBar.setDimensions(this.width - 40 - 22, 20);
+        }
         this.SearchBar.setMaxLength(256);
         this.SearchBar.setDrawsBackground(true);
         this.SearchBar.setChangedListener(this::updateSearch);
