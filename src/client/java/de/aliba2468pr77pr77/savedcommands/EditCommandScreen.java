@@ -185,8 +185,8 @@ public class EditCommandScreen extends Screen {
     protected void init() {
         super.init();
 
-        popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(230, this.height - 40);
+        popupW = Math.min(300, this.width - 20);
+        popupH = Math.min(230, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -420,8 +420,8 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(230, this.height - 40);
+        popupW = Math.min(300, this.width - 20);
+        popupH = Math.min(230, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 

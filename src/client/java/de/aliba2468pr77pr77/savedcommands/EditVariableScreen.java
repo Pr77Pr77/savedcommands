@@ -59,8 +59,8 @@ public class EditVariableScreen extends Screen {
     protected void init() {
         super.init();
 
-        popupW = Math.min(280, this.width - 40);
-        popupH = Math.min(190, this.height - 40);
+        popupW = Math.min(280, this.width - 20);
+        popupH = Math.min(190, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
@@ -215,8 +215,8 @@ public class EditVariableScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(280, this.width - 40);
-        popupH = Math.min(190, this.height - 40);
+        popupW = Math.min(280, this.width - 20);
+        popupH = Math.min(190, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 

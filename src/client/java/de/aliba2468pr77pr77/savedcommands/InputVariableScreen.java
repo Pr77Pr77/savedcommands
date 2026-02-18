@@ -28,7 +28,7 @@ public class InputVariableScreen extends Screen {
     private ButtonWidget cancelButton;
     private ButtonWidget doneButton;
 
-    private final List<TextFieldWidget> variableInputTextFields = new ArrayList<>();
+    private List<TextFieldWidget> variableInputTextFields = new ArrayList<>();
 
     private final String preInsertedCommand;
     List<SavedCommandManager.CommandData.variable> userEditableVariablesLeft;
@@ -52,10 +52,12 @@ public class InputVariableScreen extends Screen {
 
         contentH = (userEditableVariablesLeft.size() + 2) * 40;
 
-        popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(contentH, this.height - 40);
+        popupW = Math.min(300, this.width - 20);
+        popupH = Math.min(contentH, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
+
+        variableInputTextFields = new ArrayList<>();
 
         assert this.client != null;
         for (SavedCommandManager.CommandData.variable Variable : userEditableVariablesLeft) {
@@ -92,8 +94,8 @@ public class InputVariableScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(300, this.width - 40);
-        popupH = Math.min(contentH, this.height - 40);
+        popupW = Math.min(300, this.width - 20);
+        popupH = Math.min(contentH, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
