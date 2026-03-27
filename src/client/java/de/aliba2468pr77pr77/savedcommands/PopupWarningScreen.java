@@ -1,27 +1,25 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.cursor.StandardCursors;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
-import static net.minecraft.text.Text.translatable;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 
 public class PopupWarningScreen extends Screen {
     Screen parent;
-    Text message;
+    Component message;
 
     public int popupW;
     public int popupH;
     public int popupX;
     public int popupY;
 
-    PopupWarningScreen(Text header, Text message, Screen parent) {
+    PopupWarningScreen(Component header, Component message, Screen parent) {
         super(header);
         this.message = message;
         this.parent = parent;
@@ -36,20 +34,20 @@ public class PopupWarningScreen extends Screen {
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        ButtonWidget closeButton = ButtonWidget.builder(translatable("gui.ok"), b -> exit()).dimensions(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
-        this.addDrawableChild(closeButton);
+        Button closeButton = Button.builder(Component.translatable("gui.ok"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.addRenderableWidget(closeButton);
     }
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         popupW = Math.min(290, this.width - 20);
         popupH = Math.min(90, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        int textWidth = this.textRenderer.getWidth(title);
-        ctx.drawText(
-                this.textRenderer,
+        int textWidth = this.font.width(title);
+        ctx.text(
+                this.font,
                 title,
                 (this.width - textWidth) / 2,
                 popupY + 10,
@@ -57,9 +55,9 @@ public class PopupWarningScreen extends Screen {
                 false
         );
 
-        textWidth = this.textRenderer.getWidth(message);
-        ctx.drawText(
-                this.textRenderer,
+        textWidth = this.font.width(message);
+        ctx.text(
+                this.font,
                 message,
                 (this.width - textWidth) / 2,
                 popupY + 30,
@@ -67,24 +65,24 @@ public class PopupWarningScreen extends Screen {
                 false
         );
 
-        super.render(ctx, mouseX, mouseY, delta);
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    public void extractBackground(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         if (parent == null) {
-            super.renderBackground(context, mouseX, mouseY, deltaTicks);
+            super.extractBackground(context, mouseX, mouseY, deltaTicks);
         } else {
-            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.setCursor(StandardCursors.ARROW);
+            this.parent.extractBackground(context, -2147483648, -2147483648, deltaTicks);
+            this.parent.extractRenderState(context, -2147483648, -2147483648, deltaTicks);
+            context.requestCursor(CursorTypes.ARROW);
             context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+            context.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
         }
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
             exit();
             return true;
@@ -94,9 +92,9 @@ public class PopupWarningScreen extends Screen {
 
     void exit() {
         if (parent instanceof SavedCommandsScreen) {
-            MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen());
         } else {
-            MinecraftClient.getInstance().setScreen(parent);
+            minecraft.setScreen(parent);
         }
     }
 }

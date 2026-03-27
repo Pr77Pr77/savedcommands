@@ -2,11 +2,11 @@ package de.aliba2468pr77pr77.savedcommands.mixin.client;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.KeyMapping;
+import com.mojang.blaze3d.platform.InputConstants;
 
-@Mixin(KeyBinding.class)
+@Mixin(KeyMapping.class)
 public interface KeyBindingAccessor {
-    @Accessor("boundKey")
-    InputUtil.Key getBoundKey();
+    @Accessor("key")
+    InputConstants.Key getBoundKey();
 }

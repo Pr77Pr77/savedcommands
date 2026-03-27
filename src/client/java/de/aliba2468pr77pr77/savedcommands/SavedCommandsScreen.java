@@ -1,24 +1,24 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandMana
 
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
-    ButtonWidget AddButton;
+    Button AddButton;
     CommandList commandList;
 
     int listWidth;
@@ -36,60 +36,59 @@ public class SavedCommandsScreen extends Screen {
     int listTop = 50;
     int itemHeight = 30;
 
-    ChatInputSuggestor CommandSuggestor;
+    CommandSuggestions CommandSuggestor;
 
-    @Nullable Element focused;
+    @Nullable GuiEventListener focused;
 
     protected SavedCommandsScreen() {
-        super(Text.translatable("screen.savedcommands.commandscreentitle"));
+        super(Component.translatable("screen.savedcommands.commandscreentitle"));
     }
 
     protected void init() {
-        assert this.client != null;
         if (this.SearchBar == null) {
-            this.SearchBar = new TextFieldPlaceholderAlways(this.client.advanceValidatingTextRenderer, 20, 20, this.width - 40 - 22, 20, Text.translatable("screen.savedcommands.searchsavebar"));
+            this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
         } else {
-            this.SearchBar.setDimensions(this.width - 40 - 22, 20);
+            this.SearchBar.setSize(this.width - 40 - 22, 20);
         }
         this.SearchBar.setMaxLength(256);
-        this.SearchBar.setDrawsBackground(true);
-        this.SearchBar.setChangedListener(this::updateSearch);
-        this.SearchBar.setFocusUnlocked(false);
-        this.SearchBar.setPlaceholder(Text.translatable("screen.savedcommands.searchsavebar"));
-        this.addDrawableChild(this.SearchBar);
+        this.SearchBar.setBordered(true);
+        this.SearchBar.setResponder(this::updateSearch);
+        this.SearchBar.setCanLoseFocus(false);
+        this.SearchBar.setHint(Component.translatable("screen.savedcommands.searchsavebar"));
+        this.addRenderableWidget(this.SearchBar);
 
-        AddButton = ButtonWidget.builder(
-                Text.literal("+"),
+        AddButton = Button.builder(
+                Component.literal("+"),
                 b -> {
                     LOGGER.info("Add command button clicked!");
                     addCommand();
                 }
-        ).dimensions(20 + this.width - 40 - 20, 20, 20, 20).build();
+        ).bounds(20 + this.width - 40 - 20, 20, 20, 20).build();
 
-        this.addDrawableChild(this.AddButton);
+        this.addRenderableWidget(this.AddButton);
 
         listWidth = this.width;
         listHeight = this.height - 50;
 
-        this.commandList = new CommandList(this.client, listWidth, listHeight, listTop, itemHeight);
+        this.commandList = new CommandList(this.minecraft, listWidth, listHeight, listTop, itemHeight);
 
-        updateSearch(SearchBar.getText());
+        updateSearch(SearchBar.getValue());
 
-        this.addSelectableChild(this.commandList);
+        this.addWidget(this.commandList);
 
-        CommandSuggestor = new ChatInputSuggestor(client, this, SearchBar, textRenderer, false, false, 1, 10, false, 0xD8000000);
-        CommandSuggestor.setCanLeave(false);
-        CommandSuggestor.setWindowActive(true);
-        CommandSuggestor.refresh();
+        CommandSuggestor = new CommandSuggestions(minecraft, this, SearchBar, font, false, false, 1, 10, false, 0xD8000000);
+        CommandSuggestor.setAllowHiding(false);
+        CommandSuggestor.setAllowSuggestions(true);
+        CommandSuggestor.updateCommandInfo();
     }
 
     @Override
-    public @Nullable Element getFocused() {
+    public @Nullable GuiEventListener getFocused() {
         return this.focused;
     }
 
     @Override
-    public void setFocused(@Nullable Element focused) {
+    public void setFocused(@Nullable GuiEventListener focused) {
         if (this.focused != focused) {
             if (this.focused != null) {
                 this.focused.setFocused(false);
@@ -104,7 +103,7 @@ public class SavedCommandsScreen extends Screen {
         }
     }
 
-    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList, List<BaseEntry> newList) {
+    private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList, List<CommandList.BaseEntry> newList) {
         String commandBase;
         if (data.command.contains(" ")) {
             commandBase = data.command.substring(0, data.command.indexOf(" "));
@@ -112,20 +111,20 @@ public class SavedCommandsScreen extends Screen {
             commandBase = data.command;
         }
         for (int i = 0; i < newList.size(); i++) {
-            if (newList.get(i) instanceof CategoryTitleEntry TitleEntry) {
+            if (newList.get(i) instanceof CommandList.CategoryTitleEntry TitleEntry) {
                 if (Objects.equals(TitleEntry.categoryTitle, commandBase)) {
-                    newList.add(i + 1, new CommandEntry(data.command, data.name, indexDataList));
+                    newList.add(i + 1, commandList.new CommandEntry(data.command, data.name, indexDataList));
                     return;
                 }
             }
         }
         // If the for loop didn't find the category, create it!
-        newList.addFirst(new CategoryTitleEntry(commandBase));
-        newList.add(1, new CommandEntry(data.command, data.name, indexDataList));
+        newList.addFirst(new CommandList.CategoryTitleEntry(commandBase));
+        newList.add(1, commandList.new CommandEntry(data.command, data.name, indexDataList));
     }
 
     public void updateSearch(String search) {
-        List<BaseEntry> newList = new ArrayList<>();
+        List<CommandList.BaseEntry> newList = new ArrayList<>();
         for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
             if (data.command.toLowerCase().contains(search.toLowerCase()) || (data.name != null && data.name.toLowerCase().contains(search.toLowerCase()))) {
@@ -134,20 +133,20 @@ public class SavedCommandsScreen extends Screen {
         }
         commandList.replaceEntries(newList);
         if (CommandSuggestor != null) {
-            CommandSuggestor.refresh();
+            CommandSuggestor.updateCommandInfo();
         }
     }
 
     public void resize(int width, int height) {
         if (CommandSuggestor != null) {
-            CommandSuggestor.refresh();
+            CommandSuggestor.updateCommandInfo();
         }
         super.resize(width, height);
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
-        if (input.isEnter()) {
+    public boolean keyPressed(KeyEvent input) {
+        if (input.isConfirmation()) {
             addCommand();
         }
         if (CommandSuggestor.keyPressed(input)) {
@@ -165,7 +164,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent click, boolean doubled) {
         if (CommandSuggestor.mouseClicked(click)) {
             return true;
         }
@@ -173,7 +172,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
+    public boolean mouseDragged(@NonNull MouseButtonEvent click, double offsetX, double offsetY) {
         if (commandList.isHovered()) {
             return commandList.mouseDragged(click, offsetX, offsetY);
         } else {
@@ -182,7 +181,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(@NonNull MouseButtonEvent click) {
         if (commandList.isHovered()) {
             commandList.onRelease(click);
             return true;
@@ -196,184 +195,56 @@ public class SavedCommandsScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // set all buttons to not visible in a loop (They will be set back to visible by commandList)
-        for (BaseEntry entry : commandList.children()) {
-            if (entry instanceof CommandEntry comEntry) {
+        for (CommandList.BaseEntry entry : commandList.children()) {
+            if (entry instanceof CommandList.CommandEntry comEntry) {
                 comEntry.deleteButton.visible = false;
                 comEntry.editButton.visible = false;
             }
         }
 
-        this.commandList.render(context, mouseX, mouseY, delta);
+        this.commandList.extractRenderState(context, mouseX, mouseY, delta);
 
         context.enableScissor(0, listTop, this.width, this.height);
 
-        for (BaseEntry e : this.commandList.children()) {
-            if (e instanceof CommandEntry comEntry) {
-                comEntry.deleteButton.render(context, mouseX, mouseY, delta);
-                comEntry.editButton.render(context, mouseX, mouseY, delta);
+        for (CommandList.BaseEntry e : this.commandList.children()) {
+            if (e instanceof CommandList.CommandEntry comEntry) {
+                comEntry.deleteButton.extractRenderState(context, mouseX, mouseY, delta);
+                comEntry.editButton.extractRenderState(context, mouseX, mouseY, delta);
             }
         }
 
         context.disableScissor();
 
-        CommandSuggestor.render(context, mouseX, mouseY);
+        CommandSuggestor.extractRenderState(context, mouseX, mouseY);
 
         context.fill(SearchBar.getX(), SearchBar.getY(), SearchBar.getX() + SearchBar.getWidth(), SearchBar.getY() + SearchBar.getHeight(), 0x44000000);
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
     }
 
-    public static String shortenTextIfNeeded(String text, int availableWidth, Formatting formatting) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.textRenderer.getWidth(Text.literal(text).formatted(formatting)) <= availableWidth) {
+    public static String shortenTextIfNeeded(String text, int availableWidth, ChatFormatting formatting) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.font.width(Component.literal(text).withStyle(formatting)) <= availableWidth) {
             return text;
         }
         StringBuilder mutableString = new StringBuilder(text);
         mutableString.delete(mutableString.length() - 1, mutableString.length());
         mutableString.append("…");
-        while (client.textRenderer.getWidth(Text.literal(mutableString.toString()).formatted(formatting)) > availableWidth) {
+        while (client.font.width(Component.literal(mutableString.toString()).withStyle(formatting)) > availableWidth) {
             mutableString.delete(mutableString.length() - 2, mutableString.length() - 1);
         }
         return mutableString.toString();
     }
 
     public void addCommand() {
-        MinecraftClient.getInstance().setScreen(new EditCommandScreen(this, commandManager.addCommand(SearchBar.getText(), null)));
-        SearchBar.setText("");
+        minecraft.setScreen(new EditCommandScreen(this, commandManager.addCommand(SearchBar.getValue(), null)));
+        SearchBar.setValue("");
     }
 
-    public static class BaseEntry extends ElementListWidget.Entry<BaseEntry> {
-        @Override
-        public List<? extends Element> children() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<? extends Selectable> selectableChildren() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
-        }
-    }
-
-    public class CommandEntry extends BaseEntry {
-        private final String command;
-        String name;
-        int indexDataList;
-        IconButton deleteButton;
-        IconButton editButton;
-
-        public CommandEntry(String command, String name, int indexDataList) {
-            this.command = command;
-            this.name = name;
-            this.indexDataList = indexDataList;
-
-            deleteButton = new IconButton(0, 0, 20, 20, Identifier.of(MOD_ID, "textures/gui/trash_can.png"), null);
-            deleteButton.visible = false;
-
-            editButton = new IconButton(0, 0, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), null);
-            editButton.visible = false;
-
-            assert MinecraftClient.getInstance().currentScreen != null;
-        }
-
-        @Override
-        public boolean mouseClicked(Click click, boolean doubled) {
-            if (click.button() != 0) {
-                return false;
-            }
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (deleteButton.isHovered()) {
-                LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
-                client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-
-                commandManager.removeCommand(indexDataList);
-                updateSearch(SearchBar.getText());
-                return true;
-            }
-            if (editButton.isHovered()) {
-                LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
-                client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-
-                client.setScreen(new EditCommandScreen(client.currentScreen, commandManager.data.commands.get(indexDataList)));
-                return true;
-            }
-            LOGGER.info("Clicked on command " + this.command);
-            MinecraftClient.getInstance().setScreen(null);
-            SavedCommandManager.sendCommandAndInsertVariables(commandManager.data.commands.get(indexDataList), null);
-            return true;
-        }
-
-        @Override
-        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
-            int x = this.getX() + 2;
-            int y = this.getY() + 2;
-            int entryHeight = this.getHeight() - 4;
-            int entryWidth = this.getWidth();
-
-            MinecraftClient client = MinecraftClient.getInstance();
-            context.fill(x, y, x + entryWidth, y + entryHeight, 0x44000000);
-
-            if (this.name == null) {
-                int fontHeight = client.textRenderer.fontHeight;
-                int textX = x + 3;
-                int textY = y + (entryHeight - fontHeight) / 2 + 1;
-
-                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.command, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFFFFFFF);
-            } else {
-                int fontHeight = client.textRenderer.fontHeight;
-                int textX = x + 3;
-                int textY = y + (entryHeight - fontHeight * 2 - 2) / 2 + 1;
-
-                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.name, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFFFFFFF);
-
-                textY += fontHeight + 2;
-
-                context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.command, entryWidth - 60, Formatting.RESET)), textX, textY, 0xFFBBBBBB);
-            }
-
-            deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
-            deleteButton.visible = true;
-
-            editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
-            editButton.visible = true;
-        }
-    }
-
-    public static class CategoryTitleEntry extends BaseEntry {
-        private final String categoryTitle;
-
-        public CategoryTitleEntry(String categoryTitle) {
-            this.categoryTitle = categoryTitle;
-        }
-
-        @Override
-        public boolean mouseClicked(Click click, boolean doubled) {
-            if (click.button() == 0) {
-                LOGGER.info("Clicked on category title " + this.categoryTitle);
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public void render(DrawContext context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
-            MinecraftClient client = MinecraftClient.getInstance();
-
-            int fontHeight = client.textRenderer.fontHeight;
-            int textX = this.getX() + 3;
-            int textY = this.getY() + this.getHeight() - fontHeight - 2;
-
-            context.drawTextWithShadow(client.textRenderer, Text.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, Formatting.BOLD)).formatted(Formatting.BOLD), textX, textY, 0xFFFFFFFF);
-        }
-    }
-
-    private static class CommandList extends ElementListWidget<BaseEntry> {
-        public CommandList(MinecraftClient client, int width, int height, int top, int itemHeight) {
+    private class CommandList extends AbstractSelectionList<CommandList.BaseEntry> {
+        public CommandList(Minecraft client, int width, int height, int top, int itemHeight) {
             super(client, width, height, top, itemHeight);
             this.clearEntries();
         }
@@ -388,8 +259,127 @@ public class SavedCommandsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
+        protected int scrollBarX() {
             return this.width - 6;
+        }
+
+        @Override
+        protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
+        }
+
+        public static class BaseEntry extends AbstractSelectionList.Entry<BaseEntry> {
+            @Override
+            public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+                // Implementation in CommandEntry and CategoryTitleEntry!
+            }
+        }
+
+        public class CommandEntry extends BaseEntry {
+            private final String command;
+            String name;
+            int indexDataList;
+            IconButton deleteButton;
+            IconButton editButton;
+
+            public CommandEntry(String command, String name, int indexDataList) {
+                this.command = command;
+                this.name = name;
+                this.indexDataList = indexDataList;
+
+                deleteButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), null);
+                deleteButton.visible = false;
+
+                editButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), null);
+                editButton.visible = false;
+
+                assert minecraft.screen != null;
+            }
+
+            @Override
+            public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+                if (click.button() != 0) {
+                    return false;
+                }
+                if (deleteButton.isHovered()) {
+                    LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
+                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+
+                    commandManager.removeCommand(indexDataList);
+                    updateSearch(SearchBar.getValue());
+                    return true;
+                }
+                if (editButton.isHovered()) {
+                    LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
+                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+
+                    minecraft.setScreen(new EditCommandScreen(minecraft.screen, commandManager.data.commands.get(indexDataList)));
+                    return true;
+                }
+                LOGGER.info("Clicked on command " + this.command);
+                minecraft.setScreen(null);
+                SavedCommandManager.sendCommandAndInsertVariables(commandManager.data.commands.get(indexDataList), null);
+                return true;
+            }
+
+            @Override
+            public void extractContent(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
+                int x = this.getX() + 2;
+                int y = this.getY() + 2;
+                int entryHeight = this.getHeight() - 4;
+                int entryWidth = this.getWidth();
+
+                context.fill(x, y, x + entryWidth, y + entryHeight, 0x44000000);
+
+                if (this.name == null) {
+                    int textX = x + 3;
+                    int textY = y + (entryHeight - minecraft.font.lineHeight) / 2 + 1;
+
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+                } else {
+                    int fontHeight = minecraft.font.lineHeight;
+                    int textX = x + 3;
+                    int textY = y + (entryHeight - minecraft.font.lineHeight * 2 - 2) / 2 + 1;
+
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.name, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+
+                    textY += fontHeight + 2;
+
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFBBBBBB, true);
+                }
+
+                deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
+                deleteButton.visible = true;
+
+                editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
+                editButton.visible = true;
+            }
+        }
+
+        public static class CategoryTitleEntry extends BaseEntry {
+            private final String categoryTitle;
+
+            public CategoryTitleEntry(String categoryTitle) {
+                this.categoryTitle = categoryTitle;
+            }
+
+            @Override
+            public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+                if (click.button() == 0) {
+                    LOGGER.info("Clicked on category title " + this.categoryTitle);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void extractContent(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
+                Minecraft minecraft = Minecraft.getInstance();
+
+                int textX = this.getX() + 3;
+                int textY = this.getY() + this.getHeight() - minecraft.font.lineHeight - 2;
+
+                context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, ChatFormatting.BOLD)).withStyle(ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF, true);
+            }
         }
     }
 }

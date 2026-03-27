@@ -1,25 +1,25 @@
 package de.aliba2468pr77pr77.savedcommands;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.cursor.StandardCursors;
-import net.minecraft.client.gui.screen.ChatInputSuggestor;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
@@ -32,23 +32,23 @@ import java.util.Optional;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
-import static net.minecraft.text.Text.*;
+import static net.minecraft.network.chat.Component.translatable;
 
 public class EditCommandScreen extends Screen {
     private final Screen parent;
-    private ButtonWidget closeButton;
-    public TextFieldWidget commandTextField;
-    private TextFieldWidget nameTextField;
-    private ButtonWidget keybindButton;
-    private ButtonWidget removeKeybindButton;
+    private Button closeButton;
+    public EditBox commandTextField;
+    private EditBox nameTextField;
+    private Button keybindButton;
+    private Button removeKeybindButton;
     public boolean keybindSetting = false;
     private SavedCommandManager.CommandData data;
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
-    private ButtonWidget addVariableButton;
+    private Button addVariableButton;
     public InsertedVariables insertedVariables;
 
-    ChatInputSuggestor CommandSuggestor;
+    CommandSuggestions CommandSuggestor;
 
     public int popupW;
     public int popupH;
@@ -93,7 +93,7 @@ public class EditCommandScreen extends Screen {
             }
 
             // Checking Minecraft keybinds
-            for (KeyBinding keybind : MinecraftClient.getInstance().options.allKeys) {
+            for (KeyMapping keybind : Minecraft.getInstance().options.keyMappings) {
                 if (!keybind.isUnbound() &&
                         Objects.equals(((KeyBindingAccessor) keybind).getBoundKey(), data.keybinds.toKeys().getFirst())) {
                     conflictMinecraftKB conflict = new conflictMinecraftKB();
@@ -103,23 +103,23 @@ public class EditCommandScreen extends Screen {
                 }
             }
 
-            MutableText tooltipContent = empty();
+            MutableComponent tooltipContent = Component.empty();
             if (!KeybindConflictsSavedCommands.isEmpty()) {
                 tooltipContent.append(translatable("screen.savedcommands.duplicateKeybindCombinationSC"));
 
                 for (conflictSavedCommands keybindConflictSavedCommands : KeybindConflictsSavedCommands) {
                     if (keybindConflictSavedCommands.conflictingKeys != null && !keybindConflictSavedCommands.conflictingKeys.isEmptyOrNull()) {
-                        tooltipContent.append(literal("\n"));
+                        tooltipContent.append(Component.literal("\n"));
                         boolean OneElemAlreadyAdded = false;
-                        MutableText KeyText = empty();
-                        for (InputUtil.Key Key : keybindConflictSavedCommands.conflictingKeys.toKeys()) {
+                        MutableComponent KeyText = Component.empty();
+                        for (InputConstants.Key Key : keybindConflictSavedCommands.conflictingKeys.toKeys()) {
                             if (OneElemAlreadyAdded) {
-                                KeyText.append(literal(" + "));
+                                KeyText.append(Component.literal(" + "));
                             }
-                            KeyText.append(Key.getLocalizedText());
+                            KeyText.append(Key.getDisplayName());
                             OneElemAlreadyAdded = true;
                         }
-                        KeyText.append(literal(": "));
+                        KeyText.append(Component.literal(": "));
                         tooltipContent.append(KeyText.withColor(0xfffcfc54));
                         if (keybindConflictSavedCommands.conflictingCommand.name != null && !keybindConflictSavedCommands.conflictingCommand.name.isEmpty()) {
                             tooltipContent.append(keybindConflictSavedCommands.conflictingCommand.name);
@@ -132,51 +132,51 @@ public class EditCommandScreen extends Screen {
 
             if (!KeybindConflictsMinecraft.isEmpty()) {
                 if (!KeybindConflictsSavedCommands.isEmpty()) {
-                    tooltipContent.append(literal("\n"));
+                    tooltipContent.append(Component.literal("\n"));
                 }
                 tooltipContent.append(translatable("screen.savedcommands.duplicateKeybindCombinationMC"));
 
                 for (conflictMinecraftKB KeybindConflictMinecraft : KeybindConflictsMinecraft) {
                     if (KeybindConflictMinecraft.conflictingKeybind != null && KeybindConflictMinecraft.conflictingKey != null) {
-                        tooltipContent.append(literal("\n"));
-                        MutableText KeyText = empty();
-                        KeyText.append(KeybindConflictMinecraft.conflictingKey.getLocalizedText());
-                        KeyText.append(literal(": "));
+                        tooltipContent.append(Component.literal("\n"));
+                        MutableComponent KeyText = Component.empty();
+                        KeyText.append(KeybindConflictMinecraft.conflictingKey.getDisplayName());
+                        KeyText.append(Component.literal(": "));
                         tooltipContent.append(KeyText.withColor(0xfffcfc54));
-                        tooltipContent.append(translatable(KeybindConflictMinecraft.conflictingKeybind.getId()));
+                        tooltipContent.append(KeybindConflictMinecraft.conflictingKeybind.getTranslatedKeyMessage());
                     }
                 }
             }
             if (keybindButton != null) {
-                keybindButton.setTooltip(Tooltip.of(tooltipContent));
+                keybindButton.setTooltip(Tooltip.create(tooltipContent));
             }
         }
     }
 
-    private Text getKeybindButtonText() {
-        MutableText buttonContent = empty();
+    private Component getKeybindButtonText() {
+        MutableComponent buttonContent = Component.empty();
 
         if (keybindSetting) {
-            buttonContent.append(literal("< ").withColor(0xfffcfc54));
+            buttonContent.append(Component.literal("< ").withColor(0xfffcfc54));
         } else if (!KeybindConflictsSavedCommands.isEmpty() || !KeybindConflictsMinecraft.isEmpty()) {
-            buttonContent.append(literal("[ ").withColor(0xfffcfc54));
+            buttonContent.append(Component.literal("[ ").withColor(0xfffcfc54));
         }
         if (data != null && data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             boolean OneElemAlreadyAdded = false;
-            for (InputUtil.Key Key : data.keybinds.toKeys()) {
+            for (InputConstants.Key Key : data.keybinds.toKeys()) {
                 if (OneElemAlreadyAdded) {
-                    buttonContent.append(literal(" + "));
+                    buttonContent.append(Component.literal(" + "));
                 }
-                buttonContent.append(Key.getLocalizedText());
+                buttonContent.append(Key.getDisplayName());
                 OneElemAlreadyAdded = true;
             }
         } else {
             buttonContent.append(translatable("key.keyboard.unknown"));
         }
         if (keybindSetting) {
-            buttonContent.append(literal(" >").withColor(0xfffcfc54));
+            buttonContent.append(Component.literal(" >").withColor(0xfffcfc54));
         } else if (!KeybindConflictsSavedCommands.isEmpty() || !KeybindConflictsMinecraft.isEmpty()) {
-            buttonContent.append(literal(" ]").withColor(0xfffcfc54));
+            buttonContent.append(Component.literal(" ]").withColor(0xfffcfc54));
         }
         return buttonContent;
     }
@@ -190,95 +190,94 @@ public class EditCommandScreen extends Screen {
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        this.closeButton = ButtonWidget.builder(translatable("gui.done"), b -> exit()).dimensions(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.closeButton = Button.builder(translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
 
-        this.addDrawableChild(this.closeButton);
+        this.addRenderableWidget(this.closeButton);
 
-        assert this.client != null;
-        this.commandTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40, popupW - 40, 20, translatable("advMode.command"));
+        this.commandTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 40, popupW - 40, 20, translatable("advMode.command"));
         this.commandTextField.setMaxLength(256);
-        this.commandTextField.setDrawsBackground(true);
-        this.commandTextField.setFocusUnlocked(true);
+        this.commandTextField.setBordered(true);
+        this.commandTextField.setCanLoseFocus(true);
         if (data != null && data.command != null) {
-            this.commandTextField.setText(data.command);
+            this.commandTextField.setValue(data.command);
         }
-        this.addDrawableChild(this.commandTextField);
+        this.addRenderableWidget(this.commandTextField);
 
-        this.addVariableButton = ButtonWidget.builder(Text.literal("+"), b -> {
+        this.addVariableButton = Button.builder(Component.literal("+"), b -> {
             LOGGER.info("Creating Variable...");
-            if(!save(true)){
+            if (!save(true)) {
                 return;
             }
-            MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data));
-        }).dimensions(popupX + 20, popupY + 85, 20, 20).build();
-        this.addDrawableChild(this.addVariableButton);
+            minecraft.setScreen(new EditVariableScreen(this, data));
+        }).bounds(popupX + 20, popupY + 85, 20, 20).build();
+        this.addRenderableWidget(this.addVariableButton);
 
         if (data != null && data.variables != null) {
             for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
                 int finalVariableIndex = variableIndex;
-                ButtonWidget variableButton = ButtonWidget.builder(Text.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), bu -> {
+                Button variableButton = Button.builder(Component.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), bu -> {
                     LOGGER.info("Adding Variable " + finalVariableIndex);
-                    commandTextField.setText(commandTextField.getText().substring(0, commandTextField.getCursor()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getText().substring(commandTextField.getCursor()));
-                }).dimensions(popupX + 20 + 25 + 45 * variableIndex, popupY + 85, 20, 20).build();
-                this.addDrawableChild(variableButton);
+                    commandTextField.setValue(commandTextField.getValue().substring(0, commandTextField.getCursorPosition()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getValue().substring(commandTextField.getCursorPosition()));
+                }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 85, 20, 20).build();
+                this.addRenderableWidget(variableButton);
 
-                ButtonWidget variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.of(MOD_ID, "textures/gui/edit.png"), b -> {
+                Button variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), b -> {
                     LOGGER.info("Editing Variable...");
-                    if(!save(true)){
+                    if (!save(true)) {
                         return;
                     }
-                    MinecraftClient.getInstance().setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
+                    minecraft.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
                 });
-                this.addDrawableChild(variableEditButton);
+                this.addRenderableWidget(variableEditButton);
             }
         }
 
-        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 120, popupW - 40, 20, translatable("screen.savedcommands.name"));
+        this.nameTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 120, popupW - 40, 20, translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
-        this.nameTextField.setDrawsBackground(true);
-        this.nameTextField.setFocusUnlocked(true);
+        this.nameTextField.setBordered(true);
+        this.nameTextField.setCanLoseFocus(true);
         if (data != null && data.name != null) {
-            this.nameTextField.setText(data.name);
+            this.nameTextField.setValue(data.name);
         }
-        this.addDrawableChild(this.nameTextField);
+        this.addRenderableWidget(this.nameTextField);
 
         searchConflicts();
 
-        this.keybindButton = ButtonWidget.builder(getKeybindButtonText(), b -> {
-            if(!save(true)){
+        this.keybindButton = Button.builder(getKeybindButtonText(), b -> {
+            if (!save(true)) {
                 return;
             }
             keybindSetting = true;
             keybindButton.setMessage(getKeybindButtonText());
-            keybindButton.setTooltip(Tooltip.of(empty()));
-            if(data == null){
+            keybindButton.setTooltip(Tooltip.create(Component.empty()));
+            if (data == null) {
                 return;
             }
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             LOGGER.info("Changing the keybind...");
-        }).dimensions(popupX + 20, popupY + 165, Math.round((popupW - 40) * 0.7F), 20).build();
+        }).bounds(popupX + 20, popupY + 165, Math.round((popupW - 40) * 0.7F), 20).build();
 
-        this.addDrawableChild(this.keybindButton);
+        this.addRenderableWidget(this.keybindButton);
 
-        this.removeKeybindButton = ButtonWidget.builder(translatable("screen.savedcommands.remove"), b -> {
-            if(data == null){
+        this.removeKeybindButton = Button.builder(translatable("screen.savedcommands.remove"), b -> {
+            if (data == null) {
                 return;
             }
             LOGGER.info("Removing the keybind...");
             data.keybinds = null;
             searchConflicts();
-            keybindButton.setTooltip(Tooltip.of(empty()));
+            keybindButton.setTooltip(Tooltip.create(Component.empty()));
             keybindButton.setMessage(getKeybindButtonText());
-        }).dimensions(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 165, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
+        }).bounds(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 165, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
 
-        this.addDrawableChild(this.removeKeybindButton);
+        this.addRenderableWidget(this.removeKeybindButton);
 
         searchConflicts();
 
-        CommandSuggestor = new ChatInputSuggestor(client, this, commandTextField, textRenderer, false, false, 1, 10, false, 0xD8000000);
-        CommandSuggestor.setCanLeave(false);
-        CommandSuggestor.setWindowActive(true);
-        this.commandTextField.setChangedListener((String text) -> {
+        CommandSuggestor = new CommandSuggestions(minecraft, this, commandTextField, font, false, false, 1, 10, false, 0xD8000000);
+        CommandSuggestor.setAllowHiding(false);
+        CommandSuggestor.setAllowSuggestions(true);
+        this.commandTextField.setResponder((String text) -> {
             if (text.isEmpty()) {
                 closeButton.setMessage(translatable("gui.cancel"));
             } else {
@@ -286,15 +285,15 @@ public class EditCommandScreen extends Screen {
             }
             removeOrphanedVariablePlaceholders(text);
             insertedVariables.refresh();
-            CommandSuggestor.refresh();
+            CommandSuggestor.updateCommandInfo();
         });
-        if (commandTextField.getText().isEmpty()) {
+        if (commandTextField.getValue().isEmpty()) {
             closeButton.setMessage(translatable("gui.cancel"));
         } else {
             closeButton.setMessage(translatable("gui.done"));
         }
         insertedVariables.refresh();
-        CommandSuggestor.refresh();
+        CommandSuggestor.updateCommandInfo();
     }
 
     public class InsertedVariables {
@@ -306,10 +305,10 @@ public class EditCommandScreen extends Screen {
         }
 
         public Integer refresh(Integer insertedIndex) {
-            String original = commandTextField.getText();
+            String original = commandTextField.getValue();
             if (data == null || data.variables == null || data.variables.isEmpty() || !original.contains(String.valueOf(VariablePlaceholder))) {
                 insertedVariableText = original;
-                cursor = commandTextField.getCursor();
+                cursor = commandTextField.getCursorPosition();
                 return insertedIndex;
             } else { // There are variables
                 StringBuilder insertedCommand = new StringBuilder();
@@ -321,8 +320,8 @@ public class EditCommandScreen extends Screen {
                     int finalIndex = index;
                     Optional<SavedCommandManager.CommandData.variable> optionalVariable = data.variables.stream().filter(v -> original.length() > finalIndex + 1 && v.abbreviation == original.charAt(finalIndex + 1)).findFirst();
                     if (optionalVariable.isPresent()) {
-                        if (ContinuingIndex - 1 <= commandTextField.getCursor() && index >= commandTextField.getCursor() && !cursorSet) {
-                            cursor = insertedCommand.length() + (commandTextField.getCursor() - ContinuingIndex);
+                        if (ContinuingIndex - 1 <= commandTextField.getCursorPosition() && index >= commandTextField.getCursorPosition() && !cursorSet) {
+                            cursor = insertedCommand.length() + (commandTextField.getCursorPosition() - ContinuingIndex);
                             cursorSet = true;
                         }
 
@@ -332,11 +331,11 @@ public class EditCommandScreen extends Screen {
 
                         insertedCommand.append(original.substring(ContinuingIndex, index));
                         int insertedIndexVariable = insertedCommand.length();
-                        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+                        LocalPlayer player = minecraft.player;
                         assert player != null;
                         switch (optionalVariable.get().type) {
                             case ITEMHAND:
-                                insertedCommand.append(Registries.ITEM.getId(player.getMainHandStack().getItem()));
+                                insertedCommand.append(player.getMainHandItem().getItem());
                                 break;
                             case PLAYERPOSX:
                                 insertedCommand.append(player.getBlockX());
@@ -361,8 +360,8 @@ public class EditCommandScreen extends Screen {
                     index = original.indexOf(VariablePlaceholder, index + 1);
                 }
 
-                if (ContinuingIndex - 1 <= commandTextField.getCursor() && !cursorSet) {
-                    cursor = insertedCommand.length() + (commandTextField.getCursor() - ContinuingIndex);
+                if (ContinuingIndex - 1 <= commandTextField.getCursorPosition() && !cursorSet) {
+                    cursor = insertedCommand.length() + (commandTextField.getCursorPosition() - ContinuingIndex);
                 }
                 if (newIndex == null && insertedIndex != null && insertedCommand.length() <= insertedIndex) {
                     newIndex = ContinuingIndex + (insertedIndex - insertedCommand.length());
@@ -411,23 +410,23 @@ public class EditCommandScreen extends Screen {
             }
             cleanCommand.append(command.substring(ContinuingIndex));
             if (!cleanCommand.toString().equals(command)) {
-                int cursor = commandTextField.getCursor() - 1;
-                commandTextField.setText(cleanCommand.toString());
-                commandTextField.setCursor(cursor, false);
+                int cursor = commandTextField.getCursorPosition() - 1;
+                commandTextField.setValue(cleanCommand.toString());
+                commandTextField.setCursorPosition(cursor);
             }
         }
     }
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         popupW = Math.min(300, this.width - 20);
         popupH = Math.min(230, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        int textWidth = this.textRenderer.getWidth(title);
-        ctx.drawText(
-                this.textRenderer,
+        int textWidth = this.font.width(title);
+        ctx.text(
+                this.font,
                 title,
                 (this.width - textWidth) / 2,
                 popupY + 10,
@@ -435,8 +434,8 @@ public class EditCommandScreen extends Screen {
                 false
         );
 
-        ctx.drawText(
-                this.textRenderer,
+        ctx.text(
+                this.font,
                 translatable("advMode.command"),
                 popupX + 20,
                 popupY + 30,
@@ -444,8 +443,8 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        ctx.drawText(
-                this.textRenderer,
+        ctx.text(
+                this.font,
                 translatable("screen.savedcommands.variables"),
                 popupX + 20,
                 popupY + 75,
@@ -453,8 +452,8 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        ctx.drawText(
-                this.textRenderer,
+        ctx.text(
+                this.font,
                 translatable("screen.savedcommands.name"),
                 popupX + 20,
                 popupY + 110,
@@ -462,8 +461,8 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        ctx.drawText(
-                this.textRenderer,
+        ctx.text(
+                this.font,
                 translatable("controls.keybinds.title"),
                 popupX + 20,
                 popupY + 150,
@@ -471,32 +470,33 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        super.render(ctx, mouseX, mouseY, delta);
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
 
-        CommandSuggestor.render(ctx, mouseX, mouseY);
+        CommandSuggestor.extractRenderState(ctx, mouseX, mouseY);
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    public void extractBackground(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
         if (parent == null) {
-            super.renderBackground(context, mouseX, mouseY, deltaTicks);
+            super.extractBackground(context, mouseX, mouseY, deltaTicks);
         } else {
-            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.setCursor(StandardCursors.ARROW);
+            this.parent.extractBackground(context, -2147483648, -2147483648, deltaTicks);
+            this.parent.extractRenderState(context, -2147483648, -2147483648, deltaTicks);
+            context.requestCursor(CursorTypes.ARROW);
             context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+            context.blitSprite(RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
         }
     }
 
     @Override
-    public void setFocused(@Nullable Element focused) {
-        CommandSuggestor.setWindowActive(focused == commandTextField);
+    public void setFocused(@Nullable GuiEventListener focused) {
+        CommandSuggestor.setAllowSuggestions(focused == commandTextField);
         super.setFocused(focused);
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
+    public boolean mouseClicked(final @NonNull MouseButtonEvent click, final boolean doubled) {
+        LOGGER.info("Clicked Mouse!");
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
@@ -513,7 +513,8 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(Click click) {
+    public boolean mouseReleased(final @NonNull MouseButtonEvent click) {
+        LOGGER.info("Released Mouse!");
         if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
             commandManager.saveAsync();
@@ -534,7 +535,8 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(final @NonNull KeyEvent input) {
+        LOGGER.info("Pressed Key!");
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
@@ -555,7 +557,8 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
-    public boolean keyReleased(KeyInput input) {
+    public boolean keyReleased(final @NonNull KeyEvent input) {
+        LOGGER.info("Released Key!");
         if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
             commandManager.saveAsync();
@@ -569,23 +572,23 @@ public class EditCommandScreen extends Screen {
 
     private boolean save(boolean warnOnEmptyCommandIfNull) {
         if (data == null) {
-            if (!commandTextField.getText().isEmpty()) {
-                data = commandManager.addCommand(commandTextField.getText(), nameTextField.getText());
+            if (!commandTextField.getValue().isEmpty()) {
+                data = commandManager.addCommand(commandTextField.getValue(), nameTextField.getValue());
             } else if (warnOnEmptyCommandIfNull) {
-                MinecraftClient.getInstance().setScreen(new PopupWarningScreen(Text.translatable("screen.savedcommands.emptyCommandHeader"),
-                        Text.translatable("screen.savedcommands.emptyCommandMessage"), this));
+                minecraft.setScreen(new PopupWarningScreen(Component.translatable("screen.savedcommands.emptyCommandHeader"),
+                        Component.translatable("screen.savedcommands.emptyCommandMessage"), this));
                 return false;
             } else {
                 return false;
             }
         }
-        if (commandTextField.getText() != null && !Objects.equals(commandTextField.getText(), "")) {
-            data.command = commandTextField.getText();
+        if (!Objects.equals(commandTextField.getValue(), "")) {
+            data.command = commandTextField.getValue();
         }
-        if (nameTextField.getText() == null || Objects.equals(nameTextField.getText(), "")) {
+        if (Objects.equals(nameTextField.getValue(), "")) {
             data.name = null;
         } else {
-            data.name = nameTextField.getText();
+            data.name = nameTextField.getValue();
         }
         commandManager.saveAsync();
         return true;
@@ -594,9 +597,9 @@ public class EditCommandScreen extends Screen {
     private void exit() {
         save(false);
         if (parent instanceof SavedCommandsScreen) {
-            MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen());
         } else {
-            MinecraftClient.getInstance().setScreen(parent);
+            minecraft.setScreen(parent);
         }
     }
 
@@ -607,8 +610,8 @@ public class EditCommandScreen extends Screen {
     }
 
     static class conflictMinecraftKB { // Conflict with minecraft keybinds
-        KeyBinding conflictingKeybind;
+        KeyMapping conflictingKeybind;
 
-        InputUtil.Key conflictingKey; // Only the one in both commands
+        InputConstants.Key conflictingKey; // Only the one in both commands
     }
 }

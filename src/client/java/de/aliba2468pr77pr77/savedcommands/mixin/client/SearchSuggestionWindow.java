@@ -3,13 +3,13 @@ package de.aliba2468pr77pr77.savedcommands.mixin.client;
 import com.mojang.brigadier.context.StringRange;
 import com.mojang.brigadier.suggestion.Suggestion;
 import de.aliba2468pr77pr77.savedcommands.EditCommandScreen;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(targets = "net.minecraft.client.gui.screen.ChatInputSuggestor$SuggestionWindow")
+@Mixin(targets = "net.minecraft.client.gui.components.CommandSuggestions$SuggestionsList")
 public abstract class SearchSuggestionWindow {
     @Redirect(
             method = {
@@ -18,54 +18,54 @@ public abstract class SearchSuggestionWindow {
             },
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;getText()Ljava/lang/String;"
+                    target = "Lnet/minecraft/client/gui/components/EditBox;getValue()Ljava/lang/String;"
             )
     )
-    private String savedcommands$replaceGetText(TextFieldWidget instance) {
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen editCommandScreen) {
+    private String savedcommands$replaceGetValue(EditBox instance) {
+        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getText();
         } else {
-            return instance.getText();
+            return instance.getValue();
         }
     }
 
     @Redirect(
             method = {
-                    "complete"
+                    "useSuggestion"
             },
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setSelectionStart(I)V"
+                    target = "Lnet/minecraft/client/gui/components/EditBox;setCursorPosition(I)V"
             )
     )
-    private void savedcommands$replaceSetSelectionStart(TextFieldWidget instance, int cursor) {
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen editCommandScreen) {
-            instance.setSelectionStart(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
+    private void savedcommands$replaceSetCursorPosition(EditBox instance, int cursor) {
+        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+            instance.setCursorPosition(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
         } else {
-            instance.setSelectionStart(cursor);
+            instance.setCursorPosition(cursor);
         }
     }
 
     @Redirect(
             method = {
-                    "complete"
+                    "useSuggestion"
             },
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setSelectionEnd(I)V"
+                    target = "Lnet/minecraft/client/gui/components/EditBox;setHighlightPos(I)V"
             )
     )
-    private void savedcommands$replaceSetSelectionEnd(TextFieldWidget instance, int cursor) {
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen editCommandScreen) {
-            instance.setSelectionEnd(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
+    private void savedcommands$replaceSetHighlightPos(EditBox instance, int cursor) {
+        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+            instance.setHighlightPos(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
         } else {
-            instance.setSelectionEnd(cursor);
+            instance.setHighlightPos(cursor);
         }
     }
 
     @Redirect(
             method = {
-                    "complete"
+                    "useSuggestion"
             },
             at = @At(
                     value = "INVOKE",
@@ -73,13 +73,13 @@ public abstract class SearchSuggestionWindow {
             )
     )
     private String savedcommands$replaceApplySuggestion(Suggestion instance, String input) {
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
             Suggestion suggestionUninserted = new Suggestion(
                     new StringRange(editCommandScreen.insertedVariables.getUninsertedIndex(instance.getRange().getStart()),
                             editCommandScreen.insertedVariables.getUninsertedIndex(instance.getRange().getEnd())),
                     instance.getText()
             );
-            return suggestionUninserted.apply(editCommandScreen.commandTextField.getText());
+            return suggestionUninserted.apply(editCommandScreen.commandTextField.getValue());
         } else {
             return instance.apply(input);
         }
