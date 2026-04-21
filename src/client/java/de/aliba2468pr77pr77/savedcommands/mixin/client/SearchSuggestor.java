@@ -63,8 +63,9 @@ public class SearchSuggestor {
         if (screen instanceof SavedCommandsScreen commandsScreen) {
             for (int i = 0; i < this.commandUsage.size(); i++) {
                 int y = commandsScreen.SearchBar.getY() + commandsScreen.SearchBar.getHeight() + 1 + 12 * i;
-                graphics.fill(this.commandUsagePosition - 1, y, this.commandUsagePosition + this.commandUsageWidth, y + 12, this.fillColor);
-                graphics.text(this.font, this.commandUsage.get(i), this.commandUsagePosition, y + 2, 0xFFFFFFFF, true);
+                int x = Math.max(this.commandUsagePosition, 0);
+                graphics.fill(x - 1, y, x + this.commandUsageWidth, y + 12, this.fillColor);
+                graphics.text(this.font, this.commandUsage.get(i), x, y + 2, 0xFFFFFFFF, true);
             }
             ci.cancel();
         }
