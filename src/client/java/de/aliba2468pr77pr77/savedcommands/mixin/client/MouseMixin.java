@@ -2,11 +2,11 @@ package de.aliba2468pr77pr77.savedcommands.mixin.client;
 
 import de.aliba2468pr77pr77.savedcommands.EditCommandScreen;
 import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.Mouse;
-import net.minecraft.client.gui.screen.option.KeybindsScreen;
-import net.minecraft.client.input.MouseInput;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHandler;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.client.input.MouseButtonInfo;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,21 +21,21 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandMana
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.pressedPartialCombination;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
-@Mixin(Mouse.class)
+@Mixin(MouseHandler.class)
 public class MouseMixin {
     @Shadow
     @Final
-    private MinecraftClient client;
+    private Minecraft minecraft;
 
-    @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)
-    private void onMouseButton(long window, MouseInput input, int action, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().player == null) {
+    @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
+    private void onButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
+        if (Minecraft.getInstance().player == null) {
             return;
         }
-        if (MinecraftClient.getInstance().currentScreen instanceof EditCommandScreen) {
+        if (Minecraft.getInstance().screen instanceof EditCommandScreen) {
             return;
         }
-        if (MinecraftClient.getInstance().currentScreen instanceof KeybindsScreen EditScreen && EditScreen.selectedKeyBinding != null) {
+        if (Minecraft.getInstance().screen instanceof KeyBindsScreen EditScreen && EditScreen.selectedKey != null) {
             return;
         }
 
@@ -44,12 +44,12 @@ public class MouseMixin {
                 for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                     if (command.keybinds != null && !command.keybinds.isEmptyOrNull()) {
                         if (pressedPartialCombination != null && pressedPartialCombination.size() < command.keybinds.keybindCode.size() && command.keybinds.keybindCode.get(pressedPartialCombination.size()) == input.button()) {
-                            pressedPartialCombination.add(InputUtil.Type.valueOf("MOUSE").createFromCode(input.button()));
+                            pressedPartialCombination.add(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()));
                             break;
                         }
                         if (command.keybinds.keybindCode.getFirst() == input.button() && pressedPartialCombination == null) {
                             pressedPartialCombination = new ArrayList<>();
-                            pressedPartialCombination.add(InputUtil.Type.valueOf("MOUSE").createFromCode(input.button()));
+                            pressedPartialCombination.add(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()));
                             break;
                         }
                     }
@@ -57,21 +57,21 @@ public class MouseMixin {
             }
 
             if (commandManager != null && pressedPartialCombination != null &&
-                    pressedPartialCombination.contains(InputUtil.Type.valueOf("MOUSE").createFromCode(input.button()))) {
+                    pressedPartialCombination.contains(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()))) {
                 ci.cancel();
             }
 
             if (action == GLFW.GLFW_RELEASE) {
                 if (pressedPartialCombination != null &&
-                        pressedPartialCombination.contains(InputUtil.Type.valueOf("MOUSE").createFromCode(input.button()))) {
+                        pressedPartialCombination.contains(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()))) {
                     // after releasing the first key of the combination, search for it in commandManager.data.commands.keybinds:
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                         if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
                             LOGGER.info("Combination released/pressed: " + command.command);
-                            SavedCommandManager.sendCommandAndInsertVariables(command, client.currentScreen);
+                            SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.screen);
                         }
                     }
-                    pressedPartialCombination.remove(InputUtil.Type.valueOf("MOUSE").createFromCode(input.button()));
+                    pressedPartialCombination.remove(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()));
                     if (pressedPartialCombination.isEmpty()) {
                         pressedPartialCombination = null;
                     }

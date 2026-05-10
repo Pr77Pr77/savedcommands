@@ -2,16 +2,15 @@ package de.aliba2468pr77pr77.savedcommands;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.text.Text;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
 import java.util.*;
@@ -43,18 +42,18 @@ public class SavedCommandManager {
     }
 
     public static String getWorldOrServerId() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft minecraft = Minecraft.getInstance();
 
         // Integrated server
-        IntegratedServer integratedServer = client.getServer();
+        IntegratedServer integratedServer = minecraft.getSingleplayerServer();
         if (integratedServer != null) {
-            return "singleplayer/" + integratedServer.getSavePath(WorldSavePath.ROOT).getParent().getFileName().toString();
+            return "singleplayer/" + integratedServer.getWorldPath(LevelResource.ROOT).getParent().getFileName().toString();
         }
 
         // External multiplayer
-        ServerInfo server = client.getCurrentServerEntry();
+        ServerData server = minecraft.getCurrentServer();
         if (server != null) {
-            return "multiplayer/" + server.address;
+            return "multiplayer/" + server.ip;
         }
 
         // No world open
@@ -76,10 +75,10 @@ public class SavedCommandManager {
             public List<String> keybindType = new ArrayList<>();
             public List<Integer> keybindCode = new ArrayList<>();
 
-            public List<InputUtil.Key> toKeys() {
-                List<InputUtil.Key> keybinds = new ArrayList<>();
+            public List<InputConstants.Key> toKeys() {
+                List<InputConstants.Key> keybinds = new ArrayList<>();
                 for (int i = 0; i < keybindCode.size(); i++) {
-                    keybinds.add(InputUtil.Type.valueOf(keybindType.get(i)).createFromCode(keybindCode.get(i)));
+                    keybinds.add(InputConstants.Type.valueOf(keybindType.get(i)).getOrCreate(keybindCode.get(i)));
                 }
                 return keybinds;
             }
@@ -130,19 +129,19 @@ public class SavedCommandManager {
                     return abbreviationTranslationKey;
                 }
 
-                public Text getText() {
-                    return Text.translatable(translationKey);
+                public Component getText() {
+                    return Component.translatable(translationKey);
                 }
 
                 public static Optional<types> byTranslation(String text) {
                     return Arrays.stream(values())
-                            .filter(t -> text.equals(Text.translatable(t.translationKey).getString()))
+                            .filter(t -> text.equals(Component.translatable(t.translationKey).getString()))
                             .findFirst();
                 }
 
                 public static Optional<types> byAbbreviationTranslation(String text) {
                     return Arrays.stream(values())
-                            .filter(t -> t.abbreviationTranslationKey != null && text.equals(Text.translatable(t.abbreviationTranslationKey).getString()))
+                            .filter(t -> t.abbreviationTranslationKey != null && text.equals(Component.translatable(t.abbreviationTranslationKey).getString()))
                             .findFirst();
                 }
             }
@@ -172,7 +171,7 @@ public class SavedCommandManager {
     }
 
     public static void sendCommandAndInsertVariables(SavedCommandManager.CommandData command, Screen parentScreen) {
-        if (MinecraftClient.getInstance().player == null) {
+        if (Minecraft.getInstance().player == null) {
             return;
         }
         if (command.variables == null || command.variables.isEmpty() || !command.command.contains(String.valueOf(VariablePlaceholder))) {
@@ -188,10 +187,10 @@ public class SavedCommandManager {
                 if (optionalVariable.isPresent()) {
                     if (!optionalVariable.get().type.userEditable) {
                         insertedCommand.append(command.command.substring(ContinuingIndex, index));
-                        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+                        LocalPlayer player = Minecraft.getInstance().player;
                         switch (optionalVariable.get().type) {
                             case ITEMHAND:
-                                insertedCommand.append(Registries.ITEM.getId(player.getMainHandStack().getItem()));
+                                insertedCommand.append(player.getMainHandItem().getItem());
                                 break;
                             case PLAYERPOSX:
                                 insertedCommand.append(player.getBlockX());
@@ -214,7 +213,7 @@ public class SavedCommandManager {
             insertedCommand.append(command.command.substring(ContinuingIndex));
 
             if (!userEditableVariablesLeft.isEmpty()) {
-                MinecraftClient.getInstance().setScreen(new InputVariableScreen(insertedCommand.toString(), userEditableVariablesLeft, parentScreen));
+                Minecraft.getInstance().setScreen(new InputVariableScreen(insertedCommand.toString(), userEditableVariablesLeft, parentScreen));
             } else {
                 sendCommand(insertedCommand.toString());
             }
@@ -222,12 +221,12 @@ public class SavedCommandManager {
     }
 
     public static void sendCommand(String command) {
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         assert player != null;
         if (command.charAt(0) == '/') {
-            player.networkHandler.sendChatCommand(command.substring(1));
+            player.connection.sendCommand(command.substring(1));
         } else {
-            player.networkHandler.sendChatMessage(command);
+            player.connection.sendChat(command);
         }
     }
 

@@ -1,15 +1,14 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.cursor.StandardCursors;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -18,16 +17,15 @@ import java.util.List;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandManager.sendCommand;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen.shortenTextIfNeeded;
-import static net.minecraft.text.Text.*;
 
 public class InputVariableScreen extends Screen {
     @Nullable
     private final Screen parent;
 
-    private ButtonWidget cancelButton;
-    private ButtonWidget doneButton;
+    private Button cancelButton;
+    private Button doneButton;
 
-    private List<TextFieldWidget> variableInputTextFields = new ArrayList<>();
+    private List<EditBox> variableInputTextFields = new ArrayList<>();
 
     private final String preInsertedCommand;
     List<SavedCommandManager.CommandData.variable> userEditableVariablesLeft;
@@ -39,7 +37,7 @@ public class InputVariableScreen extends Screen {
     private int contentH = 60;
 
     public InputVariableScreen(String preInsertedCommand, List<SavedCommandManager.CommandData.variable> userEditableVariablesLeft, @Nullable Screen parent) {
-        super(translatable("screen.savedcommands.entervariablevalues"));
+        super(Component.translatable("screen.savedcommands.entervariablevalues"));
         this.parent = parent;
         this.preInsertedCommand = preInsertedCommand;
         this.userEditableVariablesLeft = userEditableVariablesLeft;
@@ -58,49 +56,54 @@ public class InputVariableScreen extends Screen {
 
         variableInputTextFields = new ArrayList<>();
 
-        assert this.client != null;
         for (SavedCommandManager.CommandData.variable Variable : userEditableVariablesLeft) {
             if (Variable.type.userEditable) {
-                variableInputTextFields.add(new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40 * (variableInputTextFields.size() + 1), popupW - 40, 20,
-                        literal(Variable.name + " (").append(translatable(Variable.type.getTranslationKey())).append(literal(")"))));
+                assert this.minecraft != null;
+                variableInputTextFields.add(new EditBox(this.minecraft.font, popupX + 20, popupY + 40 * (variableInputTextFields.size() + 1), popupW - 40, 20,
+                        Component.literal(Variable.name + " (").append(Component.translatable(Variable.type.getTranslationKey())).append(Component.literal(")"))));
                 variableInputTextFields.getLast().setMaxLength(256);
-                variableInputTextFields.getLast().setDrawsBackground(true);
-                variableInputTextFields.getLast().setFocusUnlocked(true);
-                variableInputTextFields.getLast().setText(Variable.defaultValue);
+                variableInputTextFields.getLast().setBordered(true);
+                variableInputTextFields.getLast().setCanLoseFocus(true);
+                variableInputTextFields.getLast().setValue(Variable.defaultValue);
                 if (variableInputTextFields.size() == 1) { // Select the first one
                     this.setFocused(variableInputTextFields.getFirst());
                 }
+
+                int variableInputIndex = variableInputTextFields.size() - 1;
                 switch (Variable.type) { // String does not need a statement
                     case INT:
-                        variableInputTextFields.getLast().setTextPredicate(text -> text.matches("-?\\d*"));
+                        variableInputTextFields.getLast().setResponder(text -> variableInputTextFields.get(variableInputIndex).setValue(
+                                text.replaceAll("[^0-9-]", "")
+                                        .replaceAll("(?<!^)-", "")));
                         break;
                     case FLOAT:
-                        variableInputTextFields.getLast().setTextPredicate(text ->
-                                text.matches("-?(\\d+\\.\\d*|\\d*\\.\\d+|\\d+)?")
-                        );
+                        variableInputTextFields.getLast().setResponder(text -> variableInputTextFields.get(variableInputIndex).setValue(
+                                text.replaceAll("[^0-9.-]", "")
+                                        .replaceAll("(?<!^)-", "")
+                                        .replaceAll("(\\..*)\\.", "$1")));
                         break;
                 }
-                this.addDrawableChild(variableInputTextFields.getLast());
+                this.addRenderableWidget(variableInputTextFields.getLast());
             }
         }
 
-        this.cancelButton = ButtonWidget.builder(translatable("gui.cancel"), b -> exit()).dimensions(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
-        this.addDrawableChild(this.cancelButton);
+        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> exit()).bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.addRenderableWidget(this.cancelButton);
 
-        this.doneButton = ButtonWidget.builder(translatable("screen.savedcommands.send"), b -> exit(true)).dimensions(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
-        this.addDrawableChild(this.doneButton);
+        this.doneButton = Button.builder(Component.translatable("screen.savedcommands.send"), b -> exit(true)).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.addRenderableWidget(this.doneButton);
     }
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         popupW = Math.min(300, this.width - 20);
         popupH = Math.min(contentH, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        int textWidth = this.textRenderer.getWidth(title);
-        ctx.drawText(
-                this.textRenderer,
+        int textWidth = this.font.width(title);
+        ctx.drawString(
+                this.font,
                 title,
                 (this.width - textWidth) / 2,
                 popupY + 10,
@@ -108,10 +111,10 @@ public class InputVariableScreen extends Screen {
                 false
         );
 
-        for (TextFieldWidget variableInputTextField : variableInputTextFields) {
-            ctx.drawText(
-                    this.textRenderer,
-                    shortenTextIfNeeded(variableInputTextField.getMessage().getString(), popupW - 25, Formatting.RESET),
+        for (EditBox variableInputTextField : variableInputTextFields) {
+            ctx.drawString(
+                    this.font,
+                    shortenTextIfNeeded(variableInputTextField.getMessage().getString(), popupW - 25, ChatFormatting.RESET),
                     popupX + 20,
                     variableInputTextField.getY() - 10,
                     0xFFFFFFFF,
@@ -123,24 +126,24 @@ public class InputVariableScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
         if (parent == null) {
             super.renderBackground(context, mouseX, mouseY, deltaTicks);
         } else {
             this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
             this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.setCursor(StandardCursors.ARROW);
+            context.requestCursor(CursorTypes.ARROW);
             context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+            context.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, ResourceLocation.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
         }
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
             exit();
             return true;
-        } else if (input.isEnter()) {
+        } else if (input.isConfirmation()) {
             exit(true);
         }
         return super.keyPressed(input);
@@ -157,14 +160,14 @@ public class InputVariableScreen extends Screen {
                 if (userEditableVariablesLeft.get(variableIndex).type.userEditable) {
                     String variableValue =
                             switch (userEditableVariablesLeft.get(variableIndex).type) {
-                                case INT -> this.variableInputTextFields.get(variableIndex).getText()
+                                case INT -> this.variableInputTextFields.get(variableIndex).getValue()
                                         .replaceAll("[^0-9-]", "")
                                         .replaceAll("(?<!^)-", "");
-                                case FLOAT -> this.variableInputTextFields.get(variableIndex).getText()
+                                case FLOAT -> this.variableInputTextFields.get(variableIndex).getValue()
                                         .replaceAll("[^0-9.-]", "")
                                         .replaceAll("(?<!^)-", "")
                                         .replaceAll("(\\..*)\\.", "$1");
-                                case STRING -> this.variableInputTextFields.get(variableIndex).getText();
+                                case STRING -> this.variableInputTextFields.get(variableIndex).getValue();
                                 default -> "";
                             };
                     insertedCommand = insertVariableValue(variableIndex, variableValue, insertedCommand);
@@ -173,10 +176,11 @@ public class InputVariableScreen extends Screen {
             sendCommand(insertedCommand.toString());
         }
 
+        assert minecraft != null;
         if (parent instanceof SavedCommandsScreen) {
-            MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen());
         } else {
-            MinecraftClient.getInstance().setScreen(parent);
+            minecraft.setScreen(parent);
         }
     }
 
