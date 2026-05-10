@@ -1,36 +1,35 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.cursor.StandardCursors;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.CyclingButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
-import static net.minecraft.text.Text.*;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
 public class EditVariableScreen extends Screen {
     private final Screen parent;
-    private ButtonWidget closeButton;
-    private ButtonWidget deleteButton;
+    private Button closeButton;
+    private Button deleteButton;
 
-    private TextFieldWidget nameTextField;
-    private TextFieldWidget abbreviationTextField;
-    CyclingButtonWidget<SavedCommandManager.CommandData.variable.types> typeButton;
-    private TextFieldWidget defaultValueTextField;
+    private EditBox nameTextField;
+    private EditBox abbreviationTextField;
+    CycleButton<SavedCommandManager.CommandData.variable.types> typeButton;
+    private EditBox defaultValueTextField;
+    private Function<String, String> defaultValueCleanup;
 
     private boolean abbreviationExists = false;
 
@@ -43,13 +42,13 @@ public class EditVariableScreen extends Screen {
     public int popupY;
 
     public EditVariableScreen(Screen parent, SavedCommandManager.@Nullable CommandData commandData) {
-        super(translatable("screen.savedcommands.createvariable"));
+        super(Component.translatable("screen.savedcommands.createvariable"));
         this.parent = parent;
         this.commandData = commandData;
     }
 
     public EditVariableScreen(Screen parent, SavedCommandManager.CommandData.@Nullable variable data, SavedCommandManager.@Nullable CommandData commandData) {
-        super(translatable("screen.savedcommands.editvariable"));
+        super(Component.translatable("screen.savedcommands.editvariable"));
         this.parent = parent;
         this.data = data;
         this.commandData = commandData;
@@ -65,148 +64,153 @@ public class EditVariableScreen extends Screen {
         popupY = (this.height - popupH) / 2;
 
         if (data != null) {
-            this.closeButton = ButtonWidget.builder(translatable("gui.done"), b -> exit()).dimensions(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
-            this.deleteButton = ButtonWidget.builder(translatable("selectWorld.deleteButton"), b -> {
+            this.closeButton = Button.builder(Component.translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.deleteButton = Button.builder(Component.translatable("selectWorld.deleteButton"), b -> {
                 assert commandData != null;
                 commandData.variables.remove(data);
-                nameTextField.setText("");
-                abbreviationTextField.setText("");
+                nameTextField.setValue("");
+                abbreviationTextField.setValue("");
                 exit();
-            }).dimensions(popupX + (popupW - 100 - 100 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20, 100, 20).build();
-            this.addDrawableChild(this.deleteButton);
+            }).bounds(popupX + (popupW - 100 - 100 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20, 100, 20).build();
+            this.addRenderableWidget(this.deleteButton);
         } else {
-            this.closeButton = ButtonWidget.builder(translatable("gui.done"), b -> exit()).dimensions(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.closeButton = Button.builder(Component.translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         }
 
-        this.addDrawableChild(this.closeButton);
+        this.addRenderableWidget(this.closeButton);
 
-        assert this.client != null;
-        this.nameTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 40, popupW - 40, 20, translatable("screen.savedcommands.name"));
+        this.nameTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 40, popupW - 40, 20, Component.translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
-        this.nameTextField.setDrawsBackground(true);
-        this.nameTextField.setFocusUnlocked(true);
+        this.nameTextField.setBordered(true);
+        this.nameTextField.setCanLoseFocus(true);
         if (data != null && data.name != null) {
-            this.nameTextField.setText(data.name);
+            this.nameTextField.setValue(data.name);
         }
-        this.addDrawableChild(this.nameTextField);
+        this.addRenderableWidget(this.nameTextField);
 
-        this.abbreviationTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20 + client.textRenderer.getWidth(Text.translatable("screen.savedcommands.abbreviation")) + 5, popupY + 65, 30, 20, translatable("screen.savedcommands.abbreviation"));
+        this.abbreviationTextField = new EditBox(this.minecraft.font, popupX + 20 + minecraft.font.width(Component.translatable("screen.savedcommands.abbreviation")) + 5, popupY + 65, 30, 20, Component.translatable("screen.savedcommands.abbreviation"));
         this.abbreviationTextField.setMaxLength(1);
-        this.abbreviationTextField.setDrawsBackground(true);
-        this.abbreviationTextField.setFocusUnlocked(true);
+        this.abbreviationTextField.setBordered(true);
+        this.abbreviationTextField.setCanLoseFocus(true);
         if (data != null && data.abbreviation != null) {
-            this.abbreviationTextField.setText(String.valueOf(data.abbreviation));
+            this.abbreviationTextField.setValue(String.valueOf(data.abbreviation));
         }
-        this.addDrawableChild(this.abbreviationTextField);
+        this.addRenderableWidget(this.abbreviationTextField);
 
-        this.nameTextField.setChangedListener((String input) -> {
-            closeButton.setMessage(input.isEmpty() || abbreviationTextField.getText().isEmpty() || abbreviationExists ? translatable("gui.cancel") : translatable("gui.done"));
+        this.nameTextField.setResponder((String input) -> {
+            closeButton.setMessage(input.isEmpty() || abbreviationTextField.getValue().isEmpty() || abbreviationExists ? Component.translatable("gui.cancel") : Component.translatable("gui.done"));
         });
-        this.abbreviationTextField.setChangedListener((String input) -> {
+        this.abbreviationTextField.setResponder((String input) -> {
             if (!input.isEmpty() && commandData != null && commandData.variables != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)) && !data.equals(this.data))) {
                 abbreviationExists = true;
-                closeButton.setMessage(translatable("gui.cancel"));
+                closeButton.setMessage(Component.translatable("gui.cancel"));
                 return;
             } else {
                 abbreviationExists = false;
             }
-            if (input.isEmpty() || nameTextField.getText().isEmpty()) {
-                closeButton.setMessage(translatable("gui.cancel"));
+            if (input.isEmpty() || nameTextField.getValue().isEmpty()) {
+                closeButton.setMessage(Component.translatable("gui.cancel"));
             } else {
-                closeButton.setMessage(translatable("gui.done"));
+                closeButton.setMessage(Component.translatable("gui.done"));
             }
         });
 
         typeButton =
-                CyclingButtonWidget.builder(SavedCommandManager.CommandData.variable.types::getText, (data != null && data.type != null) ? data.type : SavedCommandManager.CommandData.variable.types.STRING)
-                        .values(SavedCommandManager.CommandData.variable.types.values())
-                        .build(popupX + 20, popupY + 90, popupW - 40, 20, Text.translatable("screen.savedcommands.vartype"),
+                CycleButton.builder(SavedCommandManager.CommandData.variable.types::getText, (data != null && data.type != null) ? data.type : SavedCommandManager.CommandData.variable.types.STRING)
+                        .withValues(SavedCommandManager.CommandData.variable.types.values())
+                        .create(popupX + 20, popupY + 90, popupW - 40, 20, Component.translatable("screen.savedcommands.vartype"),
                                 (btn, value) -> {
                                     LOGGER.info("Chosen variable: " + value);
                                     setDefaultValueLimitations(value);
 
-                                    if (nameTextField.getText().isEmpty() ||
-                                            SavedCommandManager.CommandData.variable.types.byTranslation(nameTextField.getText()).isPresent()) {
-                                        nameTextField.setText(value.userEditable ? "" : Text.translatable(value.getTranslationKey()).getString());
+                                    if (nameTextField.getValue().isEmpty() ||
+                                            SavedCommandManager.CommandData.variable.types.byTranslation(nameTextField.getValue()).isPresent()) {
+                                        nameTextField.setValue(value.userEditable ? "" : Component.translatable(value.getTranslationKey()).getString());
                                     }
-                                    if (abbreviationTextField.getText().isEmpty() ||
-                                            SavedCommandManager.CommandData.variable.types.byAbbreviationTranslation(abbreviationTextField.getText()).isPresent()) {
-                                        abbreviationTextField.setText(value.userEditable ? "" : Text.translatable(value.getAbbreviationTranslationKey()).getString());
+                                    if (abbreviationTextField.getValue().isEmpty() ||
+                                            SavedCommandManager.CommandData.variable.types.byAbbreviationTranslation(abbreviationTextField.getValue()).isPresent()) {
+                                        abbreviationTextField.setValue(value.userEditable ? "" : Component.translatable(value.getAbbreviationTranslationKey()).getString());
                                     }
                                 });
-        this.addDrawableChild(this.typeButton);
+        this.addRenderableWidget(this.typeButton);
 
-        this.defaultValueTextField = new TextFieldWidget(this.client.advanceValidatingTextRenderer, popupX + 20, popupY + 125, popupW - 40, 20, translatable("screen.savedcommands.defaultvalue"));
+        this.defaultValueTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 125, popupW - 40, 20, Component.translatable("screen.savedcommands.defaultvalue"));
         this.defaultValueTextField.setMaxLength(256);
-        this.defaultValueTextField.setDrawsBackground(true);
-        this.defaultValueTextField.setFocusUnlocked(true);
+        this.defaultValueTextField.setBordered(true);
+        this.defaultValueTextField.setCanLoseFocus(true);
         if (data != null && data.defaultValue != null) {
-            this.defaultValueTextField.setText(data.defaultValue);
+            this.defaultValueTextField.setValue(data.defaultValue);
             setDefaultValueLimitations(typeButton.getValue());
+        } else {
+            this.defaultValueCleanup = text -> text;
         }
-        this.addDrawableChild(this.defaultValueTextField);
+        this.defaultValueTextField.setResponder(input -> {
+            String cleaned = defaultValueCleanup.apply(input);
 
-        closeButton.setMessage(nameTextField.getText().isEmpty() || abbreviationTextField.getText().isEmpty() ? translatable("gui.cancel") : translatable("gui.done"));
+            if (!cleaned.equals(input)) {
+                defaultValueTextField.setValue(cleaned);
+            }
+        });
+        this.addRenderableWidget(this.defaultValueTextField);
+
+        closeButton.setMessage(nameTextField.getValue().isEmpty() || abbreviationTextField.getValue().isEmpty() ? Component.translatable("gui.cancel") : Component.translatable("gui.done"));
     }
 
     void setDefaultValueLimitations(SavedCommandManager.CommandData.variable.types value) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientPlayerEntity player = client.player;
+        LocalPlayer player = minecraft.player;
         switch (value) {
             case STRING:
-                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueCleanup = text -> text;
                 this.defaultValueTextField.setEditable(true);
                 break;
             case INT:
-                this.defaultValueTextField.setTextPredicate(text -> text.matches("-?\\d*"));
-                this.defaultValueTextField.setEditable(true);
-                this.defaultValueTextField.setText(this.defaultValueTextField.getText()
+                this.defaultValueCleanup = text -> text
                         .replaceAll("[^0-9-]", "")
-                        .replaceAll("(?<!^)-", "")); // Removing unwanted characters
+                        .replaceAll("(?<!^)-", "");  // Removing unwanted characters
+                this.defaultValueTextField.setEditable(true);
+                this.defaultValueTextField.setValue(defaultValueCleanup.apply(defaultValueTextField.getValue()));
                 break;
             case FLOAT:
-                this.defaultValueTextField.setTextPredicate(text ->
-                        text.matches("-?(\\d+\\.\\d*|\\d*\\.\\d+|\\d+)?")
-                );
-                this.defaultValueTextField.setEditable(true);
-                this.defaultValueTextField.setText(this.defaultValueTextField.getText()
+                this.defaultValueCleanup = text -> text
                         .replaceAll("[^0-9.-]", "")
                         .replaceAll("(?<!^)-", "")
-                        .replaceAll("(\\..*)\\.", "$1")); // Removing unwanted characters
+                        .replaceAll("(\\..*)\\.", "$1");
+                this.defaultValueTextField.setEditable(true);
+                this.defaultValueTextField.setValue(defaultValueCleanup.apply(defaultValueTextField.getValue()));
                 break;
             case ITEMHAND:
-                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueCleanup = text -> text;
                 this.defaultValueTextField.setEditable(false);
                 if (player != null) {
-                    this.defaultValueTextField.setText(String.valueOf(Registries.ITEM.getId(player.getMainHandStack().getItem())));
+                    this.defaultValueTextField.setValue(String.valueOf(player.getMainHandItem().getItem()));
                 } else {
-                    this.defaultValueTextField.setText("");
+                    this.defaultValueTextField.setValue("");
                 }
                 break;
             case PLAYERPOSX:
-                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueCleanup = text -> text;
                 if (player != null) {
-                    this.defaultValueTextField.setText(String.valueOf(player.getBlockX()));
+                    this.defaultValueTextField.setValue(String.valueOf(player.getBlockX()));
                 } else {
-                    this.defaultValueTextField.setText("");
+                    this.defaultValueTextField.setValue("");
                 }
                 this.defaultValueTextField.setEditable(false);
                 break;
             case PLAYERPOSY:
-                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueCleanup = text -> text;
                 if (player != null) {
-                    this.defaultValueTextField.setText(String.valueOf(player.getBlockY()));
+                    this.defaultValueTextField.setValue(String.valueOf(player.getBlockY()));
                 } else {
-                    this.defaultValueTextField.setText("");
+                    this.defaultValueTextField.setValue("");
                 }
                 this.defaultValueTextField.setEditable(false);
                 break;
             case PLAYERPOSZ:
-                this.defaultValueTextField.setTextPredicate(text -> true);
+                this.defaultValueCleanup = text -> text;
                 if (player != null) {
-                    this.defaultValueTextField.setText(String.valueOf(player.getBlockZ()));
+                    this.defaultValueTextField.setValue(String.valueOf(player.getBlockZ()));
                 } else {
-                    this.defaultValueTextField.setText("");
+                    this.defaultValueTextField.setValue("");
                 }
                 this.defaultValueTextField.setEditable(false);
                 break;
@@ -214,15 +218,15 @@ public class EditVariableScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
+    public void render(final @NonNull GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         popupW = Math.min(280, this.width - 20);
         popupH = Math.min(190, this.height - 20);
         popupX = (this.width - popupW) / 2;
         popupY = (this.height - popupH) / 2;
 
-        int textWidth = this.textRenderer.getWidth(title);
-        ctx.drawText(
-                this.textRenderer,
+        int textWidth = this.font.width(title);
+        ctx.drawString(
+                this.font,
                 title,
                 (this.width - textWidth) / 2,
                 popupY + 10,
@@ -230,18 +234,18 @@ public class EditVariableScreen extends Screen {
                 false
         );
 
-        ctx.drawText(
-                this.textRenderer,
-                translatable("screen.savedcommands.name"),
+        ctx.drawString(
+                this.font,
+                Component.translatable("screen.savedcommands.name"),
                 popupX + 20,
                 popupY + 30,
                 0xFFFFFFFF,
                 true
         );
 
-        ctx.drawText(
-                this.textRenderer,
-                translatable("screen.savedcommands.abbreviation"),
+        ctx.drawString(
+                this.font,
+                Component.translatable("screen.savedcommands.abbreviation"),
                 popupX + 20,
                 popupY + 70,
                 0xFFFFFFFF,
@@ -249,19 +253,19 @@ public class EditVariableScreen extends Screen {
         );
 
         if (abbreviationExists) {
-            ctx.drawText(
-                    this.textRenderer,
-                    translatable("screen.savedcommands.abbreviationAlreadyExists"),
-                    popupX + 20 + client.textRenderer.getWidth(Text.translatable("screen.savedcommands.abbreviation")) + 40,
+            ctx.drawString(
+                    this.font,
+                    Component.translatable("screen.savedcommands.abbreviationAlreadyExists"),
+                    popupX + 20 + this.font.width(Component.translatable("screen.savedcommands.abbreviation")) + 40,
                     popupY + 70,
                     0xfffcfc54,
                     true
             );
         }
 
-        ctx.drawText(
-                this.textRenderer,
-                translatable("screen.savedcommands.defaultvalue"),
+        ctx.drawString(
+                this.font,
+                Component.translatable("screen.savedcommands.defaultvalue"),
                 popupX + 20,
                 popupY + 115,
                 0xFFFFFFFF,
@@ -272,20 +276,20 @@ public class EditVariableScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    public void renderBackground(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
         if (parent == null) {
             super.renderBackground(context, mouseX, mouseY, deltaTicks);
         } else {
             this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
             this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.setCursor(StandardCursors.ARROW);
+            context.requestCursor(CursorTypes.ARROW);
             context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, Identifier.ofVanilla("popup/background"), popupX, popupY, popupW, popupH);
+            context.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
         }
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
             if (data == null) { // New variable
                 exit(false);
@@ -302,8 +306,8 @@ public class EditVariableScreen extends Screen {
     }
 
     private void exit(boolean save) {
-        if (!nameTextField.getText().isEmpty() && !abbreviationTextField.getText().isEmpty() && save &&
-                commandData != null && (commandData.variables == null || commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getText().charAt(0)) && !data.equals(this.data)))) {
+        if (!nameTextField.getValue().isEmpty() && !abbreviationTextField.getValue().isEmpty() && save &&
+                commandData != null && (commandData.variables == null || commandData.variables.stream().noneMatch(data -> data.abbreviation.equals(abbreviationTextField.getValue().charAt(0)) && !data.equals(this.data)))) {
             if (data == null) {
                 if (commandData.variables == null) {
                     commandData.variables = new ArrayList<>();
@@ -313,17 +317,17 @@ public class EditVariableScreen extends Screen {
             }
 
             assert data != null;
-            data.name = nameTextField.getText();
-            data.abbreviation = abbreviationTextField.getText().charAt(0);
+            data.name = nameTextField.getValue();
+            data.abbreviation = abbreviationTextField.getValue().charAt(0);
             data.type = typeButton.getValue();
-            data.defaultValue = defaultValueTextField.getText();
+            data.defaultValue = defaultValueTextField.getValue();
 
             commandManager.saveAsync();
         }
         if (parent instanceof SavedCommandsScreen) {
-            MinecraftClient.getInstance().setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen());
         } else {
-            MinecraftClient.getInstance().setScreen(parent);
+            minecraft.setScreen(parent);
         }
     }
 }
