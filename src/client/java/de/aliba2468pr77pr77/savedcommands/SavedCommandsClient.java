@@ -6,7 +6,12 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -41,5 +46,29 @@ public class SavedCommandsClient implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             commandManager = new SavedCommandManager();
         });
+    }
+
+    public static NarratableEntry NarratableEntryOfString(String text) {
+        if(text == null) {
+            return null;
+        }
+        return NarratableEntryOfComponent(Component.literal(text));
+    }
+
+    public static NarratableEntry NarratableEntryOfComponent(Component text) {
+        if(text == null) {
+            return null;
+        }
+        return new NarratableEntry() {
+            @Override
+            public NarratableEntry.@NonNull NarrationPriority narrationPriority() {
+                return NarrationPriority.HOVERED;
+            }
+
+            @Override
+            public void updateNarration(@NonNull NarrationElementOutput output) {
+                output.add(NarratedElementType.TITLE, text);
+            }
+        };
     }
 }
