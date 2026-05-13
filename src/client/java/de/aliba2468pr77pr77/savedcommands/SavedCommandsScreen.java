@@ -1,13 +1,15 @@
 package de.aliba2468pr77pr77.savedcommands;
 
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -24,12 +26,14 @@ import java.util.Objects;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
-import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
-    Button AddButton;
+    Button addButton;
     CommandList commandList;
+
+    boolean otherPlayersOnServer; // disables/enables the share buttons
 
     int listWidth;
     int listHeight;
@@ -57,15 +61,18 @@ public class SavedCommandsScreen extends Screen {
         this.SearchBar.setHint(Component.translatable("screen.savedcommands.searchsavebar"));
         this.addRenderableWidget(this.SearchBar);
 
-        AddButton = Button.builder(
-                Component.literal("+"),
-                b -> {
-                    LOGGER.info("Add command button clicked!");
-                    addCommand();
-                }
-        ).bounds(20 + this.width - 40 - 20, 20, 20, 20).build();
+        addButton = Button.builder(
+                        Component.literal("+"),
+                        b -> {
+                            LOGGER.info("Add command button clicked!");
+                            addCommand();
+                        }
+                ).bounds(20 + this.width - 40 - 20, 20, 20, 20)
+                .createNarration((_) -> Component.translatable("screen.savedcommands.savenewcommandbutton")).build();
+        otherPlayersOnServer = minecraft.getConnection() != null
+                && minecraft.getConnection().getOnlinePlayers().size() > 1;
 
-        this.addRenderableWidget(this.AddButton);
+        this.addRenderableWidget(this.addButton);
 
         listWidth = this.width;
         listHeight = this.height - 50;
@@ -80,6 +87,10 @@ public class SavedCommandsScreen extends Screen {
         CommandSuggestor.setAllowHiding(false);
         CommandSuggestor.setAllowSuggestions(true);
         CommandSuggestor.updateCommandInfo();
+    }
+
+    public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
+        this.otherPlayersOnServer = otherPlayersOnServer;
     }
 
     @Override
@@ -124,6 +135,11 @@ public class SavedCommandsScreen extends Screen {
     }
 
     public void updateSearch(String search) {
+        if (search.isEmpty()) {
+            addButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.savenewcommandbutton")));
+        } else {
+            addButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.savecommandfromsearchbutton", search)));
+        }
         List<CommandList.BaseEntry> newList = new ArrayList<>();
         for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
@@ -196,26 +212,7 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public void extractRenderState(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        // set all buttons to not visible in a loop (They will be set back to visible by commandList)
-        for (CommandList.BaseEntry entry : commandList.children()) {
-            if (entry instanceof CommandList.CommandEntry comEntry) {
-                comEntry.deleteButton.visible = false;
-                comEntry.editButton.visible = false;
-            }
-        }
-
         this.commandList.extractRenderState(context, mouseX, mouseY, delta);
-
-        context.enableScissor(0, listTop, this.width, this.height);
-
-        for (CommandList.BaseEntry e : this.commandList.children()) {
-            if (e instanceof CommandList.CommandEntry comEntry) {
-                comEntry.deleteButton.extractRenderState(context, mouseX, mouseY, delta);
-                comEntry.editButton.extractRenderState(context, mouseX, mouseY, delta);
-            }
-        }
-
-        context.disableScissor();
 
         CommandSuggestor.extractRenderState(context, mouseX, mouseY);
 
@@ -243,7 +240,7 @@ public class SavedCommandsScreen extends Screen {
         SearchBar.setValue("");
     }
 
-    private class CommandList extends AbstractSelectionList<CommandList.BaseEntry> {
+    private class CommandList extends ContainerObjectSelectionList<CommandList.BaseEntry> {
         public CommandList(Minecraft client, int width, int height, int top, int itemHeight) {
             super(client, width, height, top, itemHeight);
             this.clearEntries();
@@ -263,14 +260,20 @@ public class SavedCommandsScreen extends Screen {
             return this.width - 6;
         }
 
-        @Override
-        protected void updateWidgetNarration(@NonNull NarrationElementOutput output) {
-        }
-
-        public static class BaseEntry extends AbstractSelectionList.Entry<BaseEntry> {
+        public static class BaseEntry extends ContainerObjectSelectionList.Entry<BaseEntry> {
             @Override
             public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
                 // Implementation in CommandEntry and CategoryTitleEntry!
+            }
+
+            @Override
+            public @NonNull List<? extends NarratableEntry> narratables() {
+                return List.of();
+            }
+
+            @Override
+            public @NonNull List<? extends GuiEventListener> children() {
+                return List.of();
             }
         }
 
@@ -280,42 +283,43 @@ public class SavedCommandsScreen extends Screen {
             int indexDataList;
             IconButton deleteButton;
             IconButton editButton;
+            IconButton shareButton;
 
             public CommandEntry(String command, String name, int indexDataList) {
                 this.command = command;
                 this.name = name;
                 this.indexDataList = indexDataList;
 
-                deleteButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), null);
-                deleteButton.visible = false;
+                deleteButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), button -> {
+                    LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
+                    commandManager.removeCommand(indexDataList);
+                    updateSearch(SearchBar.getValue());
+                }, Component.translatable("selectWorld.deleteButton"));
 
-                editButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), null);
-                editButton.visible = false;
+                editButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
+                    LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
+                    minecraft.setScreen(new EditCommandScreen(minecraft.screen, commandManager.data.commands.get(indexDataList)));
+                }, Component.translatable("selectWorld.edit"));
 
-                assert minecraft.screen != null;
+                shareButton = new IconButton(0, 0, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/share.png"), button -> {
+                    LOGGER.info("Clicked on share " + this.command + " index " + indexDataList);
+                }, Component.translatable("screen.savedcommands.share"));
+                shareButton.active = otherPlayersOnServer;
             }
 
             @Override
-            public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+            public boolean mouseClicked(@NonNull MouseButtonEvent click, boolean doubled) {
+                if (super.mouseClicked(click, doubled)) {
+                    return true;
+                }
+                if (shareButton.isHovered()) { // Ignore clicks on share if the button is not active.
+                    return false;
+                }
                 if (click.button() != 0) {
                     return false;
                 }
-                if (deleteButton.isHovered()) {
-                    LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
-                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-
-                    commandManager.removeCommand(indexDataList);
-                    updateSearch(SearchBar.getValue());
-                    return true;
-                }
-                if (editButton.isHovered()) {
-                    LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
-                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-
-                    minecraft.setScreen(new EditCommandScreen(minecraft.screen, commandManager.data.commands.get(indexDataList)));
-                    return true;
-                }
                 LOGGER.info("Clicked on command " + this.command);
+                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 minecraft.setScreen(null);
                 SavedCommandManager.sendCommandAndInsertVariables(commandManager.data.commands.get(indexDataList), null);
                 return true;
@@ -323,6 +327,8 @@ public class SavedCommandsScreen extends Screen {
 
             @Override
             public void extractContent(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
+                shareButton.active = otherPlayersOnServer;
+
                 int x = this.getX() + 2;
                 int y = this.getY() + 2;
                 int entryHeight = this.getHeight() - 4;
@@ -334,24 +340,50 @@ public class SavedCommandsScreen extends Screen {
                     int textX = x + 3;
                     int textY = y + (entryHeight - minecraft.font.lineHeight) / 2 + 1;
 
-                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
                 } else {
                     int fontHeight = minecraft.font.lineHeight;
                     int textX = x + 3;
                     int textY = y + (entryHeight - minecraft.font.lineHeight * 2 - 2) / 2 + 1;
 
-                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.name, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.name, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
 
                     textY += fontHeight + 2;
 
-                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 60, ChatFormatting.RESET)), textX, textY, 0xFFBBBBBB, true);
+                    context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFBBBBBB, true);
                 }
 
                 deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
-                deleteButton.visible = true;
+                deleteButton.extractRenderState(context, mouseX, mouseY, deltaTicks);
 
                 editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
-                editButton.visible = true;
+                editButton.extractRenderState(context, mouseX, mouseY, deltaTicks);
+
+                shareButton.setPosition(entryWidth - 80, y + (entryHeight - 20) / 2);
+                shareButton.extractRenderState(context, mouseX, mouseY, deltaTicks);
+
+                if (hovered && !deleteButton.isHovered()
+                        && !editButton.isHovered()
+                        && !shareButton.isHovered()) {
+                    context.setTooltipForNextFrame(command.charAt(0) == '/' ?
+                            Component.translatable("screen.savedcommands.sendcommandfromlist") : Component.translatable("screen.savedcommands.sendchatfromlist"), mouseX, mouseY);
+                    context.requestCursor(CursorTypes.POINTING_HAND);
+                }
+            }
+
+            @Override
+            public @NonNull List<? extends NarratableEntry> narratables() {
+                if (name != null) {
+                    return List.of(NarratableEntryOfString(name), NarratableEntryOfString(command), shareButton, editButton, deleteButton);
+                } else {
+                    return List.of(NarratableEntryOfString(command), shareButton, editButton, deleteButton);
+                }
+
+            }
+
+            @Override
+            public @NonNull List<? extends GuiEventListener> children() {
+                return List.of(shareButton, editButton, deleteButton);
             }
         }
 
@@ -379,6 +411,11 @@ public class SavedCommandsScreen extends Screen {
                 int textY = this.getY() + this.getHeight() - minecraft.font.lineHeight - 2;
 
                 context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, ChatFormatting.BOLD)).withStyle(ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF, true);
+            }
+
+            @Override
+            public @NonNull List<? extends NarratableEntry> narratables() {
+                return List.of(NarratableEntryOfString(categoryTitle));
             }
         }
     }
