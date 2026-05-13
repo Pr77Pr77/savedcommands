@@ -8,7 +8,8 @@
     "MouseMixin",
     "SearchSuggestionWindow",
     "SearchSuggestor",
-    "SuggestionWindowInvoker"
+    "SuggestionWindowInvoker",
+    "ClientPacketListenerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
