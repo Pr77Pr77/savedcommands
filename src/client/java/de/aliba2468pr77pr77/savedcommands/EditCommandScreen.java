@@ -1,7 +1,6 @@
 package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -11,7 +10,6 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Tooltip;
@@ -34,8 +32,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePla
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static net.minecraft.network.chat.Component.translatable;
 
-public class EditCommandScreen extends Screen {
-    private final Screen parent;
+public class EditCommandScreen extends PopupScreen {
     private Button closeButton;
     public EditBox commandTextField;
     private EditBox nameTextField;
@@ -50,14 +47,8 @@ public class EditCommandScreen extends Screen {
 
     CommandSuggestions CommandSuggestor;
 
-    public int popupW;
-    public int popupH;
-    public int popupX;
-    public int popupY;
-
     public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
-        super(translatable("screen.savedcommands.editpopup"));
-        this.parent = parent;
+        super(translatable("screen.savedcommands.editpopup"), parent, 230, 300);
         this.data = data;
         insertedVariables = new InsertedVariables();
     }
@@ -184,11 +175,6 @@ public class EditCommandScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(230, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
 
         this.closeButton = Button.builder(translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
 
@@ -423,20 +409,7 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(230, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
-
-        int textWidth = this.font.width(title);
-        ctx.text(
-                this.font,
-                title,
-                (this.width - textWidth) / 2,
-                popupY + 10,
-                0xFFFFFFFF,
-                false
-        );
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
 
         ctx.text(
                 this.font,
@@ -474,22 +447,7 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        super.extractRenderState(ctx, mouseX, mouseY, delta);
-
         CommandSuggestor.extractRenderState(ctx, mouseX, mouseY);
-    }
-
-    @Override
-    public void extractBackground(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
-        if (parent == null) {
-            super.extractBackground(context, mouseX, mouseY, deltaTicks);
-        } else {
-            this.parent.extractBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.extractRenderState(context, -2147483648, -2147483648, deltaTicks);
-            context.requestCursor(CursorTypes.ARROW);
-            context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.blitSprite(RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
-        }
     }
 
     @Override
@@ -500,7 +458,6 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean mouseClicked(final @NonNull MouseButtonEvent click, final boolean doubled) {
-        LOGGER.info("Clicked Mouse!");
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
@@ -518,7 +475,6 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean mouseReleased(final @NonNull MouseButtonEvent click) {
-        LOGGER.info("Released Mouse!");
         if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
             keybindSetting = false;
             commandManager.saveAsync();
@@ -540,7 +496,6 @@ public class EditCommandScreen extends Screen {
 
     @Override
     public boolean keyPressed(final @NonNull KeyEvent input) {
-        LOGGER.info("Pressed Key!");
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
@@ -553,16 +508,11 @@ public class EditCommandScreen extends Screen {
         if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            exit();
-            return true;
-        }
         return super.keyPressed(input);
     }
 
     @Override
     public boolean keyReleased(final @NonNull KeyEvent input) {
-        LOGGER.info("Released Key!");
         if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
             keybindSetting = false;
             commandManager.saveAsync();
@@ -598,13 +548,10 @@ public class EditCommandScreen extends Screen {
         return true;
     }
 
-    private void exit() {
+    @Override
+    void exit() {
         save(false);
-        if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen());
-        } else {
-            minecraft.setScreen(parent);
-        }
+        super.exit();
     }
 
     static class conflictSavedCommands { // Conflict with other keybinds of this mod

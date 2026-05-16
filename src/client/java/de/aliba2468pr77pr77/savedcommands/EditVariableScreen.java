@@ -1,6 +1,5 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
@@ -9,7 +8,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -20,8 +18,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandMana
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 
-public class EditVariableScreen extends Screen {
-    private final Screen parent;
+public class EditVariableScreen extends PopupScreen {
     private Button closeButton;
     private Button deleteButton;
 
@@ -36,20 +33,13 @@ public class EditVariableScreen extends Screen {
     private SavedCommandManager.CommandData.@Nullable variable data;
     private final SavedCommandManager.@Nullable CommandData commandData;
 
-    public int popupW;
-    public int popupH;
-    public int popupX;
-    public int popupY;
-
     public EditVariableScreen(Screen parent, SavedCommandManager.@Nullable CommandData commandData) {
-        super(Component.translatable("screen.savedcommands.createvariable"));
-        this.parent = parent;
+        super(Component.translatable("screen.savedcommands.createvariable"), parent, 190, 280);
         this.commandData = commandData;
     }
 
     public EditVariableScreen(Screen parent, SavedCommandManager.CommandData.@Nullable variable data, SavedCommandManager.@Nullable CommandData commandData) {
-        super(Component.translatable("screen.savedcommands.editvariable"));
-        this.parent = parent;
+        super(Component.translatable("screen.savedcommands.editvariable"), parent, 190, 280);
         this.data = data;
         this.commandData = commandData;
     }
@@ -57,11 +47,6 @@ public class EditVariableScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-
-        popupW = Math.min(280, this.width - 20);
-        popupH = Math.min(190, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
 
         if (data != null) {
             this.closeButton = Button.builder(Component.translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
@@ -219,20 +204,7 @@ public class EditVariableScreen extends Screen {
 
     @Override
     public void extractRenderState(final @NonNull GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(280, this.width - 20);
-        popupH = Math.min(190, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
-
-        int textWidth = this.font.width(title);
-        ctx.text(
-                this.font,
-                title,
-                (this.width - textWidth) / 2,
-                popupY + 10,
-                0xFFFFFFFF,
-                false
-        );
+        super.extractRenderState(ctx, mouseX, mouseY, delta);
 
         ctx.text(
                 this.font,
@@ -271,21 +243,6 @@ public class EditVariableScreen extends Screen {
                 0xFFFFFFFF,
                 true
         );
-
-        super.extractRenderState(ctx, mouseX, mouseY, delta);
-    }
-
-    @Override
-    public void extractBackground(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, float deltaTicks) {
-        if (parent == null) {
-            super.extractBackground(context, mouseX, mouseY, deltaTicks);
-        } else {
-            this.parent.extractBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.extractRenderState(context, -2147483648, -2147483648, deltaTicks);
-            context.requestCursor(CursorTypes.ARROW);
-            context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
-        }
     }
 
     @Override
@@ -301,7 +258,8 @@ public class EditVariableScreen extends Screen {
         return super.keyPressed(input);
     }
 
-    private void exit() {
+    @Override
+    void exit() {
         exit(true);
     }
 
