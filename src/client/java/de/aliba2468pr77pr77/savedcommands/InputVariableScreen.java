@@ -1,6 +1,5 @@
 package de.aliba2468pr77pr77.savedcommands;
 
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -8,7 +7,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -19,10 +17,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandManager.sendCommand
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen.shortenTextIfNeeded;
 
-public class InputVariableScreen extends Screen {
-    @Nullable
-    private final Screen parent;
-
+public class InputVariableScreen extends PopupScreen {
     private Button cancelButton;
     private Button doneButton;
 
@@ -31,29 +26,16 @@ public class InputVariableScreen extends Screen {
     private final String preInsertedCommand;
     List<SavedCommandManager.CommandData.variable> userEditableVariablesLeft;
 
-    public int popupW;
-    public int popupH;
-    public int popupX;
-    public int popupY;
-    private int contentH = 60;
-
     public InputVariableScreen(String preInsertedCommand, List<SavedCommandManager.CommandData.variable> userEditableVariablesLeft, @Nullable Screen parent) {
-        super(Component.translatable("screen.savedcommands.entervariablevalues"));
-        this.parent = parent;
+        super(Component.translatable("screen.savedcommands.entervariablevalues"), parent, 60, 300);
         this.preInsertedCommand = preInsertedCommand;
         this.userEditableVariablesLeft = userEditableVariablesLeft;
     }
 
     @Override
     protected void init() {
-        super.init();
-
         contentH = (userEditableVariablesLeft.size() + 2) * 40;
-
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(contentH, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
+        super.init();
 
         variableInputTextFields = new ArrayList<>();
 
@@ -95,21 +77,8 @@ public class InputVariableScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(contentH, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
-
-        int textWidth = this.font.width(title);
-        ctx.drawString(
-                this.font,
-                title,
-                (this.width - textWidth) / 2,
-                popupY + 10,
-                0xFFFFFFFF,
-                false
-        );
+    public void render(@NonNull GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        super.render(ctx, mouseX, mouseY, delta);
 
         for (EditBox variableInputTextField : variableInputTextFields) {
             ctx.drawString(
@@ -121,35 +90,19 @@ public class InputVariableScreen extends Screen {
                     true
             );
         }
-
-        super.render(ctx, mouseX, mouseY, delta);
-    }
-
-    @Override
-    public void renderBackground(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
-        if (parent == null) {
-            super.renderBackground(context, mouseX, mouseY, deltaTicks);
-        } else {
-            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.requestCursor(CursorTypes.ARROW);
-            context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, Identifier.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
-        }
     }
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            exit();
-            return true;
-        } else if (input.isConfirmation()) {
+        if (input.isConfirmation()) {
             exit(true);
+            return true;
         }
         return super.keyPressed(input);
     }
 
-    private void exit() {
+    @Override
+    void exit() {
         exit(false);
     }
 
