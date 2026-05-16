@@ -11,6 +11,7 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public class SavedCommandsClient implements ClientModInitializer {
         }
         return new NarratableEntry() {
             @Override
-            public NarrationPriority narrationPriority() {
+            public @NotNull NarrationPriority narrationPriority() {
                 return NarrationPriority.HOVERED;
             }
 

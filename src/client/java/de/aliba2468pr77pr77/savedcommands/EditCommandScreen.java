@@ -1,7 +1,6 @@
 package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -11,7 +10,6 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Tooltip;
@@ -19,6 +17,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
@@ -33,8 +32,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePla
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static net.minecraft.network.chat.Component.translatable;
 
-public class EditCommandScreen extends Screen {
-    private final Screen parent;
+public class EditCommandScreen extends PopupScreen {
     private Button closeButton;
     public EditBox commandTextField;
     private EditBox nameTextField;
@@ -49,14 +47,8 @@ public class EditCommandScreen extends Screen {
 
     CommandSuggestions CommandSuggestor;
 
-    public int popupW;
-    public int popupH;
-    public int popupX;
-    public int popupY;
-
     public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
-        super(translatable("screen.savedcommands.editpopup"));
-        this.parent = parent;
+        super(translatable("screen.savedcommands.editpopup"), parent, 230, 300);
         this.data = data;
         insertedVariables = new InsertedVariables();
     }
@@ -183,11 +175,6 @@ public class EditCommandScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(230, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
 
         this.closeButton = Button.builder(translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
 
@@ -423,21 +410,8 @@ public class EditCommandScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(300, this.width - 20);
-        popupH = Math.min(230, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
-
-        int textWidth = this.font.width(title);
-        ctx.drawString(
-                this.font,
-                title,
-                (this.width - textWidth) / 2,
-                popupY + 10,
-                0xFFFFFFFF,
-                false
-        );
+    public void render(@NotNull GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        super.render(ctx, mouseX, mouseY, delta);
 
         ctx.drawString(
                 this.font,
@@ -475,22 +449,7 @@ public class EditCommandScreen extends Screen {
                 true
         );
 
-        super.render(ctx, mouseX, mouseY, delta);
-
         CommandSuggestor.render(ctx, mouseX, mouseY);
-    }
-
-    @Override
-    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
-        if (parent == null) {
-            super.renderBackground(context, mouseX, mouseY, deltaTicks);
-        } else {
-            this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
-            this.parent.render(context, -2147483648, -2147483648, deltaTicks);
-            context.requestCursor(CursorTypes.ARROW);
-            context.fill(0, 0, this.width, this.height, 0x88000000);
-            context.blitSprite(RenderPipelines.GUI_TEXTURED, ResourceLocation.withDefaultNamespace("popup/background"), popupX, popupY, popupW, popupH);
-        }
     }
 
     @Override
@@ -551,10 +510,6 @@ public class EditCommandScreen extends Screen {
         if (CommandSuggestor.keyPressed(input)) {
             return true;
         }
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            exit();
-            return true;
-        }
         return super.keyPressed(input);
     }
 
@@ -596,14 +551,10 @@ public class EditCommandScreen extends Screen {
         return true;
     }
 
-    private void exit() {
+    @Override
+    void exit() {
         save(false);
-        assert minecraft != null;
-        if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen());
-        } else {
-            minecraft.setScreen(parent);
-        }
+        super.exit();
     }
 
     static class conflictSavedCommands { // Conflict with other keybinds of this mod
