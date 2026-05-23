@@ -1,6 +1,7 @@
 package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import de.aliba2468pr77pr77.savedcommands.share.SharePlayerSelectionScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,7 +31,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
-    Button addButton;
+    protected Button addButton;
     CommandList commandList;
 
     boolean otherPlayersOnServer; // disables/enables the share buttons
@@ -44,7 +45,7 @@ public class SavedCommandsScreen extends Screen {
 
     @Nullable GuiEventListener focused;
 
-    protected SavedCommandsScreen() {
+    public SavedCommandsScreen() {
         super(Component.translatable("screen.savedcommands.commandscreentitle"));
     }
 
@@ -73,7 +74,7 @@ public class SavedCommandsScreen extends Screen {
                             addCommand();
                         }
                 ).bounds(20 + this.width - 40 - 20, 20, 20, 20)
-                .createNarration((unused) -> Component.translatable("screen.savedcommands.savenewcommandbutton")).build();
+                .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.savenewcommandbutton")).build();
         assert minecraft != null;
         otherPlayersOnServer = minecraft.getConnection() != null
                 && minecraft.getConnection().getOnlinePlayers().size() > 1;
@@ -299,9 +300,9 @@ public class SavedCommandsScreen extends Screen {
         }
 
         public class CommandEntry extends BaseEntry {
-            String command;
-            String name;
-            int indexDataList;
+            protected String command;
+            protected String name;
+            protected int indexDataList;
             IconButton deleteButton;
             IconButton editButton;
             IconButton shareButton;

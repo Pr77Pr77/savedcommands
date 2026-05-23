@@ -262,7 +262,7 @@ public class EditVariableScreen extends PopupScreen {
     }
 
     @Override
-    void exit() {
+    protected void exit() {
         exit(true);
     }
 

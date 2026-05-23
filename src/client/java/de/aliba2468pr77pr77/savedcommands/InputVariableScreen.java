@@ -103,7 +103,7 @@ public class InputVariableScreen extends PopupScreen {
     }
 
     @Override
-    void exit() {
+    protected void exit() {
         exit(false);
     }
 

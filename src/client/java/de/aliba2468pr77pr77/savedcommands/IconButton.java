@@ -12,7 +12,7 @@ public class IconButton extends Button {
     private final ResourceLocation icon;
 
     public IconButton(final int x, final int y, final int width, final int height, ResourceLocation icon, final OnPress onPress, Component tooltipNarration) {
-        super(x, y, width, height, Component.empty(), onPress, (unused) -> (MutableComponent) tooltipNarration);
+        super(x, y, width, height, Component.empty(), onPress, (componentSupplier) -> (MutableComponent) tooltipNarration);
         setTooltip(Tooltip.create(tooltipNarration));
         this.icon = icon;
     }
