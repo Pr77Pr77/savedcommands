@@ -1,6 +1,8 @@
-package de.aliba2468pr77pr77.savedcommands;
+package de.aliba2468pr77pr77.savedcommands.share;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import de.aliba2468pr77pr77.savedcommands.*;
+import de.aliba2468pr77pr77.savedcommands.PopupScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
@@ -30,7 +32,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
 
     private ShareSelectionList shareSelectionList;
 
-    SharePlayerSelectionScreen(Screen parent, List<SavedCommandManager.CommandData> commands) {
+    public SharePlayerSelectionScreen(Screen parent, List<SavedCommandManager.CommandData> commands) {
         super(Component.translatable("screen.savedcommands.share.selectplayers"), parent, 300, 320);
         this.commands = commands;
     }
@@ -88,14 +90,17 @@ public class SharePlayerSelectionScreen extends PopupScreen {
     }
 
     @Override
-    void exit() {
+    protected void exit() {
         exit(exitTypes.CANCEL);
     }
 
     private void exit(exitTypes exitType) {
         switch (exitType) {
             case SEND:
-                // TODO
+                chosenPlayers.forEach(player -> SavedCommandsClient.sharingManager.recipients.put(player, SharingManager.States.WAITING_FOR_SENDING));
+                SavedCommandsClient.sharingManager.commands = commands;
+                SavedCommandsClient.sharingManager.sendInitialMessage();
+                minecraft.setScreen(new ShareStatusScreen(parent));
                 break;
             case SELECT_MORE_COMMANDS:
                 minecraft.setScreen(new ShareCommandsSelectionScreen(this));
@@ -134,20 +139,18 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         private void addPlayers(Collection<PlayerInfo> players) {
             clearEntries();
             for (PlayerInfo playerInfo : players) {
-                super.addEntry(new PlayerEntry(this.minecraft, playerInfo, chosenPlayers.contains(playerInfo)));
+                super.addEntry(new PlayerEntry(playerInfo, chosenPlayers.contains(playerInfo)));
                 super.children().getLast().init();
             }
         }
 
         public class PlayerEntry extends ContainerObjectSelectionList.Entry<ShareSelectionList.PlayerEntry> {
-            Minecraft minecraft;
             PlayerInfo playerInfo;
 
             private Checkbox checkbox;
             private final boolean checkedInitial;
 
-            PlayerEntry(Minecraft minecraft, PlayerInfo playerInfo, boolean checked) {
-                this.minecraft = minecraft;
+            PlayerEntry(PlayerInfo playerInfo, boolean checked) {
                 this.playerInfo = playerInfo;
                 checkedInitial = checked;
             }

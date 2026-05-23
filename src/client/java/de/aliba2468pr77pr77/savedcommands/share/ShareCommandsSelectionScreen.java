@@ -1,6 +1,7 @@
-package de.aliba2468pr77pr77.savedcommands;
+package de.aliba2468pr77pr77.savedcommands.share;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -134,7 +135,6 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
                 } else {
                     return List.of(NarratableEntryOfString(command));
                 }
-
             }
 
             @Override

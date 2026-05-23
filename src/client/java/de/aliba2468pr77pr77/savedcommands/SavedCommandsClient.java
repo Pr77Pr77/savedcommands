@@ -1,9 +1,11 @@
 package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import de.aliba2468pr77pr77.savedcommands.share.SharingManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -22,6 +24,8 @@ public class SavedCommandsClient implements ClientModInitializer {
     public static List<InputConstants.Key> pressedPartialCombination;
 
     final static char VariablePlaceholder = '\uE177'; // Added in front of the abbreviation to ensure that it is a variable
+
+    public static SharingManager sharingManager;
 
     @Override
     public void onInitializeClient() {
@@ -43,20 +47,30 @@ public class SavedCommandsClient implements ClientModInitializer {
             }
         });
 
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, _) -> sharingManager.shareHandler(message.getString()));
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, _, sender, _, _) -> {
+            if (sender != null) {
+                return sharingManager.shareHandler(message.getString(), sender.name());
+            } else {
+                return sharingManager.shareHandler(message.getString());
+            }
+        });
+
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             commandManager = new SavedCommandManager();
+            sharingManager = new SharingManager();
         });
     }
 
     public static NarratableEntry NarratableEntryOfString(String text) {
-        if(text == null) {
+        if (text == null) {
             return null;
         }
         return NarratableEntryOfComponent(Component.literal(text));
     }
 
     public static NarratableEntry NarratableEntryOfComponent(Component text) {
-        if(text == null) {
+        if (text == null) {
             return null;
         }
         return new NarratableEntry() {

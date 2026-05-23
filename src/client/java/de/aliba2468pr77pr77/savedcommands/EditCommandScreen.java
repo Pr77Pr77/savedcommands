@@ -549,7 +549,7 @@ public class EditCommandScreen extends PopupScreen {
     }
 
     @Override
-    void exit() {
+    protected void exit() {
         save(false);
         super.exit();
     }
