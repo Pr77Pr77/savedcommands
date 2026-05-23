@@ -197,7 +197,7 @@ public class EditCommandScreen extends PopupScreen {
                     minecraft.setScreen(new EditVariableScreen(this, data));
                 }).bounds(popupX + 20, popupY + 85, 20, 20)
                 .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.createvariable")))
-                .createNarration((unused) -> Component.translatable("screen.savedcommands.createvariable")).build();
+                .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.createvariable")).build();
         this.addRenderableWidget(this.addVariableButton);
 
         if (data != null && data.variables != null) {
@@ -208,7 +208,7 @@ public class EditCommandScreen extends PopupScreen {
                             commandTextField.setValue(commandTextField.getValue().substring(0, commandTextField.getCursorPosition()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getValue().substring(commandTextField.getCursorPosition()));
                         }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 85, 20, 20)
                         .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(variableIndex).name)))
-                        .createNarration((unused) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
+                        .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
                 this.addRenderableWidget(variableButton);
 
                 Button variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), b -> {
@@ -549,7 +549,7 @@ public class EditCommandScreen extends PopupScreen {
     }
 
     @Override
-    void exit() {
+    protected void exit() {
         save(false);
         super.exit();
     }

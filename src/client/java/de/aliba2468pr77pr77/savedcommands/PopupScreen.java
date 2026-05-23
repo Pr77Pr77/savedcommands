@@ -9,7 +9,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 public abstract class PopupScreen extends Screen {
-    Screen parent;
+    protected Screen parent;
 
     public int popupW;
     public int popupH;
@@ -18,7 +18,7 @@ public abstract class PopupScreen extends Screen {
     public int contentH;
     public int contentW;
 
-    PopupScreen(Component title, Screen parent, int contentH, int contentW) {
+    public PopupScreen(Component title, Screen parent, int contentH, int contentW) {
         super(title);
         this.parent = parent;
         this.contentH = contentH;
@@ -77,7 +77,7 @@ public abstract class PopupScreen extends Screen {
         return super.keyPressed(input);
     }
 
-    void exit() {
+    protected void exit() {
         if (parent instanceof SavedCommandsScreen) {
             minecraft.setScreen(new SavedCommandsScreen());
         } else {

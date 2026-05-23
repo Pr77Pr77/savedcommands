@@ -13,7 +13,7 @@ public class IconButton extends Button {
     private final Identifier icon;
 
     public IconButton(final int x, final int y, final int width, final int height, Identifier icon, final OnPress onPress, Component tooltipNarration) {
-        super(x, y, width, height, Component.empty(), onPress, (unused) -> (MutableComponent) tooltipNarration);
+        super(x, y, width, height, Component.empty(), onPress, (componentSupplier) -> (MutableComponent) tooltipNarration);
         setTooltip(Tooltip.create(tooltipNarration));
         this.icon = icon;
     }
