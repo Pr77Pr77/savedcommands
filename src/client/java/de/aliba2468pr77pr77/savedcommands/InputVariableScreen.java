@@ -70,10 +70,10 @@ public class InputVariableScreen extends PopupScreen {
             }
         }
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> exit()).bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), button -> exit()).bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
-        this.doneButton = Button.builder(Component.translatable("screen.savedcommands.send"), b -> exit(true)).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.doneButton = Button.builder(Component.translatable("screen.savedcommands.send"), button -> exit(true)).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         this.addRenderableWidget(this.doneButton);
     }
 
@@ -130,12 +130,7 @@ public class InputVariableScreen extends PopupScreen {
             sendCommand(insertedCommand.toString());
         }
 
-        assert minecraft != null;
-        if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen());
-        } else {
-            minecraft.setScreen(parent);
-        }
+        super.exit();
     }
 
     private StringBuilder insertVariableValue(int variableIndex, String variableValue, StringBuilder insertedCommand) {

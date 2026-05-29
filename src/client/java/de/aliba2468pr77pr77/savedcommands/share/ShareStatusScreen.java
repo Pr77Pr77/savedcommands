@@ -36,7 +36,7 @@ public class ShareStatusScreen extends PopupScreen {
         shareStatusList.addPlayers(SavedCommandsClient.sharingManager.recipients);
         this.addRenderableWidget(this.shareStatusList);
 
-        this.closeButton = Button.builder(Component.translatable("gui.cancel"), b -> exit()).bounds((this.width - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        this.closeButton = Button.builder(Component.translatable("gui.cancel"), button -> exit()).bounds((this.width - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         this.addRenderableWidget(this.closeButton);
     }
 
@@ -74,7 +74,7 @@ public class ShareStatusScreen extends PopupScreen {
         private void addPlayers(Map<PlayerInfo, SharingManager.States> players) {
             clearEntries();
             for (Map.Entry<PlayerInfo, SharingManager.States> player : players.entrySet()) {
-                super.addEntry(new PlayerEntry(player));
+                addEntry(new PlayerEntry(player));
             }
         }
 

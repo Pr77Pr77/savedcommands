@@ -2,13 +2,11 @@ package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import de.aliba2468pr77pr77.savedcommands.share.SharePlayerSelectionScreen;
+import de.aliba2468pr77pr77.savedcommands.share.ViewerSaverScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CommandSuggestions;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,6 +30,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
     protected Button addButton;
+    public IconButton notificationButton;
     CommandList commandList;
 
     boolean otherPlayersOnServer; // disables/enables the share buttons
@@ -45,8 +44,15 @@ public class SavedCommandsScreen extends Screen {
 
     @Nullable GuiEventListener focused;
 
+    public boolean showReceivedCommands = true;
+
     public SavedCommandsScreen() {
         super(Component.translatable("screen.savedcommands.commandscreentitle"));
+    }
+
+    public SavedCommandsScreen(boolean showReceivedCommands) {
+        super(Component.translatable("screen.savedcommands.commandscreentitle"));
+        this.showReceivedCommands = showReceivedCommands;
     }
 
     protected SavedCommandsScreen(Component title) {
@@ -54,11 +60,28 @@ public class SavedCommandsScreen extends Screen {
     }
 
     protected void init() {
-        if (this.SearchBar == null) {
-            assert minecraft != null;
-            this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+        if (!sharingManager.receivedCommandsByPlayerName.isEmpty()) {
+            notificationButton = new IconButton(20, 20, 20, 20, ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
+                    button -> {
+                        assert minecraft != null;
+                        minecraft.setScreen(new ViewerSaverScreen(this));
+                    }, Component.translatable("screen.savedcommands.share.notificationbutton"));
+            this.addRenderableWidget(notificationButton);
+            if (this.SearchBar == null) {
+                assert minecraft != null;
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            } else {
+                this.SearchBar.setPosition(20 + 20 + 5, 20);
+                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+            }
         } else {
-            this.SearchBar.setSize(this.width - 40 - 22, 20);
+            if (this.SearchBar == null) {
+                assert minecraft != null;
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            } else {
+                this.SearchBar.setPosition(20, 20);
+                this.SearchBar.setSize(this.width - 40 - 22, 20);
+            }
         }
         this.SearchBar.setMaxLength(256);
         this.SearchBar.setBordered(true);
@@ -94,6 +117,15 @@ public class SavedCommandsScreen extends Screen {
         CommandSuggestor.setAllowHiding(false);
         CommandSuggestor.setAllowSuggestions(true);
         CommandSuggestor.updateCommandInfo();
+
+        if (!sharingManager.receivedCommandsByPlayerName.isEmpty() && showReceivedCommands) {
+            minecraft.setScreen(new ViewerSaverScreen(this));
+            showReceivedCommands = false;
+        }
+    }
+
+    public <T extends GuiEventListener & Renderable & NarratableEntry> @NotNull T addRenderableWidget(final @NotNull T widget) {
+        return super.addRenderableWidget(widget);
     }
 
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {

@@ -27,6 +27,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     protected ShareCommandsSelectionScreen(SharePlayerSelectionScreen playerSelectionScreen) {
         super(Component.translatable("screen.savedcommands.share.selectmorecommands"));
         this.playerSelectionScreen = playerSelectionScreen;
+        showReceivedCommands = false;
     }
 
     @Override
@@ -34,6 +35,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         super.init();
 
         this.removeWidget(this.addButton);
+        this.removeWidget(this.notificationButton);
 
         this.selectPlayersButton = Button.builder(Component.translatable("gui.continue"), b -> {
             assert minecraft != null;
@@ -43,11 +45,12 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
 
         this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> {
             assert minecraft != null;
-            minecraft.setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen(false));
         }).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
+        this.SearchBar.setPosition(20, 20);
         this.SearchBar.setHint(Component.translatable("screen.savedcommands.share.searchcommands"));
     }
 
@@ -60,7 +63,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     public boolean keyPressed(KeyEvent input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
             assert minecraft != null;
-            minecraft.setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen(false));
             return true;
         }
         return super.keyPressed(input);
