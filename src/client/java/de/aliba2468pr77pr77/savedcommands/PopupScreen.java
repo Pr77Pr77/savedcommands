@@ -79,7 +79,7 @@ public abstract class PopupScreen extends Screen {
 
     protected void exit() {
         if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen(false));
         } else {
             minecraft.setScreen(parent);
         }

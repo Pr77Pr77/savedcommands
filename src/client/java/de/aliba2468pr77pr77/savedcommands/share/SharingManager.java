@@ -4,11 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import de.aliba2468pr77pr77.savedcommands.IconButton;
 import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
+import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -17,6 +20,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.OpenCommandScreen;
 
 public class SharingManager {
@@ -205,7 +209,7 @@ public class SharingManager {
             } catch (JsonSyntaxException e) {
                 Minecraft.getInstance().execute(() -> {
                             assert Minecraft.getInstance().player != null;
-                    LOGGER.error("A JSON error occurred while parsing shared commands by " + senderName + ": " + e.getMessage());
+                            LOGGER.error("A JSON error occurred while parsing shared commands by " + senderName + ": " + e.getMessage());
                             Objects.requireNonNull(Minecraft.getInstance().getConnection())
                                     .sendCommand("msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_ERROR + " " + Minecraft.getInstance().player.getName().getString());
                         }
@@ -225,6 +229,15 @@ public class SharingManager {
                     Component.translatable("screen.savedcommands.share.recievednotification.message",
                             senderName, OpenCommandScreen.getTranslatedKeyMessage()));
             Minecraft.getInstance().getToastManager().addToast(receivedToast);
+
+            if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+                savedCommandsScreen.notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
+                        button -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(savedCommandsScreen)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+                savedCommandsScreen.addRenderableWidget(savedCommandsScreen.notificationButton);
+
+                savedCommandsScreen.SearchBar.setPosition(20 + 20 + 5, 20);
+                savedCommandsScreen.SearchBar.setSize(savedCommandsScreen.width - 40 - 22 - 20 - 5, 20);
+            }
 
             Minecraft.getInstance().execute(() -> {
                         assert Minecraft.getInstance().player != null;
