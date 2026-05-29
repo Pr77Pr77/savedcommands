@@ -27,6 +27,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     protected ShareCommandsSelectionScreen(SharePlayerSelectionScreen playerSelectionScreen) {
         this.playerSelectionScreen = playerSelectionScreen;
         super(Component.translatable("screen.savedcommands.share.selectmorecommands"));
+        showReceivedCommands = false;
     }
 
     @Override
@@ -34,14 +35,16 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         super.init();
 
         this.removeWidget(this.addButton);
+        this.removeWidget(this.notificationButton);
 
-        this.selectPlayersButton = Button.builder(Component.translatable("gui.continue"), b -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
+        this.selectPlayersButton = Button.builder(Component.translatable("gui.continue"), _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.selectPlayersButton);
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> minecraft.setScreen(new SavedCommandsScreen())).bounds(width - 20 - 75, 20, 75, 20).build();
+        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), _ -> minecraft.setScreen(new SavedCommandsScreen(false))).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
+        this.SearchBar.setPosition(20, 20);
         this.SearchBar.setHint(Component.translatable("screen.savedcommands.share.searchcommands"));
     }
 
@@ -53,7 +56,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     @Override
     public boolean keyPressed(KeyEvent input) {
         if (input.isEscape() && this.shouldCloseOnEsc()) {
-            minecraft.setScreen(new SavedCommandsScreen());
+            minecraft.setScreen(new SavedCommandsScreen(false));
             return true;
         }
         return super.keyPressed(input);

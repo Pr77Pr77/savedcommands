@@ -48,7 +48,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         this.searchBar.setHint(Component.translatable("screen.savedcommands.share.searchplayers"));
         this.addRenderableWidget(this.searchBar);
 
-        this.selectMoreCommandsButton = Button.builder(Component.translatable("screen.savedcommands.share.selectmorecommands"), b -> exit(exitTypes.SELECT_MORE_COMMANDS)).bounds(popupX + popupW - 135 - 10, popupY + 22, 135, 20).build();
+        this.selectMoreCommandsButton = Button.builder(Component.translatable("screen.savedcommands.share.selectmorecommands"), _ -> exit(exitTypes.SELECT_MORE_COMMANDS)).bounds(popupX + popupW - 135 - 10, popupY + 22, 135, 20).build();
         this.addRenderableWidget(this.selectMoreCommandsButton);
 
         shareSelectionList = new ShareSelectionList(minecraft, popupW - 6 * 2, popupH - 35 - 35 - 25, popupY + 35 + 25, 36);
@@ -56,11 +56,11 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         shareSelectionList.addPlayers(getOtherPlayers());
         this.addRenderableWidget(this.shareSelectionList);
 
-        this.sendButton = Button.builder(Component.translatable("screen.savedcommands.send"), b -> exit(exitTypes.SEND)).bounds(popupX + (popupW - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        this.sendButton = Button.builder(Component.translatable("screen.savedcommands.send"), _ -> exit(exitTypes.SEND)).bounds(popupX + (popupW - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         sendButton.active = !chosenPlayers.isEmpty();
         this.addRenderableWidget(this.sendButton);
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> exit()).bounds(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), _ -> exit()).bounds(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         this.addRenderableWidget(this.cancelButton);
     }
 
@@ -106,11 +106,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
                 minecraft.setScreen(new ShareCommandsSelectionScreen(this));
                 break;
             case CANCEL:
-                if (parent instanceof SavedCommandsScreen) {
-                    minecraft.setScreen(new SavedCommandsScreen());
-                } else {
-                    minecraft.setScreen(parent);
-                }
+                super.exit();
                 break;
         }
     }

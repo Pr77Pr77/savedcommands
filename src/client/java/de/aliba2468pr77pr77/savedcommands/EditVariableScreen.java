@@ -49,8 +49,8 @@ public class EditVariableScreen extends PopupScreen {
         super.init();
 
         if (data != null) {
-            this.closeButton = Button.builder(Component.translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
-            this.deleteButton = Button.builder(Component.translatable("selectWorld.deleteButton"), b -> {
+            this.closeButton = Button.builder(Component.translatable("gui.done"), _ -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.deleteButton = Button.builder(Component.translatable("selectWorld.deleteButton"), _ -> {
                 assert commandData != null;
                 commandData.variables.remove(data);
                 nameTextField.setValue("");
@@ -59,7 +59,7 @@ public class EditVariableScreen extends PopupScreen {
             }).bounds(popupX + (popupW - 100 - 100 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20, 100, 20).build();
             this.addRenderableWidget(this.deleteButton);
         } else {
-            this.closeButton = Button.builder(Component.translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.closeButton = Button.builder(Component.translatable("gui.done"), _ -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         }
 
         this.addRenderableWidget(this.closeButton);
@@ -104,7 +104,7 @@ public class EditVariableScreen extends PopupScreen {
                 CycleButton.builder(SavedCommandManager.CommandData.variable.types::getText, (data != null && data.type != null) ? data.type : SavedCommandManager.CommandData.variable.types.STRING)
                         .withValues(SavedCommandManager.CommandData.variable.types.values())
                         .create(popupX + 20, popupY + 90, popupW - 40, 20, Component.translatable("screen.savedcommands.vartype"),
-                                (btn, value) -> {
+                                (_, value) -> {
                                     LOGGER.info("Chosen variable: " + value);
                                     setDefaultValueLimitations(value);
 
@@ -282,10 +282,6 @@ public class EditVariableScreen extends PopupScreen {
 
             commandManager.saveAsync();
         }
-        if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen());
-        } else {
-            minecraft.setScreen(parent);
-        }
+        super.exit();
     }
 }

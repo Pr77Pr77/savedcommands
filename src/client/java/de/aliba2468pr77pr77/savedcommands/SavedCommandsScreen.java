@@ -2,13 +2,11 @@ package de.aliba2468pr77pr77.savedcommands;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import de.aliba2468pr77pr77.savedcommands.share.SharePlayerSelectionScreen;
+import de.aliba2468pr77pr77.savedcommands.share.ViewerSaverScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CommandSuggestions;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,6 +30,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
     protected Button addButton;
+    public IconButton notificationButton;
     CommandList commandList;
 
     boolean otherPlayersOnServer; // disables/enables the share buttons
@@ -45,8 +44,15 @@ public class SavedCommandsScreen extends Screen {
 
     @Nullable GuiEventListener focused;
 
+    public boolean showReceivedCommands = true;
+
     public SavedCommandsScreen() {
         super(Component.translatable("screen.savedcommands.commandscreentitle"));
+    }
+
+    public SavedCommandsScreen(boolean showReceivedCommands) {
+        super(Component.translatable("screen.savedcommands.commandscreentitle"));
+        this.showReceivedCommands = showReceivedCommands;
     }
 
     protected SavedCommandsScreen(Component title) {
@@ -54,10 +60,23 @@ public class SavedCommandsScreen extends Screen {
     }
 
     protected void init() {
-        if (this.SearchBar == null) {
-            this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+        if (!sharingManager.receivedCommandsByPlayerName.isEmpty()) {
+            notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
+                    _ -> minecraft.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+            this.addRenderableWidget(notificationButton);
+            if (this.SearchBar == null) {
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            } else {
+                this.SearchBar.setPosition(20 + 20 + 5, 20);
+                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+            }
         } else {
-            this.SearchBar.setSize(this.width - 40 - 22, 20);
+            if (this.SearchBar == null) {
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            } else {
+                this.SearchBar.setPosition(20, 20);
+                this.SearchBar.setSize(this.width - 40 - 22, 20);
+            }
         }
         this.SearchBar.setMaxLength(256);
         this.SearchBar.setBordered(true);
@@ -68,7 +87,7 @@ public class SavedCommandsScreen extends Screen {
 
         addButton = Button.builder(
                         Component.literal("+"),
-                        b -> {
+                        _ -> {
                             LOGGER.info("Add command button clicked!");
                             addCommand();
                         }
@@ -92,6 +111,15 @@ public class SavedCommandsScreen extends Screen {
         CommandSuggestor.setAllowHiding(false);
         CommandSuggestor.setAllowSuggestions(true);
         CommandSuggestor.updateCommandInfo();
+
+        if (!sharingManager.receivedCommandsByPlayerName.isEmpty() && showReceivedCommands) {
+            minecraft.setScreen(new ViewerSaverScreen(this));
+            showReceivedCommands = false;
+        }
+    }
+
+    public <T extends GuiEventListener & Renderable & NarratableEntry> @NonNull T addRenderableWidget(final @NonNull T widget) {
+        return super.addRenderableWidget(widget);
     }
 
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
@@ -315,18 +343,18 @@ public class SavedCommandsScreen extends Screen {
                 int entryHeight = this.getHeight() - 4;
                 int entryWidth = this.getWidth();
 
-                deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), button -> {
+                deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
                     LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
                     commandManager.removeCommand(indexDataList);
                     updateSearch(SearchBar.getValue());
                 }, Component.translatable("selectWorld.deleteButton"));
 
-                editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
+                editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), _ -> {
                     LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
                     minecraft.setScreen(new EditCommandScreen(minecraft.screen, commandManager.data.commands.get(indexDataList)));
                 }, Component.translatable("selectWorld.edit"));
 
-                shareButton = new IconButton(entryWidth - 80, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/share.png"), button -> {
+                shareButton = new IconButton(entryWidth - 80, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/share.png"), _ -> {
                     LOGGER.info("Clicked on share " + this.command + " index " + indexDataList);
                     minecraft.setScreen(new SharePlayerSelectionScreen(minecraft.screen, new ArrayList<>(List.of(commandManager.data.commands.get(indexDataList)))));
                 }, Component.translatable("screen.savedcommands.share"));
