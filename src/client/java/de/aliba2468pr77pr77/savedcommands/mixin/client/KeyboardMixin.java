@@ -4,6 +4,9 @@ import de.aliba2468pr77pr77.savedcommands.EditCommandScreen;
 import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.MultiLineEditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.input.KeyEvent;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -29,13 +32,14 @@ public class KeyboardMixin {
 
     @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void onKey(long handle, int action, KeyEvent input, CallbackInfo ci) {
-        if (Minecraft.getInstance().player == null) {
-            return;
-        }
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen EditScreen && EditScreen.keybindSetting) {
-            return;
-        }
-        if (Minecraft.getInstance().screen instanceof KeyBindsScreen EditScreen && EditScreen.selectedKey != null) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null ||
+                mc.screen instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
+                mc.screen instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null ||
+                (mc.screen != null && (mc.screen.getFocused() instanceof EditBox eb && eb.canConsumeInput() ||
+                        mc.screen.getFocused() instanceof MultiLineEditBox ||
+                        mc.screen instanceof AbstractSignEditScreen ||
+                        mc.screen.getClass().getName().startsWith("fi.dy.masa")))) {
             return;
         }
 

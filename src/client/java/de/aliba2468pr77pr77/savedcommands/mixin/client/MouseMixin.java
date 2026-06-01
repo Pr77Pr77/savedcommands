@@ -29,15 +29,12 @@ public class MouseMixin {
 
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
-        if (Minecraft.getInstance().player == null) {
+        if (Minecraft.getInstance().player == null ||
+                Minecraft.getInstance().screen instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
+                Minecraft.getInstance().screen instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null) {
             return;
         }
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen) {
-            return;
-        }
-        if (Minecraft.getInstance().screen instanceof KeyBindsScreen EditScreen && EditScreen.selectedKey != null) {
-            return;
-        }
+
 
         if (commandManager != null) {
             if (action == GLFW.GLFW_PRESS) {
