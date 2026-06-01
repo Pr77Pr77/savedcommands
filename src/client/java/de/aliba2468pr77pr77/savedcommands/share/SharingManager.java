@@ -174,7 +174,7 @@ public class SharingManager {
                 assert Minecraft.getInstance().player != null;
                 String unfinishedHeader = "msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_UNFINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
                 String finishedHeader = "msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_FINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
-                while (JSONdataLeft.length() > 255) {
+                while (JSONdataLeft.length() + finishedHeader.length() > 255) {
                     stringsToSend.add(unfinishedHeader + JSONdataLeft.substring(0, 255 - unfinishedHeader.length()));
                     JSONdataLeft = JSONdataLeft.substring(255 - unfinishedHeader.length());
                 }
