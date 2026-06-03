@@ -4,6 +4,7 @@ package de.aliba2468pr77pr77.savedcommands;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 public class PopupWarningScreen extends PopupScreen {
@@ -18,7 +19,7 @@ public class PopupWarningScreen extends PopupScreen {
     protected void init() {
         super.init();
 
-        Button closeButton = Button.builder(Component.translatable("gui.ok"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        Button closeButton = Button.builder(CommonComponents.GUI_OK, _ -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         this.addRenderableWidget(closeButton);
     }
 

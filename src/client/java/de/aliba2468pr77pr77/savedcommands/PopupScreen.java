@@ -3,7 +3,6 @@ package de.aliba2468pr77pr77.savedcommands;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -69,12 +68,8 @@ public abstract class PopupScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            exit();
-            return true;
-        }
-        return super.keyPressed(input);
+    public void onClose() {
+        exit();
     }
 
     protected void exit() {

@@ -8,8 +8,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
@@ -37,10 +37,10 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         this.removeWidget(this.addButton);
         this.removeWidget(this.notificationButton);
 
-        this.selectPlayersButton = Button.builder(Component.translatable("gui.continue"), _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
+        this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.selectPlayersButton);
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), _ -> minecraft.setScreen(new SavedCommandsScreen(false))).bounds(width - 20 - 75, 20, 75, 20).build();
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> minecraft.setScreen(new SavedCommandsScreen(false))).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
@@ -54,12 +54,8 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            minecraft.setScreen(new SavedCommandsScreen(false));
-            return true;
-        }
-        return super.keyPressed(input);
+    public void onClose() {
+        minecraft.setScreen(new SavedCommandsScreen(false));
     }
 
     @Override
