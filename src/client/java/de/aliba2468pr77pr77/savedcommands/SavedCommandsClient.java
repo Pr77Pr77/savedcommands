@@ -37,6 +37,8 @@ public class SavedCommandsClient implements ClientModInitializer {
                 SavedcommandsKeyindCategory
         ));
 
+        SettingsManager.load();
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OpenCommandScreen.consumeClick()) {
                 client.execute(() -> {
@@ -56,7 +58,7 @@ public class SavedCommandsClient implements ClientModInitializer {
             }
         });
 
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+        ClientPlayConnectionEvents.JOIN.register((clientPacketListener, packetSender, minecraft) -> {
             commandManager = new SavedCommandManager();
             sharingManager = new SharingManager();
         });

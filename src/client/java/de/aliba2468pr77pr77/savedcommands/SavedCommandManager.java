@@ -151,6 +151,8 @@ public class SavedCommandManager {
 
     public static class SavedCommandsData {
         public List<CommandData> commands = new ArrayList<>();
+
+        SettingsManager.Settings worldSettings;
     }
 
     public synchronized CommandData addCommand(String command, String name) {
@@ -262,6 +264,7 @@ public class SavedCommandManager {
         synchronized (this) {
             snapshot = new SavedCommandsData();
             snapshot.commands = new ArrayList<>(this.data.commands);
+            snapshot.worldSettings = new SettingsManager.Settings(data.worldSettings);
         }
         CompletableFuture.runAsync(() -> {
             try {

@@ -5,8 +5,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -49,7 +49,7 @@ public class EditVariableScreen extends PopupScreen {
         super.init();
 
         if (data != null) {
-            this.closeButton = Button.builder(Component.translatable("gui.done"), button -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.closeButton = Button.builder(CommonComponents.GUI_DONE, button -> exit()).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
             this.deleteButton = Button.builder(Component.translatable("selectWorld.deleteButton"), button -> {
                 assert commandData != null;
                 commandData.variables.remove(data);
@@ -59,7 +59,7 @@ public class EditVariableScreen extends PopupScreen {
             }).bounds(popupX + (popupW - 100 - 100 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20, 100, 20).build();
             this.addRenderableWidget(this.deleteButton);
         } else {
-            this.closeButton = Button.builder(Component.translatable("gui.done"), button -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+            this.closeButton = Button.builder(CommonComponents.GUI_DONE, button -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         }
 
         this.addRenderableWidget(this.closeButton);
@@ -82,21 +82,19 @@ public class EditVariableScreen extends PopupScreen {
         }
         this.addRenderableWidget(this.abbreviationTextField);
 
-        this.nameTextField.setResponder((String input) -> {
-            closeButton.setMessage(input.isEmpty() || abbreviationTextField.getValue().isEmpty() || abbreviationExists ? Component.translatable("gui.cancel") : Component.translatable("gui.done"));
-        });
+        this.nameTextField.setResponder((String input) -> closeButton.setMessage(input.isEmpty() || abbreviationTextField.getValue().isEmpty() || abbreviationExists ? CommonComponents.GUI_CANCEL : CommonComponents.GUI_DONE));
         this.abbreviationTextField.setResponder((String input) -> {
             if (!input.isEmpty() && commandData != null && commandData.variables != null && commandData.variables.stream().anyMatch(data -> data.abbreviation.equals(input.charAt(0)) && !data.equals(this.data))) {
                 abbreviationExists = true;
-                closeButton.setMessage(Component.translatable("gui.cancel"));
+                closeButton.setMessage(CommonComponents.GUI_CANCEL);
                 return;
             } else {
                 abbreviationExists = false;
             }
             if (input.isEmpty() || nameTextField.getValue().isEmpty()) {
-                closeButton.setMessage(Component.translatable("gui.cancel"));
+                closeButton.setMessage(CommonComponents.GUI_CANCEL);
             } else {
-                closeButton.setMessage(Component.translatable("gui.done"));
+                closeButton.setMessage(CommonComponents.GUI_DONE);
             }
         });
 
@@ -138,7 +136,7 @@ public class EditVariableScreen extends PopupScreen {
         });
         this.addRenderableWidget(this.defaultValueTextField);
 
-        closeButton.setMessage(nameTextField.getValue().isEmpty() || abbreviationTextField.getValue().isEmpty() ? Component.translatable("gui.cancel") : Component.translatable("gui.done"));
+        closeButton.setMessage(nameTextField.getValue().isEmpty() || abbreviationTextField.getValue().isEmpty() ? CommonComponents.GUI_CANCEL : CommonComponents.GUI_DONE);
     }
 
     void setDefaultValueLimitations(SavedCommandManager.CommandData.variable.types value) {
@@ -246,16 +244,12 @@ public class EditVariableScreen extends PopupScreen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            if (data == null) { // New variable
-                exit(false);
-            } else {
-                exit();
-            }
-            return true;
+    public void onClose() {
+        if (data == null) { // New variable
+            exit(false);
+        } else {
+            exit();
         }
-        return super.keyPressed(input);
     }
 
     @Override

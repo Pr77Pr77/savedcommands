@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -69,7 +70,7 @@ public class InputVariableScreen extends PopupScreen {
             }
         }
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), button -> exit()).bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, button -> exit()).bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.doneButton = Button.builder(Component.translatable("screen.savedcommands.send"), button -> exit(true)).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20, 100, 20).build();
