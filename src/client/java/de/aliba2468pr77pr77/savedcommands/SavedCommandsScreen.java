@@ -31,6 +31,7 @@ public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
     protected Button addButton;
     public IconButton notificationButton;
+    public IconButton settingsButton;
     CommandList commandList;
 
     boolean otherPlayersOnServer; // disables/enables the share buttons
@@ -69,18 +70,18 @@ public class SavedCommandsScreen extends Screen {
             this.addRenderableWidget(notificationButton);
             if (this.SearchBar == null) {
                 assert minecraft != null;
-                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
             } else {
                 this.SearchBar.setPosition(20 + 20 + 5, 20);
-                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
             }
         } else {
             if (this.SearchBar == null) {
                 assert minecraft != null;
-                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
             } else {
                 this.SearchBar.setPosition(20, 20);
-                this.SearchBar.setSize(this.width - 40 - 22, 20);
+                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
             }
         }
         this.SearchBar.setMaxLength(256);
@@ -96,13 +97,16 @@ public class SavedCommandsScreen extends Screen {
                             LOGGER.info("Add command button clicked!");
                             addCommand();
                         }
-                ).bounds(20 + this.width - 40 - 20, 20, 20, 20)
+                ).bounds(20 + this.width - 40 - 20 - 5 - 20, 20, 20, 20)
                 .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.savenewcommandbutton")).build();
         assert minecraft != null;
+        this.addRenderableWidget(this.addButton);
+
+        settingsButton = new IconButton(20 + this.width - 40 - 20, 20, 20, 20, ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/settings.png"),
+                button -> minecraft.setScreen(new PerWorldSettingsScreen(this)), Component.translatable("screen.savedcommands.settings"));
+        this.addRenderableWidget(settingsButton);
         otherPlayersOnServer = minecraft.getConnection() != null
                 && minecraft.getConnection().getOnlinePlayers().size() > 1;
-
-        this.addRenderableWidget(this.addButton);
 
         listWidth = this.width;
         listHeight = this.height - 50;

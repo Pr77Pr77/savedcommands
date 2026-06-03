@@ -10,6 +10,7 @@ import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -102,7 +103,7 @@ public class SharingManager {
                 if (recipients.values().stream()
                         .noneMatch(entry -> entry == States.WAITING_FOR_RESPONSE) &&
                         Minecraft.getInstance().screen instanceof ShareStatusScreen shareStatusScreen) {
-                    shareStatusScreen.closeButton.setMessage(Component.translatable("gui.done"));
+                    shareStatusScreen.closeButton.setMessage(CommonComponents.GUI_DONE);
                 }
             }
         }), 15, TimeUnit.SECONDS);
@@ -164,7 +165,7 @@ public class SharingManager {
                     currentTimeout.cancel(false);
                 }
                 if (Minecraft.getInstance().screen instanceof ShareStatusScreen shareStatusScreen) {
-                    shareStatusScreen.closeButton.setMessage(Component.translatable("gui.done"));
+                    shareStatusScreen.closeButton.setMessage(CommonComponents.GUI_DONE);
                 }
             }
 

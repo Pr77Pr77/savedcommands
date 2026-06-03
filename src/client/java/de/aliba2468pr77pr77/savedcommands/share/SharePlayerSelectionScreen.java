@@ -11,6 +11,7 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         sendButton.active = !chosenPlayers.isEmpty();
         this.addRenderableWidget(this.sendButton);
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), button -> exit()).bounds(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, button -> exit()).bounds(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         this.addRenderableWidget(this.cancelButton);
     }
 

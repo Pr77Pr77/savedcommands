@@ -8,8 +8,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +37,13 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         this.removeWidget(this.addButton);
         this.removeWidget(this.notificationButton);
 
-        this.selectPlayersButton = Button.builder(Component.translatable("gui.continue"), b -> {
+        this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, b -> {
             assert minecraft != null;
             minecraft.setScreen(playerSelectionScreen);
         }).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.selectPlayersButton);
 
-        this.cancelButton = Button.builder(Component.translatable("gui.cancel"), b -> {
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, b -> {
             assert minecraft != null;
             minecraft.setScreen(new SavedCommandsScreen(false));
         }).bounds(width - 20 - 75, 20, 75, 20).build();
@@ -60,13 +60,10 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent input) {
-        if (input.isEscape() && this.shouldCloseOnEsc()) {
-            assert minecraft != null;
-            minecraft.setScreen(new SavedCommandsScreen(false));
-            return true;
-        }
-        return super.keyPressed(input);
+    public void onClose() {
+        assert minecraft != null;
+        minecraft.setScreen(new SavedCommandsScreen(false));
+
     }
 
     @Override
