@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -19,10 +21,10 @@ public class SettingsManager {
     public static Settings globalSettings = new Settings(); // Per word settings are managed by the SavedCommandManager
 
     public static class Settings {
-        Boolean receiveCommands;
-        String msgCommand;
-        Boolean deleteWarning;
-        Boolean manualCategories;
+        public Boolean receiveCommands;
+        public String msgCommand;
+        public Boolean deleteWarning;
+        public Boolean manualCategories;
 
         static final String DEFAULT_MSG_COMMAND = "msg";
 
@@ -48,6 +50,25 @@ public class SettingsManager {
 
         public Settings() {
         }
+    }
+
+    public static Settings getCombinedWorldAndGlobal(SavedCommandManager savedCommandManager) {
+        Settings result = new Settings();
+        for (Field field : Settings.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            try {
+                field.setAccessible(true);
+                Object worldValue = field.get(savedCommandManager.data.worldSettings);
+                Object globalValue = field.get(globalSettings);
+                field.set(result, worldValue != null ? worldValue : globalValue);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Failed to merge field: " + field.getName(), e);
+            }
+        }
+        return result;
     }
 
     static void load() {
