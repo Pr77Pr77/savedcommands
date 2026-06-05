@@ -52,7 +52,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         this.selectMoreCommandsButton = Button.builder(Component.translatable("screen.savedcommands.share.selectmorecommands"), _ -> exit(exitTypes.SELECT_MORE_COMMANDS)).bounds(popupX + popupW - 135 - 10, popupY + 22, 135, 20).build();
         this.addRenderableWidget(this.selectMoreCommandsButton);
 
-        shareSelectionList = new ShareSelectionList(minecraft, popupW - 6 * 2, popupH - 35 - 35 - 25, popupY + 35 + 25, 36);
+        shareSelectionList = new ShareSelectionList(minecraft, popupW - 6 * 2, popupH - 35 - 20 - 22 - 5, popupY + 20 + 22 + 5, 36);
         shareSelectionList.setX(popupX + 6);
         shareSelectionList.addPlayers(getOtherPlayers());
         this.addRenderableWidget(this.shareSelectionList);

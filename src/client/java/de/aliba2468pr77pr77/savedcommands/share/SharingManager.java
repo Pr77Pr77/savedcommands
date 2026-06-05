@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import de.aliba2468pr77pr77.savedcommands.IconButton;
-import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
-import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
+import de.aliba2468pr77pr77.savedcommands.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -85,10 +83,10 @@ public class SharingManager {
     protected void sendInitialMessage() {
         assert Minecraft.getInstance().player != null;
         for (Map.Entry<PlayerInfo, States> player : recipients.entrySet()) {
-            int baseLength = "msg ".length() + player.getKey().getProfile().name().length() + 1 + INITIAL_MESSAGE_TEXT.formatted(Minecraft.getInstance().player.getName().getString(), SHARE_MAGIC_CODE, "").length();
+            int baseLength = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand.length() + 1 + player.getKey().getProfile().name().length() + 1 + INITIAL_MESSAGE_TEXT.formatted(Minecraft.getInstance().player.getName().getString(), SHARE_MAGIC_CODE, "").length();
             String commandsString = truncateCommandList(commands, 255 - baseLength);
 
-            Objects.requireNonNull(Minecraft.getInstance().getConnection()).sendCommand("msg " + player.getKey().getProfile().name() + " " +
+            Objects.requireNonNull(Minecraft.getInstance().getConnection()).sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + player.getKey().getProfile().name() + " " +
                     INITIAL_MESSAGE_TEXT.formatted(Minecraft.getInstance().player.getName().getString(), SHARE_MAGIC_CODE, commandsString));
             player.setValue(States.WAITING_FOR_RESPONSE);
         }
@@ -114,7 +112,8 @@ public class SharingManager {
             return true;
         }
         if (messageString.contains("tried to share commands with you")) {
-            return shareHandler(messageString, messageString.substring(0, messageString.indexOf("tried to share commands with you")));
+            String before = messageString.substring(0, messageString.indexOf("tried to share commands with you") - 1);
+            return shareHandler(messageString, before.substring(before.lastIndexOf(' ') + 1));
         }
         String code;
         if (messageString.contains(SHARE_CODE_DATA_UNFINISHED + " ")) {
@@ -173,8 +172,8 @@ public class SharingManager {
                 String JSONdataLeft = GSON.toJson(commands);
                 List<String> stringsToSend = new ArrayList<>();
                 assert Minecraft.getInstance().player != null;
-                String unfinishedHeader = "msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_UNFINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
-                String finishedHeader = "msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_FINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
+                String unfinishedHeader = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_UNFINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
+                String finishedHeader = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_FINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
                 while (JSONdataLeft.length() + finishedHeader.length() > 255) {
                     stringsToSend.add(unfinishedHeader + JSONdataLeft.substring(0, 255 - unfinishedHeader.length()));
                     JSONdataLeft = JSONdataLeft.substring(255 - unfinishedHeader.length());
@@ -186,6 +185,14 @@ public class SharingManager {
                 }
             });
         } else if (messageString.contains(SHARE_CODE_DATA_UNFINISHED)) { // recipient
+            if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
+                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                        new SystemToast.SystemToastId(7500L),
+                        Component.translatable("screen.savedcommands.share.disabled.title"),
+                        Component.translatable("screen.savedcommands.share.disabled.message"));
+                Minecraft.getInstance().getToastManager().addToast(receivedToast);
+                return false;
+            }
             int dataStart = messageString.indexOf(" ", messageString.indexOf(SHARE_CODE_DATA_UNFINISHED) + SHARE_CODE_DATA_UNFINISHED.length() + 1) + 1;
             if (receivedDataByPlayerName.containsKey(senderName)) {
                 receivedDataByPlayerName.get(senderName).append(messageString.substring(dataStart));
@@ -193,6 +200,14 @@ public class SharingManager {
                 receivedDataByPlayerName.put(senderName, new StringBuilder(messageString.substring(dataStart)));
             }
         } else if (messageString.contains(SHARE_CODE_DATA_FINISHED)) { // recipient
+            if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
+                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                        new SystemToast.SystemToastId(7500L),
+                        Component.translatable("screen.savedcommands.share.disabled.title"),
+                        Component.translatable("screen.savedcommands.share.disabled.message"));
+                Minecraft.getInstance().getToastManager().addToast(receivedToast);
+                return false;
+            }
             StringBuilder data;
             if (receivedDataByPlayerName.containsKey(senderName)) {
                 data = receivedDataByPlayerName.get(senderName);
@@ -212,7 +227,7 @@ public class SharingManager {
                             assert Minecraft.getInstance().player != null;
                             LOGGER.error("A JSON error occurred while parsing shared commands by " + senderName + ": " + e.getMessage());
                             Objects.requireNonNull(Minecraft.getInstance().getConnection())
-                                    .sendCommand("msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_ERROR + " " + Minecraft.getInstance().player.getName().getString());
+                                    .sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_ERROR + " " + Minecraft.getInstance().player.getName().getString());
                         }
                 );
                 return false;
@@ -237,13 +252,13 @@ public class SharingManager {
                 savedCommandsScreen.addRenderableWidget(savedCommandsScreen.notificationButton);
 
                 savedCommandsScreen.SearchBar.setPosition(20 + 20 + 5, 20);
-                savedCommandsScreen.SearchBar.setSize(savedCommandsScreen.width - 40 - 22 - 20 - 5, 20);
+                savedCommandsScreen.SearchBar.setSize(savedCommandsScreen.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
             }
 
             Minecraft.getInstance().execute(() -> {
                         assert Minecraft.getInstance().player != null;
                         Objects.requireNonNull(Minecraft.getInstance().getConnection())
-                                .sendCommand("msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DONE + " " + Minecraft.getInstance().player.getName().getString());
+                                .sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DONE + " " + Minecraft.getInstance().player.getName().getString());
                     }
             );
         } else if (messageString.contains(SHARE_CODE_DONE)) { // sender
@@ -265,10 +280,18 @@ public class SharingManager {
             }
             recipients.put(found, States.RECIPIENT_ERROR);
         } else { // recipient
+            if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
+                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                        new SystemToast.SystemToastId(7500L),
+                        Component.translatable("screen.savedcommands.share.disabled.title"),
+                        Component.translatable("screen.savedcommands.share.disabled.message"));
+                Minecraft.getInstance().getToastManager().addToast(receivedToast);
+                return false;
+            }
             Minecraft.getInstance().execute(() -> {
                         assert Minecraft.getInstance().player != null;
                         Objects.requireNonNull(Minecraft.getInstance().getConnection())
-                                .sendCommand("msg " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_SEND + " " + Minecraft.getInstance().player.getName().getString());
+                                .sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_SEND + " " + Minecraft.getInstance().player.getName().getString());
                     }
             );
         }
