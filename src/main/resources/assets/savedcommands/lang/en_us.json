@@ -22,6 +22,8 @@
   "screen.savedcommands.share.recievednotification.message": "%s has sent you commands. Press %s to view and save them!",
   "screen.savedcommands.share.sendernotrecognizable.title": "Error while receiving commands!",
   "screen.savedcommands.share.sendernotrecognizable.message": "An unrecognizable player tried to send you commands.",
+  "screen.savedcommands.share.disabled.title": "Sent commands blocked!",
+  "screen.savedcommands.share.disabled.message": "Someone tried to send you commands. To receive commands, enable the corresponding setting.",
   "screen.savedcommands.share.viewersaverscreen": "View and Save sent commands",
   "screen.savedcommands.share.saveall": "Save all",
   "screen.savedcommands.share.editall": "Edit all & Save",

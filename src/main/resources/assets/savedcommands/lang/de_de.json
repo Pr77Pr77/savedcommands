@@ -22,6 +22,8 @@
   "screen.savedcommands.share.recievednotification.message": "%s hat dir Befehle gesendet. Drücke %s um sie anzusehen und zu speichern!",
   "screen.savedcommands.share.sendernotrecognizable.title": "Fehler beim Befehle Empfangen!",
   "screen.savedcommands.share.sendernotrecognizable.message": "Ein unerkennbarer Spieler hat versucht, dir Befehle zu senden.",
+  "screen.savedcommands.share.disabled.title": "Gesendete Befehle blockiert!",
+  "screen.savedcommands.share.disabled.message": "Jemand hat versucht dir Befehle zu senden. Um diese zu empfangen, aktiviere die Einstellung.",
   "screen.savedcommands.share.viewersaverscreen": "Geteilte Befehle ansehen und speichern",
   "screen.savedcommands.share.saveall": "Alle speichern",
   "screen.savedcommands.share.editall": "Alle bearbeiten",
