@@ -350,8 +350,25 @@ public class SavedCommandsScreen extends Screen {
 
                 deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
                     LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
-                    commandManager.removeCommand(indexDataList);
-                    updateSearch(SearchBar.getValue());
+                    if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
+                        minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commandDeleteQuestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
+                            commandManager.removeCommand(indexDataList);
+
+                            switch(showAgainState) {
+                                case WORLD_DISABLED -> {
+                                    commandManager.data.worldSettings.deleteWarning = false;
+                                    commandManager.saveAsync();
+                                }
+                                case GLOBAL_DISABLED -> {
+                                    SettingsManager.globalSettings.deleteWarning = false;
+                                    SettingsManager.saveAsync();
+                                }
+                            }
+                        }, !SettingsManager.globalSettings.deleteWarning));
+                    } else {
+                        commandManager.removeCommand(indexDataList);
+                        updateSearch(SearchBar.getValue());
+                    }
                 }, Component.translatable("selectWorld.deleteButton"));
 
                 editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), _ -> {
