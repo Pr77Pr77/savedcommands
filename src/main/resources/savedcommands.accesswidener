@@ -1,2 +1,3 @@
 accessWidener v2 named
 accessible field net/minecraft/client/gui/components/Checkbox selected Z
+accessible field net/minecraft/client/gui/components/AbstractButton SPRITES Lnet/minecraft/client/gui/components/WidgetSprites;

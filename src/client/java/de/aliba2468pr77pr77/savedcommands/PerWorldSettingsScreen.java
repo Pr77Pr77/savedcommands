@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 import static de.aliba2468pr77pr77.savedcommands.SettingsManager.globalSettings;
 import static net.minecraft.network.chat.Component.translatable;
 
@@ -69,8 +70,8 @@ public class PerWorldSettingsScreen extends PopupScreen {
                             case ENABLED, DISABLED -> option.getComponent();
                             case DEFAULT -> option.getComponent(globalSettings.receiveCommands);
                         })
-                        .withInitialValue((SavedCommandsClient.commandManager != null && SavedCommandsClient.commandManager.data.worldSettings != null)
-                                ? booleanToEnum(SavedCommandsClient.commandManager.data.worldSettings.receiveCommands) : BooleanObjectOptions.DEFAULT)
+                        .withInitialValue((commandManager != null && commandManager.data.worldSettings != null)
+                                ? booleanToEnum(commandManager.data.worldSettings.receiveCommands) : BooleanObjectOptions.DEFAULT)
                         .withValues(BooleanObjectOptions.values())
                         .create(popupX + 20, popupY + 30, popupW - 40, 20, Component.translatable("screen.savedcommands.settings.receivecommands"));
         addRenderableWidget(receiveSentCommandsButton);
@@ -82,8 +83,8 @@ public class PerWorldSettingsScreen extends PopupScreen {
         msgCommandEditBox.setCanLoseFocus(true);
         msgCommandEditBox.setHint(Component.literal(globalSettings.msgCommand));
         msgCommandEditBox.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.worldsettings.leaveemtydefault")));
-        if (SavedCommandsClient.commandManager != null && SavedCommandsClient.commandManager.data.worldSettings != null && SavedCommandsClient.commandManager.data.worldSettings.msgCommand != null) {
-            msgCommandEditBox.setValue(SavedCommandsClient.commandManager.data.worldSettings.msgCommand);
+        if (commandManager != null && commandManager.data.worldSettings != null && commandManager.data.worldSettings.msgCommand != null) {
+            msgCommandEditBox.setValue(commandManager.data.worldSettings.msgCommand);
         }
         this.addRenderableWidget(msgCommandEditBox);
 
@@ -92,8 +93,8 @@ public class PerWorldSettingsScreen extends PopupScreen {
                             case ENABLED, DISABLED -> option.getComponent();
                             case DEFAULT -> option.getComponent(globalSettings.deleteWarning);
                         })
-                        .withInitialValue((SavedCommandsClient.commandManager != null && SavedCommandsClient.commandManager.data.worldSettings != null)
-                                ? booleanToEnum(SavedCommandsClient.commandManager.data.worldSettings.deleteWarning) : BooleanObjectOptions.DEFAULT)
+                        .withInitialValue((commandManager != null && commandManager.data.worldSettings != null)
+                                ? booleanToEnum(commandManager.data.worldSettings.deleteWarning) : BooleanObjectOptions.DEFAULT)
                         .withValues(BooleanObjectOptions.values())
                         .create(popupX + 20, msgCommandEditBox.getY() + msgCommandEditBox.getHeight() + 10, popupW - 40, 20, Component.translatable("screen.savedcommands.settings.deletewarning"));
         addRenderableWidget(deleteWarningButton);
@@ -103,8 +104,8 @@ public class PerWorldSettingsScreen extends PopupScreen {
                             case ENABLED, DISABLED -> option.getComponent();
                             case DEFAULT -> option.getComponent(globalSettings.manualCategories);
                         })
-                        .withInitialValue((SavedCommandsClient.commandManager != null && SavedCommandsClient.commandManager.data.worldSettings != null)
-                                ? booleanToEnum(SavedCommandsClient.commandManager.data.worldSettings.manualCategories) : BooleanObjectOptions.DEFAULT)
+                        .withInitialValue((commandManager != null && commandManager.data.worldSettings != null)
+                                ? booleanToEnum(commandManager.data.worldSettings.manualCategories) : BooleanObjectOptions.DEFAULT)
                         .withValues(BooleanObjectOptions.values())
                         .create(popupX + 20, deleteWarningButton.getY() + deleteWarningButton.getHeight() + 10, popupW - 40, 20, Component.translatable("screen.savedcommands.settings.manualcategories"));
         addRenderableWidget(manualCategoriesButton);
@@ -135,39 +136,58 @@ public class PerWorldSettingsScreen extends PopupScreen {
 
     @Override
     public void exit() {
-        if (SavedCommandsClient.commandManager == null) {
+        if (commandManager == null) {
             super.exit();
             return;
         }
-        if (SavedCommandsClient.commandManager.data.worldSettings == null) {
-            SavedCommandsClient.commandManager.data.worldSettings = new SettingsManager.Settings();
+        if (commandManager.data.worldSettings == null) {
+            commandManager.data.worldSettings = new SettingsManager.Settings();
         }
 
         if (receiveSentCommandsButton.getValue().equals(BooleanObjectOptions.DEFAULT)) {
-            SavedCommandsClient.commandManager.data.worldSettings.receiveCommands = null; // Back to default
+            commandManager.data.worldSettings.receiveCommands = null; // Back to default
         } else {
-            SavedCommandsClient.commandManager.data.worldSettings.receiveCommands = receiveSentCommandsButton.getValue().getBoolean();
+            commandManager.data.worldSettings.receiveCommands = receiveSentCommandsButton.getValue().getBoolean();
         }
 
         if (msgCommandEditBox.getValue().isEmpty()) {
-            SavedCommandsClient.commandManager.data.worldSettings.msgCommand = null; // Back to default
+            commandManager.data.worldSettings.msgCommand = null; // Back to default
         } else {
-            SavedCommandsClient.commandManager.data.worldSettings.msgCommand = msgCommandEditBox.getValue().trim();
+            commandManager.data.worldSettings.msgCommand = msgCommandEditBox.getValue().trim();
         }
 
         if (deleteWarningButton.getValue().equals(BooleanObjectOptions.DEFAULT)) {
-            SavedCommandsClient.commandManager.data.worldSettings.deleteWarning = null; // Back to default
+            commandManager.data.worldSettings.deleteWarning = null; // Back to default
         } else {
-            SavedCommandsClient.commandManager.data.worldSettings.deleteWarning = deleteWarningButton.getValue().getBoolean();
+            commandManager.data.worldSettings.deleteWarning = deleteWarningButton.getValue().getBoolean();
         }
 
         if (manualCategoriesButton.getValue().equals(BooleanObjectOptions.DEFAULT)) {
-            SavedCommandsClient.commandManager.data.worldSettings.manualCategories = null; // Back to default
+            commandManager.data.worldSettings.manualCategories = null; // Back to default
         } else {
-            SavedCommandsClient.commandManager.data.worldSettings.manualCategories = manualCategoriesButton.getValue().getBoolean();
+            commandManager.data.worldSettings.manualCategories = manualCategoriesButton.getValue().getBoolean();
         }
 
-        SavedCommandsClient.commandManager.saveAsync();
+        if ((manualCategoriesButton.getValue().equals(BooleanObjectOptions.DISABLED) ||
+                (manualCategoriesButton.getValue().equals(BooleanObjectOptions.DEFAULT) && !globalSettings.manualCategories)) && commandManager.data.customCategories != null) {
+            if (commandManager.data.customCategories.isEmpty()) {
+                commandManager.data.customCategories = null;
+            } else {
+                assert minecraft != null;
+                minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.settings.manualcategories.clearquestion"), Component.translatable("screen.savedcommands.settings.manualcategories.clearmessage"),
+                        parent, Component.translatable("screen.savedcommands.clear"), Component.translatable("screen.savedcommands.keep"), () -> {
+                    commandManager.data.customCategories = null;
+                    for (SavedCommandManager.CommandData command : commandManager.data.commands) {
+                        command.categoryId = null;
+                    }
+                    commandManager.saveAsync();
+                }));
+                commandManager.saveAsync();
+                return;
+            }
+        }
+
+        commandManager.saveAsync();
         super.exit();
     }
 }
