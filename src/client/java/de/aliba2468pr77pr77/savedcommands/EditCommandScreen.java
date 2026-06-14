@@ -5,15 +5,12 @@ import de.aliba2468pr77pr77.savedcommands.mixin.client.KeyBindingAccessor;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.CommandSuggestions;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -36,19 +33,35 @@ public class EditCommandScreen extends PopupScreen {
     private Button closeButton;
     public EditBox commandTextField;
     private EditBox nameTextField;
+
     private Button keybindButton;
-    private Button removeKeybindButton;
     public boolean keybindSetting = false;
+
     private SavedCommandManager.CommandData data;
+
     private final List<conflictSavedCommands> KeybindConflictsSavedCommands = new ArrayList<>();
     private final List<conflictMinecraftKB> KeybindConflictsMinecraft = new ArrayList<>();
-    private Button addVariableButton;
+
+    private CycleButton<CustomComponentCategory> categorySelectionButton;
+    private boolean customCategoriesEnabled = false;
+    private List<CustomComponentCategory> componentCategories = new ArrayList<>();
+    private IconButton addCategoryButton;
+    private EditBox newCategoryEditBox;
+
     public InsertedVariables insertedVariables;
 
-    CommandSuggestions CommandSuggestor;
+    CommandSuggestions commandSuggestor;
 
     public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
-        super(translatable("screen.savedcommands.editpopup"), parent, 230, 300);
+        super(translatable("screen.savedcommands.editpopup"), parent, 200, 300);
+        if (SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories) {
+            contentH = 230;
+            customCategoriesEnabled = true;
+            if (commandManager.data.customCategories == null) {
+                commandManager.data.customCategories = new ArrayList<>();
+            }
+            componentCategories = CustomComponentCategory.fromSimpleCategories(commandManager.data.customCategories);
+        }
         this.data = data;
         insertedVariables = new InsertedVariables();
     }
@@ -134,7 +147,7 @@ public class EditCommandScreen extends PopupScreen {
                         KeyText.append(KeybindConflictMinecraft.conflictingKey.getDisplayName());
                         KeyText.append(Component.literal(": "));
                         tooltipContent.append(KeyText.withColor(0xfffcfc54));
-                        tooltipContent.append(KeybindConflictMinecraft.conflictingKeybind.getTranslatedKeyMessage());
+                        tooltipContent.append(Component.translatable(KeybindConflictMinecraft.conflictingKeybind.getName()));
                     }
                 }
             }
@@ -145,7 +158,7 @@ public class EditCommandScreen extends PopupScreen {
     }
 
     private Component getKeybindButtonText() {
-        MutableComponent buttonContent = Component.empty();
+        MutableComponent buttonContent = Component.translatable("controls.keybinds.title").append(Component.literal(": "));
 
         if (keybindSetting) {
             buttonContent.append(Component.literal("< ").withColor(0xfffcfc54));
@@ -176,11 +189,11 @@ public class EditCommandScreen extends PopupScreen {
     protected void init() {
         super.init();
 
-        this.closeButton = Button.builder(translatable("gui.done"), b -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        this.closeButton = Button.builder(translatable("gui.done"), button -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 10 - 20, 100, 20).build();
 
         this.addRenderableWidget(this.closeButton);
 
-        this.commandTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 40, popupW - 40, 20, translatable("advMode.command"));
+        this.commandTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 35, popupW - 40, 20, translatable("advMode.command"));
         this.commandTextField.setMaxLength(256);
         this.commandTextField.setBordered(true);
         this.commandTextField.setCanLoseFocus(true);
@@ -189,29 +202,29 @@ public class EditCommandScreen extends PopupScreen {
         }
         this.addRenderableWidget(this.commandTextField);
 
-        this.addVariableButton = Button.builder(Component.literal("+"), b -> {
+        Button addVariableButton = Button.builder(Component.literal("+"), button -> {
                     LOGGER.info("Creating Variable...");
                     if (!save(true)) {
                         return;
                     }
                     minecraft.setScreen(new EditVariableScreen(this, data));
-                }).bounds(popupX + 20, popupY + 85, 20, 20)
+                }).bounds(popupX + 20, popupY + 80, 20, 20)
                 .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.createvariable")))
                 .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.createvariable")).build();
-        this.addRenderableWidget(this.addVariableButton);
+        this.addRenderableWidget(addVariableButton);
 
         if (data != null && data.variables != null) {
             for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
                 int finalVariableIndex = variableIndex;
-                Button variableButton = Button.builder(Component.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), bu -> {
+                Button variableButton = Button.builder(Component.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), button -> {
                             LOGGER.info("Adding Variable " + finalVariableIndex);
                             commandTextField.setValue(commandTextField.getValue().substring(0, commandTextField.getCursorPosition()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getValue().substring(commandTextField.getCursorPosition()));
-                        }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 85, 20, 20)
+                        }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 80, 20, 20)
                         .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(variableIndex).name)))
                         .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
                 this.addRenderableWidget(variableButton);
 
-                Button variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 85, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), b -> {
+                Button variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 80, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
                     LOGGER.info("Editing Variable...");
                     if (!save(true)) {
                         return;
@@ -222,7 +235,7 @@ public class EditCommandScreen extends PopupScreen {
             }
         }
 
-        this.nameTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 120, popupW - 40, 20, translatable("screen.savedcommands.name"));
+        this.nameTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 115, popupW - 40, 20, translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setBordered(true);
         this.nameTextField.setCanLoseFocus(true);
@@ -233,7 +246,7 @@ public class EditCommandScreen extends PopupScreen {
 
         searchConflicts();
 
-        this.keybindButton = Button.builder(getKeybindButtonText(), b -> {
+        this.keybindButton = Button.builder(getKeybindButtonText(), button -> {
             if (!save(true)) {
                 return;
             }
@@ -245,11 +258,11 @@ public class EditCommandScreen extends PopupScreen {
             }
             data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
             LOGGER.info("Changing the keybind...");
-        }).bounds(popupX + 20, popupY + 165, Math.round((popupW - 40) * 0.7F), 20).build();
+        }).bounds(popupX + 20, popupY + 140, Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addRenderableWidget(this.keybindButton);
 
-        this.removeKeybindButton = Button.builder(translatable("screen.savedcommands.remove"), b -> {
+        Button removeKeybindButton = Button.builder(translatable("screen.savedcommands.remove"), button -> {
             if (data == null) {
                 return;
             }
@@ -258,15 +271,81 @@ public class EditCommandScreen extends PopupScreen {
             searchConflicts();
             keybindButton.setTooltip(Tooltip.create(Component.empty()));
             keybindButton.setMessage(getKeybindButtonText());
-        }).bounds(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 165, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
+        }).bounds(popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 140, popupW - 45 - Math.round((popupW - 40) * 0.7F), 20).build();
 
-        this.addRenderableWidget(this.removeKeybindButton);
+        this.addRenderableWidget(removeKeybindButton);
 
         searchConflicts();
 
-        CommandSuggestor = new CommandSuggestions(minecraft, this, commandTextField, font, false, false, 1, 10, false, 0xD8000000);
-        CommandSuggestor.setAllowHiding(false);
-        CommandSuggestor.setAllowSuggestions(true);
+        if (customCategoriesEnabled) {
+            if (data.categoryId == null) {
+                createCategorySelectionButton(CustomComponentCategory.NONE);
+            } else {
+                createCategorySelectionButton(componentCategories.stream()
+                        .filter(category -> Objects.equals(data.categoryId, category.id))
+                        .findFirst()
+                        .orElse(CustomComponentCategory.NONE));
+            }
+            this.addRenderableWidget(categorySelectionButton);
+
+            newCategoryEditBox = new EditBox(this.minecraft.font, popupX + 20, popupY + 165, popupW - 40 - 5 - 20, 20, translatable("screen.savedcommands.name"));
+            newCategoryEditBox.setMaxLength(256);
+            newCategoryEditBox.setBordered(true);
+            newCategoryEditBox.setCanLoseFocus(true);
+            newCategoryEditBox.setHint(Component.translatable("screen.savedcommands.createcategory.name"));
+            newCategoryEditBox.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.createcategory.name")));
+            newCategoryEditBox.setResponder((string) -> {
+                if (string.isEmpty()) {
+                    addCategoryButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.createcategory.cancel")));
+                    addCategoryButton.switchToComponent();
+                } else {
+                    addCategoryButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.createcategory.createanduse", string.trim())));
+                    addCategoryButton.switchToIcon();
+                }
+            });
+
+            addCategoryButton = new IconButton(popupX + popupW - 20 - 20, popupY + 165, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/save.png"), button -> {
+                if (children().contains(newCategoryEditBox)) {
+                    if (!newCategoryEditBox.getValue().isEmpty()) {
+                        if (commandManager.data.customCategories == null) {
+                            commandManager.data.customCategories = new ArrayList<>();
+                        }
+                        SavedCommandManager.SavedCommandsData.CustomCategory newCategory = commandManager.data.new CustomCategory(newCategoryEditBox.getValue().trim());
+                        commandManager.data.customCategories.add(newCategory);
+                        componentCategories = CustomComponentCategory.fromSimpleCategories(commandManager.data.customCategories);
+
+                        Optional<CustomComponentCategory> newComponentCategory = componentCategories.stream()
+                                .filter((customComponentCategory) -> newCategory.id.equals(customComponentCategory.id)).findFirst();
+
+                        this.removeWidget(categorySelectionButton);
+                        newComponentCategory.ifPresent(this::createCategorySelectionButton);
+                    }
+
+                    this.addRenderableWidget(categorySelectionButton);
+                    this.removeWidget(newCategoryEditBox);
+                    this.newCategoryEditBox.setValue("");
+                    button.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.createcategory")));
+                    button.setMessage(Component.literal("+"));
+                    if (button instanceof IconButton iconButton) {
+                        iconButton.switchToComponent();
+                    }
+                } else {
+                    this.addRenderableWidget(newCategoryEditBox);
+                    this.removeWidget(categorySelectionButton);
+                    button.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.createcategory.cancel")));
+                    button.setMessage(Component.literal("×"));
+                    if (button instanceof IconButton iconButton) {
+                        iconButton.switchToComponent();
+                    }
+                }
+
+            }, Component.translatable("screen.savedcommands.createcategory"), Component.literal("+"), false);
+            this.addRenderableWidget(addCategoryButton);
+        }
+
+        commandSuggestor = new CommandSuggestions(minecraft, this, commandTextField, font, false, false, 1, 10, false, 0xD8000000);
+        commandSuggestor.setAllowHiding(false);
+        commandSuggestor.setAllowSuggestions(true);
         this.commandTextField.setResponder((String text) -> {
             if (text.isEmpty()) {
                 closeButton.setMessage(translatable("gui.cancel"));
@@ -275,7 +354,7 @@ public class EditCommandScreen extends PopupScreen {
             }
             removeOrphanedVariablePlaceholders(text);
             insertedVariables.refresh();
-            CommandSuggestor.updateCommandInfo();
+            commandSuggestor.updateCommandInfo();
         });
         if (commandTextField.getValue().isEmpty()) {
             closeButton.setMessage(translatable("gui.cancel"));
@@ -283,7 +362,43 @@ public class EditCommandScreen extends PopupScreen {
             closeButton.setMessage(translatable("gui.done"));
         }
         insertedVariables.refresh();
-        CommandSuggestor.updateCommandInfo();
+        commandSuggestor.updateCommandInfo();
+    }
+
+    private void createCategorySelectionButton(CustomComponentCategory defaultValue) {
+        categorySelectionButton = CycleButton.builder(category -> category.name, defaultValue)
+                .withValues(componentCategories)
+                .withTooltip((customComponentCategory) -> Tooltip.create(Component.translatable("screen.savedcommands.manualcategories.disableinfo")))
+                .create(
+                        popupX + 20, popupY + 165, popupW - 40 - 5 - 20, 20,
+                        Component.translatable("screen.savedcommands.manualcategory")
+                );
+    }
+
+    public static class CustomComponentCategory {
+        public @Nullable String id;
+        public Component name;
+
+        public static final CustomComponentCategory NONE = new CustomComponentCategory(translatable("screen.savedcommands.nocategory"), null);
+
+        public CustomComponentCategory(Component name, @Nullable String id) {
+            this.name = name;
+            this.id = id;
+        }
+
+        private static List<CustomComponentCategory> fromSimpleCategories(List<SavedCommandManager.SavedCommandsData.CustomCategory> source) {
+            List<CustomComponentCategory> result = new ArrayList<>();
+            result.add(CustomComponentCategory.NONE);
+
+            for (SavedCommandManager.SavedCommandsData.CustomCategory category : source) {
+                result.add(new CustomComponentCategory(
+                        Component.translatable(category.name),
+                        category.id
+                ));
+            }
+
+            return result;
+        }
     }
 
     public class InsertedVariables {
@@ -415,7 +530,7 @@ public class EditCommandScreen extends PopupScreen {
                 this.font,
                 translatable("advMode.command"),
                 popupX + 20,
-                popupY + 30,
+                popupY + 25,
                 0xFFFFFFFF,
                 true
         );
@@ -424,7 +539,7 @@ public class EditCommandScreen extends PopupScreen {
                 this.font,
                 translatable("screen.savedcommands.variables"),
                 popupX + 20,
-                popupY + 75,
+                popupY + 70,
                 0xFFFFFFFF,
                 true
         );
@@ -433,26 +548,17 @@ public class EditCommandScreen extends PopupScreen {
                 this.font,
                 translatable("screen.savedcommands.name"),
                 popupX + 20,
-                popupY + 110,
+                popupY + 105,
                 0xFFFFFFFF,
                 true
         );
 
-        ctx.drawString(
-                this.font,
-                translatable("controls.keybinds.title"),
-                popupX + 20,
-                popupY + 150,
-                0xFFFFFFFF,
-                true
-        );
-
-        CommandSuggestor.render(ctx, mouseX, mouseY);
+        commandSuggestor.render(ctx, mouseX, mouseY);
     }
 
     @Override
     public void setFocused(@Nullable GuiEventListener focused) {
-        CommandSuggestor.setAllowSuggestions(focused == commandTextField);
+        commandSuggestor.setAllowSuggestions(focused == commandTextField);
         super.setFocused(focused);
     }
 
@@ -467,7 +573,7 @@ public class EditCommandScreen extends PopupScreen {
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         }
-        if (CommandSuggestor.mouseClicked(click)) {
+        if (commandSuggestor.mouseClicked(click)) {
             return true;
         }
         return super.mouseClicked(click, doubled);
@@ -488,7 +594,7 @@ public class EditCommandScreen extends PopupScreen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (CommandSuggestor.mouseScrolled(verticalAmount)) {
+        if (commandSuggestor.mouseScrolled(verticalAmount)) {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -505,7 +611,7 @@ public class EditCommandScreen extends PopupScreen {
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         }
-        if (CommandSuggestor.keyPressed(input)) {
+        if (commandSuggestor.keyPressed(input)) {
             return true;
         }
         return super.keyPressed(input);
@@ -543,6 +649,9 @@ public class EditCommandScreen extends PopupScreen {
             data.name = null;
         } else {
             data.name = nameTextField.getValue();
+        }
+        if (customCategoriesEnabled) {
+            data.categoryId = categorySelectionButton.getValue().id;
         }
         commandManager.saveAsync();
         return true;
