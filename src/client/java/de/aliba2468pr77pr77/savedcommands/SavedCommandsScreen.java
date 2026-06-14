@@ -22,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
@@ -46,6 +47,7 @@ public class SavedCommandsScreen extends Screen {
     @Nullable GuiEventListener focused;
 
     public boolean showReceivedCommands = true;
+    boolean manualCategories = false;
 
     public SavedCommandsScreen() {
         super(Component.translatable("screen.savedcommands.commandscreentitle"));
@@ -61,6 +63,8 @@ public class SavedCommandsScreen extends Screen {
     }
 
     protected void init() {
+        manualCategories = SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories;
+
         if (!sharingManager.receivedCommandsByPlayerName.isEmpty()) {
             notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
                     _ -> minecraft.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
@@ -153,23 +157,58 @@ public class SavedCommandsScreen extends Screen {
     }
 
     private void addCommandRightPlace(SavedCommandManager.CommandData data, int indexDataList, List<CommandList.BaseEntry> newList) {
-        String commandBase;
-        if (data.command.contains(" ")) {
-            commandBase = data.command.substring(0, data.command.indexOf(" "));
-        } else {
-            commandBase = data.command;
-        }
-        for (int i = 0; i < newList.size(); i++) {
-            if (newList.get(i) instanceof CommandList.CategoryTitleEntry TitleEntry) {
-                if (Objects.equals(TitleEntry.categoryTitle, commandBase)) {
-                    newList.add(i + 1, commandList.createCommandEntry(data.command, data.name, indexDataList));
-                    return;
+        if (manualCategories) {
+            for (int i = 0; i < newList.size(); i++) {
+                if (newList.get(i) instanceof CommandList.CategoryTitleEntry titleEntry) {
+                    if ((titleEntry.customCategory != null && Objects.equals(titleEntry.customCategory.id, data.categoryId)) ||
+                            (titleEntry.customCategory == null && data.categoryId == null)) {
+                        newList.add(i + 1, commandList.createCommandEntry(data.command, data.name, indexDataList));
+                        return;
+                    }
                 }
             }
+            // If the for loop didn't find the category, create it!
+            if (data.categoryId == null) {
+                newList.addFirst(commandList.new CategoryTitleEntry((SavedCommandManager.SavedCommandsData.CustomCategory) null));
+                newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
+            } else {
+                if (commandManager.data.customCategories == null) {
+                    commandManager.data.customCategories = new ArrayList<>();
+                    newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
+                }
+                Optional<SavedCommandManager.SavedCommandsData.CustomCategory> customCategory = commandManager.data.customCategories.stream()
+                        .filter((category) -> category.id.equals(data.categoryId)).findFirst();
+                customCategory.ifPresentOrElse(
+                        found -> { // found
+                            newList.addFirst(commandList.new CategoryTitleEntry(found));
+                            newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
+                        },
+                        () -> { // not found
+                            data.categoryId = null; // clean up orphanated id
+                            commandManager.saveAsync();
+                            addCommandRightPlace(data, indexDataList, newList); // Run again to add it.
+                        }
+                );
+            }
+        } else {
+            String commandBase;
+            if (data.command.contains(" ")) {
+                commandBase = data.command.substring(0, data.command.indexOf(" "));
+            } else {
+                commandBase = data.command;
+            }
+            for (int i = 0; i < newList.size(); i++) {
+                if (newList.get(i) instanceof CommandList.CategoryTitleEntry titleEntry) {
+                    if (Objects.equals(titleEntry.categoryTitle, commandBase)) {
+                        newList.add(i + 1, commandList.createCommandEntry(data.command, data.name, indexDataList));
+                        return;
+                    }
+                }
+            }
+            // If the for loop didn't find the category, create it!
+            newList.addFirst(commandList.new CategoryTitleEntry(commandBase));
+            newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
         }
-        // If the for loop didn't find the category, create it!
-        newList.addFirst(new CommandList.CategoryTitleEntry(commandBase));
-        newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
     }
 
     public void updateSearch(String search) {
@@ -186,10 +225,8 @@ public class SavedCommandsScreen extends Screen {
             }
         }
         commandList.replaceEntries(newList);
-        for (CommandList.BaseEntry Entry : commandList.children()) {
-            if (Entry instanceof CommandList.CommandEntry commandEntry) {
-                commandEntry.init();
-            }
+        for (CommandList.BaseEntry entry : commandList.children()) {
+            entry.init();
         }
         if (CommandSuggestor != null) {
             CommandSuggestor.updateCommandInfo();
@@ -308,21 +345,8 @@ public class SavedCommandsScreen extends Screen {
             return this.width - 6;
         }
 
-        public static class BaseEntry extends ContainerObjectSelectionList.Entry<BaseEntry> {
-            @Override
-            public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
-                // Implementation in CommandEntry and CategoryTitleEntry!
-            }
-
-            @Override
-            public @NonNull List<? extends NarratableEntry> narratables() {
-                return List.of();
-            }
-
-            @Override
-            public @NonNull List<? extends GuiEventListener> children() {
-                return List.of();
-            }
+        public static abstract class BaseEntry extends ContainerObjectSelectionList.Entry<BaseEntry> {
+            protected abstract void init();
         }
 
         protected CommandEntry createCommandEntry(String command, String name, int indexDataList) {
@@ -343,6 +367,7 @@ public class SavedCommandsScreen extends Screen {
                 this.indexDataList = indexDataList;
             }
 
+            @Override
             protected void init() {
                 int y = this.getY() + 2;
                 int entryHeight = this.getHeight() - 4;
@@ -351,10 +376,10 @@ public class SavedCommandsScreen extends Screen {
                 deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
                     LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
                     if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
-                        minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commandDeleteQuestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
+                        minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commanddeletequestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
                             commandManager.removeCommand(indexDataList);
 
-                            switch(showAgainState) {
+                            switch (showAgainState) {
                                 case WORLD_DISABLED -> {
                                     commandManager.data.worldSettings.deleteWarning = false;
                                     commandManager.saveAsync();
@@ -470,35 +495,104 @@ public class SavedCommandsScreen extends Screen {
             }
         }
 
-        public static class CategoryTitleEntry extends BaseEntry {
+        public class CategoryTitleEntry extends BaseEntry {
             private final String categoryTitle;
+            private final SavedCommandManager.SavedCommandsData.CustomCategory customCategory;
+
+            IconButton deleteButton;
+            IconButton editButton;
 
             public CategoryTitleEntry(String categoryTitle) {
                 this.categoryTitle = categoryTitle;
+                this.customCategory = null;
+            }
+
+            public CategoryTitleEntry(SavedCommandManager.SavedCommandsData.CustomCategory customCategory) {
+                if (customCategory != null) {
+                    this.categoryTitle = customCategory.name;
+                } else {
+                    this.categoryTitle = Component.translatable("screen.savedcommands.nocategory").getString();
+                }
+                this.customCategory = customCategory;
             }
 
             @Override
-            public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-                if (click.button() == 0) {
-                    LOGGER.info("Clicked on category title " + this.categoryTitle);
-                    return true;
+            protected void init() {
+                int y = this.getY() + 2;
+                int entryHeight = this.getHeight() - 4;
+                int entryWidth = this.getWidth();
+
+                if (customCategory != null && manualCategories) {
+                    deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
+                        if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
+                            minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.categorydeletequestion"),
+                                    Component.translatable("screen.savedcommands.categorydeletemessage", categoryTitle),
+                                    minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
+                                commandManager.data.commands.removeIf(commandData -> Objects.equals(commandData.categoryId, customCategory.id));
+                                if (commandManager.data.customCategories != null) {
+                                    commandManager.data.customCategories.remove(customCategory);
+                                }
+                                switch (showAgainState) {
+                                    case WORLD_DISABLED -> {
+                                        commandManager.data.worldSettings.deleteWarning = false;
+                                        commandManager.saveAsync();
+                                    }
+                                    case GLOBAL_DISABLED -> {
+                                        SettingsManager.globalSettings.deleteWarning = false;
+                                        SettingsManager.saveAsync();
+                                    }
+                                }
+                            }, !SettingsManager.globalSettings.deleteWarning));
+                        } else {
+                            commandManager.data.commands.removeIf(commandData -> Objects.equals(commandData.categoryId, customCategory.id));
+                            if (commandManager.data.customCategories != null) {
+                                commandManager.data.customCategories.remove(customCategory);
+                            }
+                        }
+                    }, Component.translatable("selectWorld.deleteButton"));
+
+                    editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"),
+                            _ -> minecraft.setScreen(new EditCategoryScreen(customCategory, minecraft.screen)), Component.translatable("selectWorld.edit"));
                 }
-                return false;
             }
 
             @Override
             public void extractContent(@NonNull GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float deltaTicks) {
-                Minecraft minecraft = Minecraft.getInstance();
+                int x = this.getX() + 2;
+                int y = this.getY() + 2;
+                int entryHeight = this.getHeight() - 4;
+                int entryWidth = this.getWidth();
 
-                int textX = this.getX() + 3;
-                int textY = this.getY() + this.getHeight() - minecraft.font.lineHeight - 2;
+                int textX;
+                int textY;
+                if (manualCategories) {
+                    context.fill(x, y, x + entryWidth, y + entryHeight, 0x44161616);
+                    textX = x + 3;
+                    textY = this.getY() + (this.getHeight() - minecraft.font.lineHeight) / 2;
+                } else {
+                    textX = x + 3;
+                    textY = this.getY() + this.getHeight() - minecraft.font.lineHeight - 2;
+                }
 
                 context.text(minecraft.font, Component.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, ChatFormatting.BOLD)).withStyle(ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF, true);
+
+                if (customCategory != null && manualCategories) {
+                    deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
+                    deleteButton.extractRenderState(context, mouseX, mouseY, deltaTicks);
+
+                    editButton.setPosition(entryWidth - 50, y + (entryHeight - 20) / 2);
+                    editButton.extractRenderState(context, mouseX, mouseY, deltaTicks);
+                }
             }
 
             @Override
             public @NonNull List<? extends NarratableEntry> narratables() {
                 return List.of(NarratableEntryOfString(categoryTitle));
+            }
+
+            @Override
+            public @NonNull List<? extends GuiEventListener> children() {
+                return customCategory != null && manualCategories ? List.of(editButton, deleteButton) : List.of();
             }
         }
     }

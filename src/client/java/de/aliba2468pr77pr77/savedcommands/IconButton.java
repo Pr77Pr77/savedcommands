@@ -11,6 +11,7 @@ import org.jspecify.annotations.NonNull;
 
 public class IconButton extends Button {
     private final Identifier icon;
+    private boolean iconShown = true;
 
     public IconButton(final int x, final int y, final int width, final int height, Identifier icon, final OnPress onPress, Component tooltipNarration) {
         super(x, y, width, height, Component.empty(), onPress, (_) -> (MutableComponent) tooltipNarration);
@@ -18,13 +19,34 @@ public class IconButton extends Button {
         this.icon = icon;
     }
 
+    // Switchable between icon and component
+    public IconButton(final int x, final int y, final int width, final int height, Identifier iconSwitchable, final OnPress onPress, Component tooltipNarration, Component componentSwitchable, boolean initialIconShown) {
+        super(x, y, width, height, componentSwitchable, onPress, (_) -> (MutableComponent) tooltipNarration);
+        setTooltip(Tooltip.create(tooltipNarration));
+        this.iconShown = initialIconShown;
+        this.icon = iconSwitchable;
+    }
+
+    public void switchToIcon() {
+        iconShown = true;
+    }
+
+    public void switchToComponent() {
+        iconShown = false;
+    }
+
     @Override
     protected void extractContents(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        this.extractDefaultSprite(graphics);
+        if (iconShown) {
+            this.extractDefaultSprite(graphics);
 
-        int iconSize = 20;
-        int iconX = this.getX() + (this.getWidth() - iconSize) / 2;
-        int iconY = this.getY() + (this.getHeight() - iconSize) / 2;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            int iconSize = 20;
+            int iconX = this.getX() + (this.getWidth() - iconSize) / 2;
+            int iconY = this.getY() + (this.getHeight() - iconSize) / 2;
+            graphics.blit(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        } else {
+            this.extractDefaultSprite(graphics);
+            this.extractDefaultLabel(graphics.textRendererForWidget(this, GuiGraphicsExtractor.HoveredTextEffects.NONE));
+        }
     }
 }

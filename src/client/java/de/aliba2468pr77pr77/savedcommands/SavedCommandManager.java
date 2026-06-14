@@ -11,6 +11,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.storage.LevelResource;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -65,6 +66,9 @@ public class SavedCommandManager {
         public String name;
         public keybindCombination keybinds;
         public List<variable> variables;
+
+        // Only if custom categories enabled
+        public @Nullable String categoryId;
 
         CommandData(String command, String name) {
             this.command = command;
@@ -152,7 +156,22 @@ public class SavedCommandManager {
     public static class SavedCommandsData {
         public List<CommandData> commands = new ArrayList<>();
 
+        // Only if custom categories enabled
+        public @Nullable List<CustomCategory> customCategories = new ArrayList<>();
+
         SettingsManager.Settings worldSettings;
+
+        public class CustomCategory {
+            public String id;
+            public String name;
+
+            public CustomCategory(String name) {
+                this.name = name;
+                do {
+                    id = UUID.randomUUID().toString();
+                } while (Objects.requireNonNull(customCategories).stream().anyMatch(customCategory -> customCategory.id.equals(id)));
+            }
+        }
     }
 
     public synchronized CommandData addCommand(String command, String name) {
@@ -265,6 +284,9 @@ public class SavedCommandManager {
             snapshot = new SavedCommandsData();
             snapshot.commands = new ArrayList<>(this.data.commands);
             snapshot.worldSettings = new SettingsManager.Settings(data.worldSettings);
+            if (this.data.customCategories != null) {
+                snapshot.customCategories = new ArrayList<>(this.data.customCategories);
+            }
         }
         CompletableFuture.runAsync(() -> {
             try {
