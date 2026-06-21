@@ -24,7 +24,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.OpenCommand
 
 public class SharingManager {
     public static final String INITIAL_MESSAGE_TEXT = "%s tried to share commands with you, but you don't have the required mod. " +
-            "Install '%s' (Fabric) to receive them properly. Commands: %s.";
+            "Install '%s' (Fabric) to receive them properly. Commands: %s";
     public static final String SHARE_MAGIC_CODE = "Sаvеd Cоmmаnds";
     public static final String SHARE_CODE_SEND = "SEND"; // Sent by recipient
     public static final String SHARE_CODE_DATA_UNFINISHED = "DATA_UNFINISHED"; // Sent by sender + Unfinished data
@@ -169,7 +169,15 @@ public class SharingManager {
             }
 
             Minecraft.getInstance().execute(() -> {
+                // Getting JSON without categoryId
+                Map<SavedCommandManager.CommandData, String> backup = new HashMap<>();
+                commands.forEach(c -> {
+                    backup.put(c, c.categoryId);
+                    c.categoryId = null;
+                });
                 String JSONdataLeft = GSON.toJson(commands);
+                commands.forEach(c -> c.categoryId = backup.get(c));
+
                 List<String> stringsToSend = new ArrayList<>();
                 assert Minecraft.getInstance().player != null;
                 String unfinishedHeader = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_UNFINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";

@@ -45,6 +45,14 @@ public class EditCategoryScreen extends PopupScreen {
     }
 
     @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        nameEditBox.setRectangle(popupW - 40, 20, popupX + 20, popupY + 40);
+        exitButton.setPosition(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20);
+    }
+
+    @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float delta) {
         super.extractRenderState(ctx, mouseX, mouseY, delta);
 

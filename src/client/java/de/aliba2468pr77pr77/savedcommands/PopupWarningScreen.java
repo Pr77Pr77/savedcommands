@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 
 public class PopupWarningScreen extends PopupScreen {
     Component message;
+    Button closeButton;
 
     PopupWarningScreen(Component header, Component message, Screen parent) {
         super(header, parent, 90, 290);
@@ -19,8 +20,15 @@ public class PopupWarningScreen extends PopupScreen {
     protected void init() {
         super.init();
 
-        Button closeButton = Button.builder(CommonComponents.GUI_OK, _ -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
+        closeButton = Button.builder(CommonComponents.GUI_OK, _ -> exit()).bounds(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20, 100, 20).build();
         this.addRenderableWidget(closeButton);
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        closeButton.setPosition(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20);
     }
 
     @Override

@@ -57,12 +57,28 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         shareSelectionList.addPlayers(getOtherPlayers());
         this.addRenderableWidget(this.shareSelectionList);
 
-        this.sendButton = Button.builder(Component.translatable("screen.savedcommands.send"), _ -> exit(exitTypes.SEND)).bounds(popupX + (popupW - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        this.sendButton = Button.builder(Component.translatable("screen.savedcommands.send"), _ -> exit(exitTypes.SEND))
+                .bounds(popupX + (popupW - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10, 100, 20).
+                tooltip(Tooltip.create(Component.translatable("screen.savedcommands.share.unencryptednotice"))).build();
         sendButton.active = !chosenPlayers.isEmpty();
         this.addRenderableWidget(this.sendButton);
 
         this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> exit()).bounds(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         this.addRenderableWidget(this.cancelButton);
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        this.searchBar.setRectangle(popupW - 135 - 20 - 5, 20, popupX + 10, popupY + 22);
+        this.selectMoreCommandsButton.setPosition(popupX + popupW - 135 - 10, popupY + 22);
+
+        shareSelectionList.setRectangle(popupW - 6 * 2, popupH - 35 - 20 - 22 - 5, popupX + 6, popupY + 20 + 22 + 5);
+        shareSelectionList.repositionEntries();
+
+        this.sendButton.setPosition(popupX + (popupW - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10);
+        this.cancelButton.setPosition(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10);
     }
 
     public void updateSearch(String search) {

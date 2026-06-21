@@ -1,6 +1,7 @@
 package de.aliba2468pr77pr77.savedcommands.share;
 
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import de.aliba2468pr77pr77.savedcommands.SavedCommandManager;
 import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -36,16 +37,32 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
 
         this.removeWidget(this.addButton);
         this.removeWidget(this.notificationButton);
+        this.removeWidget(this.settingsButton);
 
-        this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
+        if (this.selectPlayersButton == null) {
+            this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
+        } else {
+            this.selectPlayersButton.setPosition(width - 20 - 75 - 5 - 75, 20);
+        }
         this.addRenderableWidget(this.selectPlayersButton);
 
-        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> minecraft.setScreen(new SavedCommandsScreen(false))).bounds(width - 20 - 75, 20, 75, 20).build();
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> minecraft.setScreen(playerSelectionScreen.parent)).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
         this.SearchBar.setPosition(20, 20);
         this.SearchBar.setHint(Component.translatable("screen.savedcommands.share.searchcommands"));
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        this.selectPlayersButton.setPosition(width - 20 - 75 - 5 - 75, 20);
+        this.cancelButton.setPosition(width - 20 - 75, 20);
+
+        this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
+        this.SearchBar.setPosition(20, 20);
     }
 
     @Override
@@ -81,6 +98,13 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         @Override
         protected CommandEntry createCommandEntry(String command, String name, int indexDataList) {
             return new ShareCommandEntry(command, name, indexDataList);
+        }
+
+        @Override
+        protected CategoryTitleEntry createCategoryTitleEntry(SavedCommandManager.SavedCommandsData.CustomCategory customCategory) {
+            CategoryTitleEntry categoryTitleEntry = new CategoryTitleEntry(customCategory);
+            categoryTitleEntry.buttonExtraction = false;
+            return categoryTitleEntry;
         }
 
         protected class ShareCommandEntry extends CommandEntry {

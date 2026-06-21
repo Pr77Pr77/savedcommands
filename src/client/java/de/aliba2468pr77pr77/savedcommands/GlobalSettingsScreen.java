@@ -59,7 +59,7 @@ public class GlobalSettingsScreen extends Screen {
     }
 
     @Override
-    protected void repositionElements() {
+    public void repositionElements() {
         layout.arrangeElements();
         if (list != null) list.updateSize(width, layout);
         assert list != null;

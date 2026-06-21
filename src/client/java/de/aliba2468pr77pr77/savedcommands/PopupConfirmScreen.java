@@ -18,8 +18,11 @@ public class PopupConfirmScreen extends PopupScreen {
     boolean worldSelectedBeforeGlobal = false;
     boolean noCheckboxes;
 
+    MultiLineTextWidget messageWidget;
     Checkbox worldShowAgain;
     Checkbox globalShowAgain;
+    Button yesButton;
+    Button noButton;
 
     enum ShowAgainState {
         SHOW_AGAIN,
@@ -57,7 +60,7 @@ public class PopupConfirmScreen extends PopupScreen {
     protected void init() {
         super.init();
 
-        MultiLineTextWidget messageWidget = new MultiLineTextWidget(this.message, this.font);
+        messageWidget = new MultiLineTextWidget(this.message, this.font);
         messageWidget.setCentered(true);
         messageWidget.setPosition(popupX + 10, popupY + 30);
         messageWidget.setMaxWidth(popupW - 20);
@@ -84,7 +87,6 @@ public class PopupConfirmScreen extends PopupScreen {
                             } else {
                                 worldShowAgain.selected = worldSelectedBeforeGlobal;
                             }
-
                         })).build();
                 addRenderableWidget(globalShowAgain);
 
@@ -92,7 +94,7 @@ public class PopupConfirmScreen extends PopupScreen {
             }
         }
 
-        super.init(); // Done to recalculate the positions and dimensions
+        calculateRectangle();
 
         messageWidget.setPosition(popupX + (popupW - messageWidget.getWidth()) / 2, popupY + 30);
         if (!noCheckboxes) {
@@ -102,7 +104,7 @@ public class PopupConfirmScreen extends PopupScreen {
             }
         }
 
-        Button yesButton = Button.builder(yesComponent, _ -> {
+        yesButton = Button.builder(yesComponent, _ -> {
             if (callbackOnYes != null) {
                 if (globalShowAgain != null && globalShowAgain.selected) {
                     callbackOnYes.accept(ShowAgainState.GLOBAL_DISABLED);
@@ -118,8 +120,38 @@ public class PopupConfirmScreen extends PopupScreen {
         }).bounds(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 10 - 20, 100, 20).build();
         addRenderableWidget(yesButton);
 
-        Button noButton = Button.builder(noComponent, _ -> exit()).
+        noButton = Button.builder(noComponent, _ -> exit()).
                 bounds(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 10 - 20, 100, 20).build();
         addRenderableWidget(noButton);
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        messageWidget.setMaxWidth(popupW - 20);
+        contentH = 30 + messageWidget.getHeight() + 5 + 10 + 20;
+
+        if (worldShowAgain != null) {
+            worldShowAgain.adjustWidth(popupW - 20, font);
+            contentH += worldShowAgain.getHeight() + 5;
+
+            if (globalShowAgain != null) {
+                globalShowAgain.adjustWidth(popupW - 20, font);
+                contentH += globalShowAgain.getHeight() + 5;
+            }
+        }
+        calculateRectangle();
+
+        messageWidget.setPosition(popupX + (popupW - messageWidget.getWidth()) / 2, popupY + 30);
+        if (worldShowAgain != null) {
+            worldShowAgain.setPosition(popupX + (popupW - worldShowAgain.getWidth()) / 2, popupY + 30 + messageWidget.getHeight() + 5);
+            if (globalShowAgain != null) {
+                globalShowAgain.setPosition(popupX + (popupW - globalShowAgain.getWidth()) / 2, popupY + 30 + messageWidget.getHeight() + 5 + globalShowAgain.getHeight() + 5);
+            }
+        }
+
+        yesButton.setPosition(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 10 - 20);
+        noButton.setPosition(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 10 - 20);
     }
 }

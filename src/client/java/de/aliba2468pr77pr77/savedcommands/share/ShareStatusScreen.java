@@ -37,8 +37,22 @@ public class ShareStatusScreen extends PopupScreen {
         shareStatusList.addPlayers(SavedCommandsClient.sharingManager.recipients);
         this.addRenderableWidget(this.shareStatusList);
 
-        this.closeButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> exit()).bounds((this.width - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        if (this.closeButton == null) {
+            this.closeButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> exit()).bounds((this.width - 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
+        } else {
+            this.closeButton.setPosition((this.width - 100) / 2, popupY + popupH - 20 - 10);
+        }
         this.addRenderableWidget(this.closeButton);
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        shareStatusList.setRectangle(popupW - 6 * 2, popupH - 35 - 25, popupX + 6, popupY + 25);
+        shareStatusList.repositionEntries();
+
+        this.closeButton.setPosition((this.width - 100) / 2, popupY + popupH - 20 - 10);
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
+import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 
 public class SavedCommandManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -28,10 +29,10 @@ public class SavedCommandManager {
     private final Path filePath;
     public SavedCommandsData data;
 
-    public SavedCommandManager(String World) {
+    public SavedCommandManager(String world) {
         Path configDir = FabricLoader.getInstance().getConfigDir();
         Path myDir = configDir.resolve(MOD_ID);
-        this.filePath = myDir.resolve(World + ".json");
+        this.filePath = myDir.resolve(world + ".json");
         load();
     }
 
@@ -64,7 +65,7 @@ public class SavedCommandManager {
     public static class CommandData {
         public String command;
         public String name;
-        public keybindCombination keybinds;
+        public KeybindCombination keybinds;
         public List<variable> variables;
 
         // Only if custom categories enabled
@@ -75,7 +76,7 @@ public class SavedCommandManager {
             this.name = name;
         }
 
-        public static class keybindCombination {
+        public static class KeybindCombination {
             public List<String> keybindType = new ArrayList<>();
             public List<Integer> keybindCode = new ArrayList<>();
 
@@ -186,7 +187,15 @@ public class SavedCommandManager {
 
     public synchronized void removeCommand(int index) {
         if (index >= 0 && index < data.commands.size()) {
+            String categoryIdSearching = data.commands.get(index).categoryId;
             data.commands.remove(index);
+
+            // Custom category cleanup
+            if (categoryIdSearching != null && commandManager.data.customCategories != null &&
+                    commandManager.data.commands.stream().noneMatch(command -> Objects.equals(categoryIdSearching, command.categoryId))) {
+                commandManager.data.customCategories
+                        .removeIf((category) -> category.id.equals(categoryIdSearching));
+            }
             saveAsync();
         }
     }
