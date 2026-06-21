@@ -79,6 +79,19 @@ public class InputVariableScreen extends PopupScreen {
     }
 
     @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        for (int variableEditBoxIndex = 0; variableEditBoxIndex < variableInputTextFields.size(); variableEditBoxIndex++) {
+            variableInputTextFields.get(variableEditBoxIndex)
+                    .setRectangle(popupW - 40, 20, popupX + 20, popupY + 40 * (variableEditBoxIndex + 1));
+        }
+
+        this.cancelButton.setPosition(popupX + (popupW - 100 + 100 + 5) / 2, popupY + popupH - 20 - 20);
+        this.doneButton.setPosition(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20);
+    }
+
+    @Override
     public void render(@NotNull GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         super.render(ctx, mouseX, mouseY, delta);
 

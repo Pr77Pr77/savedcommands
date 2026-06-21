@@ -66,6 +66,19 @@ public class ViewerSaverScreen extends PopupScreen {
         }
     }
 
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        viewerSaverList.setRectangle(popupW - 6 * 2, popupH - 35 - 25, popupX + 6, popupY + 25);
+        viewerSaverList.repositionEntries();
+
+        saveAllButton.setPosition((width - 100 - 5 - 100 - 5 - 100 - 5 - 100) / 2, popupY + popupH - 20 - 10);
+        editAllButton.setPosition((width - 100 - 5 - 100 - 5 - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10);
+        deleteAllButton.setPosition((width - 100 - 5 - 100 + 5 + 100 + 5 + 100) / 2, popupY + popupH - 20 - 10);
+        continueLaterButton.setPosition((width - 100 + 5 + 100 + 5 + 100 + 5 + 100) / 2, popupY + popupH - 20 - 10);
+    }
+
     public enum exitTypes {
         SAVE_ALL,
         EDIT_ALL,

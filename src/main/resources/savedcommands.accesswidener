@@ -1,3 +1,7 @@
 accessWidener v2 named
 accessible field net/minecraft/client/gui/components/Checkbox selected Z
 accessible field net/minecraft/client/gui/components/AbstractButton SPRITES Lnet/minecraft/client/gui/components/WidgetSprites;
+accessible method net/minecraft/client/gui/components/AbstractSelectionList repositionEntries ()V
+accessible method net/minecraft/client/gui/screens/Screen addRenderableWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+accessible method net/minecraft/client/gui/screens/Screen repositionElements ()V
+accessible method net/minecraft/client/gui/components/Checkbox getAdjustedWidth (ILnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)I
