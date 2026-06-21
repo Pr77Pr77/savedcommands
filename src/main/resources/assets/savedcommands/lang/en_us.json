@@ -12,6 +12,7 @@
   "screen.savedcommands.share.searchplayers": "Search players...",
   "screen.savedcommands.share.searchcommands": "Search commands...",
   "screen.savedcommands.share.selectmorecommands": "Select more commands",
+  "screen.savedcommands.share.unencryptednotice": "Commands will be visible to the server. Proceed with caution!",
   "screen.savedcommands.share.status": "Sharing status",
   "screen.savedcommands.share.status.waiting": "Waiting for response",
   "screen.savedcommands.share.status.notavailable": "recipient's mod not available!",

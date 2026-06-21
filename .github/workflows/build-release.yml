@@ -43,6 +43,7 @@ jobs:
           loaders: fabric
           dependencies: |
             fabric-api(required)
+            modmenu(optional)
           game-versions: |
             1.21.11
           java: |

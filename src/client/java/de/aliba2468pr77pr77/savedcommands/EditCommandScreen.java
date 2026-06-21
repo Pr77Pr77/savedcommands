@@ -33,8 +33,11 @@ public class EditCommandScreen extends PopupScreen {
     private Button closeButton;
     public EditBox commandTextField;
     private EditBox nameTextField;
+    private Button addVariableButton;
+    private final List<ButtonVariablePair> variableButtons = new ArrayList<>();
 
     private Button keybindButton;
+    private Button removeKeybindButton;
     public boolean keybindSetting = false;
 
     private SavedCommandManager.CommandData data;
@@ -55,7 +58,7 @@ public class EditCommandScreen extends PopupScreen {
     public EditCommandScreen(Screen parent, SavedCommandManager.CommandData data) {
         super(translatable("screen.savedcommands.editpopup"), parent, 200, 300);
         if (SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories) {
-            contentH = 230;
+            contentH = 225;
             customCategoriesEnabled = true;
             if (commandManager.data.customCategories == null) {
                 commandManager.data.customCategories = new ArrayList<>();
@@ -78,7 +81,7 @@ public class EditCommandScreen extends PopupScreen {
                     conflictSavedCommands conflict = new conflictSavedCommands();
                     conflict.conflictingCommand = command;
 
-                    conflict.conflictingKeys = new SavedCommandManager.CommandData.keybindCombination();
+                    conflict.conflictingKeys = new SavedCommandManager.CommandData.KeybindCombination();
                     boolean differentEndings = false;
                     for (int keybindIndex = 0; keybindIndex < command.keybinds.keybindType.size() && keybindIndex < data.keybinds.keybindType.size(); keybindIndex++) {
                         if (Objects.equals(command.keybinds.keybindCode.get(keybindIndex), data.keybinds.keybindCode.get(keybindIndex)) &&
@@ -202,7 +205,7 @@ public class EditCommandScreen extends PopupScreen {
         }
         this.addRenderableWidget(this.commandTextField);
 
-        Button addVariableButton = Button.builder(Component.literal("+"), button -> {
+        addVariableButton = Button.builder(Component.literal("+"), button -> {
                     LOGGER.info("Creating Variable...");
                     if (!save(true)) {
                         return;
@@ -224,7 +227,7 @@ public class EditCommandScreen extends PopupScreen {
                         .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
                 this.addRenderableWidget(variableButton);
 
-                Button variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 80, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
+                IconButton variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 80, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
                     LOGGER.info("Editing Variable...");
                     if (!save(true)) {
                         return;
@@ -232,6 +235,8 @@ public class EditCommandScreen extends PopupScreen {
                     minecraft.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
                 }, Component.translatable("screen.savedcommands.editvariablebutton", data.variables.get(variableIndex).name));
                 this.addRenderableWidget(variableEditButton);
+
+                variableButtons.add(new ButtonVariablePair(variableButton, variableEditButton));
             }
         }
 
@@ -256,13 +261,13 @@ public class EditCommandScreen extends PopupScreen {
             if (data == null) {
                 return;
             }
-            data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
+            data.keybinds = new SavedCommandManager.CommandData.KeybindCombination();
             LOGGER.info("Changing the keybind...");
         }).bounds(popupX + 20, popupY + 140, Math.round((popupW - 40) * 0.7F), 20).build();
 
         this.addRenderableWidget(this.keybindButton);
 
-        Button removeKeybindButton = Button.builder(translatable("screen.savedcommands.remove"), button -> {
+        this.removeKeybindButton = Button.builder(translatable("screen.savedcommands.remove"), button -> {
             if (data == null) {
                 return;
             }
@@ -278,7 +283,7 @@ public class EditCommandScreen extends PopupScreen {
         searchConflicts();
 
         if (customCategoriesEnabled) {
-            if (data.categoryId == null) {
+            if (data == null || data.categoryId == null) {
                 createCategorySelectionButton(CustomComponentCategory.NONE);
             } else {
                 createCategorySelectionButton(componentCategories.stream()
@@ -363,6 +368,39 @@ public class EditCommandScreen extends PopupScreen {
         }
         insertedVariables.refresh();
         commandSuggestor.updateCommandInfo();
+    }
+
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        this.closeButton.setPosition(popupX + (popupW - 100) / 2, popupY + popupH - 10 - 20);
+        this.nameTextField.setRectangle(popupW - 40, 20, popupX + 20, popupY + 115);
+        this.commandTextField.setRectangle(popupW - 40, 20, popupX + 20, popupY + 35);
+        this.addVariableButton.setPosition(popupX + 20, popupY + 80);
+
+        for (int buttonPairIndex = 0; buttonPairIndex < variableButtons.size(); buttonPairIndex++) {
+            variableButtons.get(buttonPairIndex).variableButton.setPosition(popupX + 20 + 25 + 45 * buttonPairIndex, popupY + 80);
+            variableButtons.get(buttonPairIndex).editButton.setPosition(popupX + 20 + 45 + 45 * buttonPairIndex, popupY + 80);
+        }
+
+        this.keybindButton.setRectangle(Math.round((popupW - 40) * 0.7F), 20, popupX + 20, popupY + 140);
+        this.removeKeybindButton.setRectangle(popupW - 45 - Math.round((popupW - 40) * 0.7F), 20, popupX + Math.round((popupW - 40) * 0.7F) + 25, popupY + 140);
+
+        if (this.categorySelectionButton != null) {
+            this.categorySelectionButton.setRectangle(popupW - 40 - 5 - 20, 20, popupX + 20, popupY + 165);
+        }
+        if (this.newCategoryEditBox != null) {
+            this.newCategoryEditBox.setRectangle(popupW - 40 - 5 - 20, 20, popupX + 20, popupY + 165);
+        }
+        if (this.addCategoryButton != null) {
+            this.addCategoryButton.setPosition(popupX + popupW - 20 - 20, popupY + 165);
+        }
+
+        commandSuggestor.updateCommandInfo();
+    }
+
+    record ButtonVariablePair(Button variableButton, IconButton editButton) {
     }
 
     private void createCategorySelectionButton(CustomComponentCategory defaultValue) {
@@ -566,7 +604,7 @@ public class EditCommandScreen extends PopupScreen {
     public boolean mouseClicked(final @NonNull MouseButtonEvent click, final boolean doubled) {
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
             if (data.keybinds == null) {
-                data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
+                data.keybinds = new SavedCommandManager.CommandData.KeybindCombination();
             }
             data.keybinds.keybindType.add("MOUSE");
             data.keybinds.keybindCode.add(click.button());
@@ -604,7 +642,7 @@ public class EditCommandScreen extends PopupScreen {
     public boolean keyPressed(final @NonNull KeyEvent input) {
         if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
             if (data.keybinds == null) {
-                data.keybinds = new SavedCommandManager.CommandData.keybindCombination();
+                data.keybinds = new SavedCommandManager.CommandData.KeybindCombination();
             }
             data.keybinds.keybindType.add("KEYSYM");
             data.keybinds.keybindCode.add(input.key());
@@ -666,7 +704,7 @@ public class EditCommandScreen extends PopupScreen {
     static class conflictSavedCommands { // Conflict with other keybinds of this mod
         SavedCommandManager.CommandData conflictingCommand;
 
-        SavedCommandManager.CommandData.keybindCombination conflictingKeys; // Only the ones in both commands
+        SavedCommandManager.CommandData.KeybindCombination conflictingKeys; // Only the ones in both commands
     }
 
     static class conflictMinecraftKB { // Conflict with minecraft keybinds

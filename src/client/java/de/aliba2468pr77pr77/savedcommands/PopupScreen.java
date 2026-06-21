@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 public abstract class PopupScreen extends Screen {
-    protected Screen parent;
+    public Screen parent;
 
     public int popupW;
     public int popupH;
@@ -28,6 +28,16 @@ public abstract class PopupScreen extends Screen {
     protected void init() {
         super.init();
 
+        calculateRectangle();
+    }
+
+    @Override
+    public void repositionElements() {
+        parent.resize(width, height);
+        calculateRectangle();
+    }
+
+    protected void calculateRectangle() {
         popupW = Math.min(contentW, this.width - 20);
         popupH = Math.min(contentH, this.height - 20);
         popupX = (this.width - popupW) / 2;
@@ -36,10 +46,7 @@ public abstract class PopupScreen extends Screen {
 
     @Override
     public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        popupW = Math.min(contentW, this.width - 20);
-        popupH = Math.min(contentH, this.height - 20);
-        popupX = (this.width - popupW) / 2;
-        popupY = (this.height - popupH) / 2;
+        calculateRectangle();
 
         int textWidth = this.font.width(title);
         ctx.drawString(
@@ -73,10 +80,6 @@ public abstract class PopupScreen extends Screen {
     }
 
     protected void exit() {
-        if (parent instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen(false));
-        } else {
-            minecraft.setScreen(parent);
-        }
+        minecraft.setScreen(parent);
     }
 }

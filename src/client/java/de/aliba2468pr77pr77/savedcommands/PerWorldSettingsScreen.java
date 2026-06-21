@@ -117,6 +117,19 @@ public class PerWorldSettingsScreen extends PopupScreen {
     }
 
     @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        receiveSentCommandsButton.setRectangle(popupW - 40, 20, popupX + 20, popupY + 30);
+        msgCommandEditBox.setRectangle(popupW - 40, 20, popupX + 20, receiveSentCommandsButton.getY() + receiveSentCommandsButton.getHeight() + 20);
+        deleteWarningButton.setRectangle(popupW - 40, 20, popupX + 20, msgCommandEditBox.getY() + msgCommandEditBox.getHeight() + 10);
+        manualCategoriesButton.setRectangle(popupW - 40, 20, popupX + 20, deleteWarningButton.getY() + deleteWarningButton.getHeight() + 10);
+
+        closeButton.setPosition(popupX + (popupW - 100 - 150 - 5) / 2, popupY + popupH - 20 - 20);
+        generalSettingsButton.setPosition(popupX + (popupW - 100 - 150 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20);
+    }
+
+    @Override
     public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         super.render(ctx, mouseX, mouseY, delta);
 

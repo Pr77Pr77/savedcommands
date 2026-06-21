@@ -30,7 +30,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 
 public class SavedCommandsScreen extends Screen {
     public TextFieldPlaceholderAlways SearchBar;
-    protected Button addButton;
+    protected IconButton addButton;
     public IconButton notificationButton;
     public IconButton settingsButton;
     CommandList commandList;
@@ -42,7 +42,7 @@ public class SavedCommandsScreen extends Screen {
     int listTop = 50;
     int itemHeight = 30;
 
-    CommandSuggestions CommandSuggestor;
+    CommandSuggestions commandSuggestor;
 
     @Nullable GuiEventListener focused;
 
@@ -90,14 +90,16 @@ public class SavedCommandsScreen extends Screen {
         this.SearchBar.setHint(Component.translatable("screen.savedcommands.searchsavebar"));
         this.addRenderableWidget(this.SearchBar);
 
-        addButton = Button.builder(
-                        Component.literal("+"),
-                        b -> {
-                            LOGGER.info("Add command button clicked!");
-                            addCommand();
-                        }
-                ).bounds(20 + this.width - 40 - 20 - 5 - 20, 20, 20, 20)
-                .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.savenewcommandbutton")).build();
+        addButton = new IconButton(20 + this.width - 40 - 20 - 5 - 20, 20, 20, 20,
+                Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/save.png"),
+                button -> {
+                    LOGGER.info("Add command button clicked!");
+                    addCommand();
+                },
+                Component.translatable("screen.savedcommands.savenewcommandbutton"),
+                Component.literal("+"),
+                false
+        );
         this.addRenderableWidget(this.addButton);
 
         settingsButton = new IconButton(20 + this.width - 40 - 20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings.png"),
@@ -113,12 +115,12 @@ public class SavedCommandsScreen extends Screen {
 
         updateSearch(SearchBar.getValue());
 
-        this.addWidget(this.commandList);
+        this.addRenderableWidget(this.commandList);
 
-        CommandSuggestor = new CommandSuggestions(minecraft, this, SearchBar, font, false, false, 1, 10, false, 0xD8000000);
-        CommandSuggestor.setAllowHiding(false);
-        CommandSuggestor.setAllowSuggestions(true);
-        CommandSuggestor.updateCommandInfo();
+        commandSuggestor = new CommandSuggestions(minecraft, this, SearchBar, font, false, false, 1, 10, false, 0xD8000000);
+        commandSuggestor.setAllowHiding(false);
+        commandSuggestor.setAllowSuggestions(true);
+        commandSuggestor.updateCommandInfo();
 
         if (!sharingManager.receivedCommandsByPlayerName.isEmpty() && showReceivedCommands) {
             minecraft.setScreen(new ViewerSaverScreen(this));
@@ -126,8 +128,30 @@ public class SavedCommandsScreen extends Screen {
         }
     }
 
-    public <T extends GuiEventListener & Renderable & NarratableEntry> @NonNull T addRenderableWidget(final @NonNull T widget) {
-        return super.addRenderableWidget(widget);
+    @Override
+    public void repositionElements() {
+        if (notificationButton != null) {
+            this.SearchBar.setPosition(20 + 20 + 5, 20);
+            this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+        } else {
+            this.SearchBar.setPosition(20, 20);
+            this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+        }
+
+        if (addButton != null) {
+            addButton.setPosition(20 + this.width - 40 - 20 - 5 - 20, 20);
+        }
+        if (settingsButton != null) {
+            settingsButton.setPosition(20 + this.width - 40 - 20, 20);
+        }
+
+        listWidth = this.width;
+        listHeight = this.height - 50;
+
+        this.commandList.setRectangle(listWidth, listHeight, 0, listTop);
+        this.commandList.repositionEntries();
+
+        commandSuggestor.updateCommandInfo();
     }
 
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
@@ -168,7 +192,7 @@ public class SavedCommandsScreen extends Screen {
             }
             // If the for loop didn't find the category, create it!
             if (data.categoryId == null) {
-                newList.addFirst(commandList.new CategoryTitleEntry((SavedCommandManager.SavedCommandsData.CustomCategory) null));
+                newList.addFirst(commandList.createCategoryTitleEntry((SavedCommandManager.SavedCommandsData.CustomCategory) null));
                 newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
             } else {
                 if (commandManager.data.customCategories == null) {
@@ -179,7 +203,7 @@ public class SavedCommandsScreen extends Screen {
                         .filter((category) -> category.id.equals(data.categoryId)).findFirst();
                 customCategory.ifPresentOrElse(
                         found -> { // found
-                            newList.addFirst(commandList.new CategoryTitleEntry(found));
+                            newList.addFirst(commandList.createCategoryTitleEntry(found));
                             newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
                         },
                         () -> { // not found
@@ -205,7 +229,7 @@ public class SavedCommandsScreen extends Screen {
                 }
             }
             // If the for loop didn't find the category, create it!
-            newList.addFirst(commandList.new CategoryTitleEntry(commandBase));
+            newList.addFirst(commandList.createCategoryTitleEntry(commandBase));
             newList.add(1, commandList.createCommandEntry(data.command, data.name, indexDataList));
         }
     }
@@ -213,30 +237,29 @@ public class SavedCommandsScreen extends Screen {
     public void updateSearch(String search) {
         if (search.isEmpty()) {
             addButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.savenewcommandbutton")));
+            addButton.switchToComponent();
         } else {
             addButton.setTooltip(Tooltip.create(Component.translatable("screen.savedcommands.savecommandfromsearchbutton", search)));
+            addButton.switchToIcon();
         }
         List<CommandList.BaseEntry> newList = new ArrayList<>();
         for (int i = 0; i < commandManager.data.commands.size(); i++) {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
-            if (data.command.toLowerCase().contains(search.toLowerCase()) || (data.name != null && data.name.toLowerCase().contains(search.toLowerCase()))) {
+            if (data.command.toLowerCase().contains(search.toLowerCase()) ||
+                    (data.name != null && data.name.toLowerCase().contains(search.toLowerCase())) ||
+                    (manualCategories && data.categoryId != null && commandManager.data.customCategories != null && commandManager.data.customCategories.stream()
+                            .anyMatch((category) -> category.name.toLowerCase().contains(search.toLowerCase())))) {
                 addCommandRightPlace(data, i, newList);
             }
         }
         commandList.replaceEntries(newList);
+        commandList.setScrollAmount(0);
         for (CommandList.BaseEntry entry : commandList.children()) {
             entry.init();
         }
-        if (CommandSuggestor != null) {
-            CommandSuggestor.updateCommandInfo();
+        if (commandSuggestor != null) {
+            commandSuggestor.updateCommandInfo();
         }
-    }
-
-    public void resize(int width, int height) {
-        if (CommandSuggestor != null) {
-            CommandSuggestor.updateCommandInfo();
-        }
-        super.resize(width, height);
     }
 
     @Override
@@ -244,7 +267,7 @@ public class SavedCommandsScreen extends Screen {
         if (input.isConfirmation()) {
             addCommand();
         }
-        if (CommandSuggestor.keyPressed(input)) {
+        if (commandSuggestor.keyPressed(input)) {
             return true;
         }
         return super.keyPressed(input);
@@ -252,7 +275,7 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (CommandSuggestor.mouseScrolled(verticalAmount)) {
+        if (commandSuggestor.mouseScrolled(verticalAmount)) {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -260,7 +283,7 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent click, boolean doubled) {
-        if (CommandSuggestor.mouseClicked(click)) {
+        if (commandSuggestor.mouseClicked(click)) {
             return true;
         }
         return super.mouseClicked(click, doubled);
@@ -291,13 +314,8 @@ public class SavedCommandsScreen extends Screen {
 
     @Override
     public void render(@NonNull GuiGraphics context, int mouseX, int mouseY, float delta) {
-        this.commandList.render(context, mouseX, mouseY, delta);
-
-        CommandSuggestor.render(context, mouseX, mouseY);
-
-        context.fill(SearchBar.getX(), SearchBar.getY(), SearchBar.getX() + SearchBar.getWidth(), SearchBar.getY() + SearchBar.getHeight(), 0x44000000);
-
         super.render(context, mouseX, mouseY, delta);
+        commandSuggestor.render(context, mouseX, mouseY);
     }
 
     public static String shortenTextIfNeeded(String text, int availableWidth, ChatFormatting formatting) {
@@ -318,7 +336,6 @@ public class SavedCommandsScreen extends Screen {
         minecraft.setScreen(new EditCommandScreen(this, commandManager.addCommand(SearchBar.getValue(), null)));
         SearchBar.setValue("");
     }
-
 
     protected CommandList createCommandList(Minecraft client, int width, int height, int top, int itemHeight) {
         return new CommandList(client, width, height, top, itemHeight);
@@ -350,6 +367,14 @@ public class SavedCommandsScreen extends Screen {
 
         protected CommandEntry createCommandEntry(String command, String name, int indexDataList) {
             return new CommandEntry(command, name, indexDataList);
+        }
+
+        protected CategoryTitleEntry createCategoryTitleEntry(String categoryTitle) {
+            return new CategoryTitleEntry(categoryTitle);
+        }
+
+        protected CategoryTitleEntry createCategoryTitleEntry(SavedCommandManager.SavedCommandsData.CustomCategory customCategory) {
+            return new CategoryTitleEntry(customCategory);
         }
 
         public class CommandEntry extends BaseEntry {
@@ -438,17 +463,17 @@ public class SavedCommandsScreen extends Screen {
                     int textX = x + 3;
                     int textY = y + (entryHeight - minecraft.font.lineHeight) / 2 + 1;
 
-                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 95, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
                 } else {
                     int fontHeight = minecraft.font.lineHeight;
                     int textX = x + 3;
                     int textY = y + (entryHeight - minecraft.font.lineHeight * 2 - 2) / 2 + 1;
 
-                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.name, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
+                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.name, entryWidth - 95, ChatFormatting.RESET)), textX, textY, 0xFFFFFFFF, true);
 
                     textY += fontHeight + 2;
 
-                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 90, ChatFormatting.RESET)), textX, textY, 0xFFBBBBBB, true);
+                    context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.command, entryWidth - 95, ChatFormatting.RESET)), textX, textY, 0xFFBBBBBB, true);
                 }
 
                 buttonExtractActions(context, mouseX, mouseY, hovered, deltaTicks);
@@ -497,6 +522,7 @@ public class SavedCommandsScreen extends Screen {
         public class CategoryTitleEntry extends BaseEntry {
             private final String categoryTitle;
             private final SavedCommandManager.SavedCommandsData.CustomCategory customCategory;
+            public boolean buttonExtraction = false;
 
             IconButton deleteButton;
             IconButton editButton;
@@ -513,6 +539,7 @@ public class SavedCommandsScreen extends Screen {
                     this.categoryTitle = Component.translatable("screen.savedcommands.nocategory").getString();
                 }
                 this.customCategory = customCategory;
+                this.buttonExtraction = manualCategories;
             }
 
             @Override
@@ -521,13 +548,15 @@ public class SavedCommandsScreen extends Screen {
                 int entryHeight = this.getHeight() - 4;
                 int entryWidth = this.getWidth();
 
-                if (customCategory != null && manualCategories) {
+                if (customCategory != null && buttonExtraction) {
                     deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), button -> {
                         if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
                             minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.categorydeletequestion"),
                                     Component.translatable("screen.savedcommands.categorydeletemessage", categoryTitle),
                                     minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
-                                commandManager.data.commands.removeIf(commandData -> Objects.equals(commandData.categoryId, customCategory.id));
+                                commandManager.data.commands.stream()
+                                        .filter(commandData -> Objects.equals(commandData.categoryId, customCategory.id))
+                                        .forEach(commandData -> commandData.categoryId = null);
                                 if (commandManager.data.customCategories != null) {
                                     commandManager.data.customCategories.remove(customCategory);
                                 }
@@ -543,7 +572,9 @@ public class SavedCommandsScreen extends Screen {
                                 }
                             }, !SettingsManager.globalSettings.deleteWarning));
                         } else {
-                            commandManager.data.commands.removeIf(commandData -> Objects.equals(commandData.categoryId, customCategory.id));
+                            commandManager.data.commands.stream()
+                                    .filter(commandData -> Objects.equals(commandData.categoryId, customCategory.id))
+                                    .forEach(commandData -> commandData.categoryId = null);
                             if (commandManager.data.customCategories != null) {
                                 commandManager.data.customCategories.remove(customCategory);
                             }
@@ -564,18 +595,21 @@ public class SavedCommandsScreen extends Screen {
 
                 int textX;
                 int textY;
+                int availableWidth;
                 if (manualCategories) {
                     context.fill(x, y, x + entryWidth, y + entryHeight, 0x44161616);
                     textX = x + 3;
-                    textY = this.getY() + (this.getHeight() - minecraft.font.lineHeight) / 2;
+                    textY = y + (entryHeight - 8) / 2;
+                    availableWidth = entryWidth - 60;
                 } else {
                     textX = x + 3;
-                    textY = this.getY() + this.getHeight() - minecraft.font.lineHeight - 2;
+                    textY = y + entryHeight - minecraft.font.lineHeight;
+                    availableWidth = entryWidth - 10;
                 }
 
-                context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.categoryTitle, this.getWidth() - 10, ChatFormatting.BOLD)).withStyle(ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF, true);
+                context.drawString(minecraft.font, Component.literal(shortenTextIfNeeded(this.categoryTitle, availableWidth, ChatFormatting.BOLD)).withStyle(ChatFormatting.BOLD), textX, textY, 0xFFFFFFFF, true);
 
-                if (customCategory != null && manualCategories) {
+                if (customCategory != null && buttonExtraction) {
                     deleteButton.setPosition(entryWidth - 20, y + (entryHeight - 20) / 2);
                     deleteButton.render(context, mouseX, mouseY, deltaTicks);
 

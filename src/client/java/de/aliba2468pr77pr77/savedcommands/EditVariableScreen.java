@@ -139,6 +139,26 @@ public class EditVariableScreen extends PopupScreen {
         closeButton.setMessage(nameTextField.getValue().isEmpty() || abbreviationTextField.getValue().isEmpty() ? CommonComponents.GUI_CANCEL : CommonComponents.GUI_DONE);
     }
 
+    @Override
+    public void repositionElements() {
+        super.repositionElements();
+
+        if (data != null) {
+            this.closeButton.setPosition(popupX + (popupW - 100 - 100 - 5) / 2, popupY + popupH - 20 - 20);
+            this.deleteButton.setPosition(popupX + (popupW - 100 - 100 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20);
+        } else {
+            this.closeButton.setPosition(popupX + (popupW - 100) / 2, popupY + popupH - 20 - 20);
+        }
+
+        this.nameTextField.setRectangle(popupW - 40, 20, popupX + 20, popupY + 40);
+
+        this.abbreviationTextField.setPosition(popupX + 20, popupY + 65);
+
+        typeButton.setRectangle(popupW - 40, 20, popupX + 20, popupY + 90);
+
+        this.defaultValueTextField.setRectangle(popupW - 40, 20, popupX + 20, popupY + 125);
+    }
+
     void setDefaultValueLimitations(SavedCommandManager.CommandData.variable.types value) {
         LocalPlayer player = minecraft.player;
         switch (value) {
@@ -272,7 +292,11 @@ public class EditVariableScreen extends PopupScreen {
             data.name = nameTextField.getValue();
             data.abbreviation = abbreviationTextField.getValue().charAt(0);
             data.type = typeButton.getValue();
-            data.defaultValue = defaultValueTextField.getValue();
+            if (data.type.userEditable) {
+                data.defaultValue = defaultValueTextField.getValue();
+            } else {
+                data.defaultValue = "";
+            }
 
             commandManager.saveAsync();
         }
