@@ -50,7 +50,7 @@ public class SearchSuggestor {
     @Redirect(method = "showSuggestions(Z)V", at = @At(value = "NEW", target = "net/minecraft/client/gui/components/CommandSuggestions$SuggestionsList"))
     private CommandSuggestions.SuggestionsList createWindow(CommandSuggestions commandSuggestions, int x, int y, int width, List<Suggestion> suggestions, boolean narrateFirstSuggestion) {
         if (screen instanceof SavedCommandsScreen commandsScreen) {
-            return SuggestionWindowInvoker.invokeInit(commandSuggestions, x + 3, commandsScreen.SearchBar.getY() + commandsScreen.SearchBar.getHeight() + 2, width, suggestions, narrateFirstSuggestion);
+            return SuggestionWindowInvoker.invokeInit(commandSuggestions, x + 3, commandsScreen.searchBar.getY() + commandsScreen.searchBar.getHeight() + 2, width, suggestions, narrateFirstSuggestion);
         }
         if (screen instanceof EditCommandScreen editCommandScreen) {
             return SuggestionWindowInvoker.invokeInit(commandSuggestions, x + 3, editCommandScreen.commandTextField.getY() + editCommandScreen.commandTextField.getHeight() + 2, width, suggestions, narrateFirstSuggestion);
@@ -62,7 +62,7 @@ public class SearchSuggestor {
     private void renderMessages(GuiGraphicsExtractor graphics, CallbackInfo ci) {
         if (screen instanceof SavedCommandsScreen commandsScreen) {
             for (int i = 0; i < this.commandUsage.size(); i++) {
-                int y = commandsScreen.SearchBar.getY() + commandsScreen.SearchBar.getHeight() + 1 + 12 * i;
+                int y = commandsScreen.searchBar.getY() + commandsScreen.searchBar.getHeight() + 1 + 12 * i;
                 int x = Math.max(this.commandUsagePosition, 0);
                 graphics.fill(x - 1, y, x + this.commandUsageWidth, y + 12, this.fillColor);
                 graphics.text(this.font, this.commandUsage.get(i), x, y + 2, 0xFFFFFFFF, true);

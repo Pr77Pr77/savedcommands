@@ -11,9 +11,10 @@ please use the official [Fabric player guides](https://docs.fabricmc.net/players
 
 You can download the mod on either [Modrinth](https://modrinth.com/mod/savedcommands) or on [GitHub](https://github.com/Pr77Pr77/savedcommands)
 under [releases](https://github.com/Pr77Pr77/savedcommands/releases).
-This mod needs the following dependency:
+This mod has the following dependencies:
 
-[Fabric API](https://modrinth.com/mod/fabric-api) (Please pick an appropriate version for your Minecraft version)
+- Required: [Fabric API](https://modrinth.com/mod/fabric-api)
+- Optional: [Mod Manu](https://modrinth.com/mod/modmenu)
 
 ## Using the mod
 
@@ -28,10 +29,24 @@ insert variables, add or edit a name and add or edit the keybind combination (sh
 * Delete saved commands by clicking on the trash can icon on the right.
 * Send and run commands by clicking on them
 * Search for commands by entering the query into the top bar.
+* Share saved commands with other players on the server using this mod.
+* Change global and world settings by clicking on the sliders icon in the top right corner.
 
 Variables can be used to insert player data, like the position and item id of the held item.
 You can also select a data type like string, integer and float, for you to input before sending.
 If you don't know these types, use string because it is the least "strict" one.
+
+Custom categories can be enabled in the settings. Turning the related setting on, makes it
+possible to create and select categories with custom names from within the edit popup.
+
+Commands can be shared with players on the same server using the mod, which also shares all
+command properties like the name, keybind combination and variables, but not custom categories.
+When you receive one or more commands, you will get a notification within the game in
+the top right corner, saying to press your keybind for opening the saved commands screen
+to view or save the commands. There you can pick commands to save separately or bulk save
+them. Please note, that commands are being sent unencrypted! This means, that server admins,
+your ISP or other involved parties could see the commands you sent or received. The ability
+to receive commands can be disabled in the settings.
 
 > We accept no liability for any damages caused by using this mod. Use at your own risk!
 
@@ -52,6 +67,18 @@ If you don't know these types, use string because it is the least "strict" one.
 ![Input variable screen](resources/input-variable-screen-screenshot.png)
 *Before sending a command or text containing a custom variable, you are prompted to input the values*
 
+![Share select recepients screen](resources/share-select-recipients.png)
+*After clicking share, this screen to select the recipients opens*
+
+![Share select recepients screen](resources/share-select-recipients.png)
+*After clicking share, this screen to select the recipients opens*
+
+![Share view and save screen](resources/share-view-save.png)
+*This screen lets you view, save and edit received commands. The circle shows, if you already have the command saved.*
+
+![Per world settings](resources/settings-world.png)
+*There are settings which can be changed per world, as seen in the screenshot, or changed for the whole installation.*
+
 ## Working principles
 
 The following things regarding the mod might be counterintuitive:
@@ -63,6 +90,7 @@ the first key of a combination or if the next key of the combination is pressed 
 
 ## Reporting issues, getting help and suggesting features
 
-If you have trouble using the mod, if you stumble upon a bug or if you want to suggest a feature to be implemented,
-please don't hesitate to post an [issue on GitHub](https://github.com/Pr77Pr77/savedcommands/issues).
-We will try to respond as soon as possible and maybe ask follow-up questions.
+If you have trouble using the mod, if you stumble upon a bug, if you want to suggest a feature to be implemented
+or if you would like to have a backport of the mod,
+please don't hesitate to post an [issue on GitHub](https://github.com/Pr77Pr77/savedcommands/issues) or open a ticket on the [Discord server](https://discord.gg/wfeM63Jar5).
+I will try to respond as soon as possible and maybe ask follow-up questions.
