@@ -60,8 +60,14 @@ public class ViewerSaverScreen extends PopupScreen {
 
         this.continueLaterButton = Button.builder(Component.translatable("screen.savedcommands.share.continuelater"), button -> exit(exitTypes.CONTINUE_LATER)).bounds((this.width - 100 + 5 + 100 + 5 + 100 + 5 + 100) / 2, popupY + popupH - 20 - 10, 100, 20).build();
         this.addRenderableWidget(this.continueLaterButton);
+    }
 
+    @Override
+    public void added() {
         if (editingAll) {
+            if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue()); // Done to update the list ib the background
+            }
             exit(exitTypes.EDIT_ALL);
         }
     }
@@ -97,6 +103,12 @@ public class ViewerSaverScreen extends PopupScreen {
                 for (List<SavedCommandManager.CommandData> commandDataList : SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.values()) {
                     commandManager.data.commands.addAll(commandDataList);
                 }
+                commandManager.saveAsync();
+                if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                    savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
+                    savedCommandsScreen.removeNotificationButton();
+                }
+
                 SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.clear();
                 super.exit();
                 break;
@@ -105,11 +117,20 @@ public class ViewerSaverScreen extends PopupScreen {
                 SavedCommandManager.CommandData commandData = commandDataListEntry.getValue().getFirst();
 
                 commandManager.data.commands.add(commandData);
-                minecraft.setScreen(new EditCommandScreen(deleteCommand(commandDataListEntry.getKey(), commandData, viewerSaverList) ? parent : this, commandData));
+                boolean emptyMap = deleteCommand(commandDataListEntry.getKey(), commandData, viewerSaverList);
+                minecraft.setScreen(new EditCommandScreen(emptyMap ? parent : this, commandData));
+                if (emptyMap && parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                    savedCommandsScreen.removeNotificationButton();
+                } else if (!emptyMap) {
+                    viewerSaverList.setScrollAmount(0);
+                }
                 editingAll = true;
                 // Next command after returning to this screen.
                 break;
             case DELETE_ALL:
+                if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                    savedCommandsScreen.removeNotificationButton();
+                }
                 SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.clear();
                 super.exit();
                 break;
@@ -119,7 +140,7 @@ public class ViewerSaverScreen extends PopupScreen {
         }
     }
 
-    private boolean deleteCommand(String playerName, SavedCommandManager.CommandData command, ViewerSaverList list) { // Returns weather the Map is completely enmpty
+    private boolean deleteCommand(String playerName, SavedCommandManager.CommandData command, ViewerSaverList list) { // Returns weather the Map is completely empty
         SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.get(playerName).remove(command);
         if (SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.get(playerName).isEmpty()) {
             SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.remove(playerName);
@@ -281,6 +302,9 @@ public class ViewerSaverScreen extends PopupScreen {
                     SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.remove(playerName);
                     if (SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.isEmpty()) {
                         if (minecraft.screen instanceof ViewerSaverScreen viewerSaverScreen) {
+                            if (viewerSaverScreen.parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                                savedCommandsScreen.removeNotificationButton();
+                            }
                             minecraft.setScreen(viewerSaverScreen.parent);
                             return true;
                         }

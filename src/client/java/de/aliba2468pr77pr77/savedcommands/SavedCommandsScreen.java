@@ -29,7 +29,7 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.*;
 
 public class SavedCommandsScreen extends Screen {
-    public TextFieldPlaceholderAlways SearchBar;
+    public TextFieldPlaceholderAlways searchBar;
     protected IconButton addButton;
     public IconButton notificationButton;
     public IconButton settingsButton;
@@ -69,26 +69,26 @@ public class SavedCommandsScreen extends Screen {
             notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
                     button -> minecraft.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
             this.addRenderableWidget(notificationButton);
-            if (this.SearchBar == null) {
-                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            if (this.searchBar == null) {
+                this.searchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
             } else {
-                this.SearchBar.setPosition(20 + 20 + 5, 20);
-                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+                this.searchBar.setPosition(20 + 20 + 5, 20);
+                this.searchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
             }
         } else {
-            if (this.SearchBar == null) {
-                this.SearchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
+            if (this.searchBar == null) {
+                this.searchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20, 20, this.width - 40 - 22 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
             } else {
-                this.SearchBar.setPosition(20, 20);
-                this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+                this.searchBar.setPosition(20, 20);
+                this.searchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
             }
         }
-        this.SearchBar.setMaxLength(256);
-        this.SearchBar.setBordered(true);
-        this.SearchBar.setResponder(this::updateSearch);
-        this.SearchBar.setCanLoseFocus(false);
-        this.SearchBar.setHint(Component.translatable("screen.savedcommands.searchsavebar"));
-        this.addRenderableWidget(this.SearchBar);
+        this.searchBar.setMaxLength(256);
+        this.searchBar.setBordered(true);
+        this.searchBar.setResponder(this::updateSearchAndScroll);
+        this.searchBar.setCanLoseFocus(false);
+        this.searchBar.setHint(Component.translatable("screen.savedcommands.searchsavebar"));
+        this.addRenderableWidget(this.searchBar);
 
         addButton = new IconButton(20 + this.width - 40 - 20 - 5 - 20, 20, 20, 20,
                 Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/save.png"),
@@ -113,11 +113,11 @@ public class SavedCommandsScreen extends Screen {
 
         this.commandList = createCommandList(this.minecraft, listWidth, listHeight, listTop, itemHeight);
 
-        updateSearch(SearchBar.getValue());
+        updateSearch(searchBar.getValue());
 
         this.addRenderableWidget(this.commandList);
 
-        commandSuggestor = new CommandSuggestions(minecraft, this, SearchBar, font, false, false, 1, 10, false, 0xD8000000);
+        commandSuggestor = new CommandSuggestions(minecraft, this, searchBar, font, false, false, 1, 10, false, 0xD8000000);
         commandSuggestor.setAllowHiding(false);
         commandSuggestor.setAllowSuggestions(true);
         commandSuggestor.updateCommandInfo();
@@ -131,11 +131,11 @@ public class SavedCommandsScreen extends Screen {
     @Override
     public void repositionElements() {
         if (notificationButton != null) {
-            this.SearchBar.setPosition(20 + 20 + 5, 20);
-            this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+            this.searchBar.setPosition(20 + 20 + 5, 20);
+            this.searchBar.setSize(this.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
         } else {
-            this.SearchBar.setPosition(20, 20);
-            this.SearchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+            this.searchBar.setPosition(20, 20);
+            this.searchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
         }
 
         if (addButton != null) {
@@ -156,6 +156,23 @@ public class SavedCommandsScreen extends Screen {
 
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
         this.otherPlayersOnServer = otherPlayersOnServer;
+    }
+
+    public void addNotificationButton() {
+        notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
+                button -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+        addRenderableWidget(notificationButton);
+
+        searchBar.setPosition(20 + 20 + 5, 20);
+        searchBar.setSize(width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+    }
+
+    public void removeNotificationButton() {
+        removeWidget(notificationButton);
+        notificationButton = null;
+
+        this.searchBar.setPosition(20, 20);
+        this.searchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
     }
 
     @Override
@@ -247,19 +264,24 @@ public class SavedCommandsScreen extends Screen {
             SavedCommandManager.CommandData data = commandManager.data.commands.get(i);
             if (data.command.toLowerCase().contains(search.toLowerCase()) ||
                     (data.name != null && data.name.toLowerCase().contains(search.toLowerCase())) ||
-                    (manualCategories && data.categoryId != null && commandManager.data.customCategories != null && commandManager.data.customCategories.stream()
-                            .anyMatch((category) -> category.name.toLowerCase().contains(search.toLowerCase())))) {
+                    (manualCategories && data.categoryId != null && commandManager.data.customCategories != null &&
+                            commandManager.data.customCategories.stream().anyMatch((category) ->
+                                    Objects.equals(data.categoryId, category.id) && category.name.toLowerCase().contains(search.toLowerCase())))) {
                 addCommandRightPlace(data, i, newList);
             }
         }
         commandList.replaceEntries(newList);
-        commandList.setScrollAmount(0);
         for (CommandList.BaseEntry entry : commandList.children()) {
             entry.init();
         }
         if (commandSuggestor != null) {
             commandSuggestor.updateCommandInfo();
         }
+    }
+
+    public void updateSearchAndScroll(String search) {
+        updateSearch(search);
+        commandList.setScrollAmount(0);
     }
 
     @Override
@@ -309,7 +331,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     protected void setInitialFocus() {
-        this.setInitialFocus(this.SearchBar);
+        this.setInitialFocus(this.searchBar);
     }
 
     @Override
@@ -333,8 +355,8 @@ public class SavedCommandsScreen extends Screen {
     }
 
     public void addCommand() {
-        minecraft.setScreen(new EditCommandScreen(this, commandManager.addCommand(SearchBar.getValue(), null)));
-        SearchBar.setValue("");
+        minecraft.setScreen(new EditCommandScreen(this, commandManager.addCommand(searchBar.getValue(), null)));
+        searchBar.setValue("");
     }
 
     protected CommandList createCommandList(Minecraft client, int width, int height, int top, int itemHeight) {
@@ -402,6 +424,7 @@ public class SavedCommandsScreen extends Screen {
                     if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
                         minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commanddeletequestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
                             commandManager.removeCommand(indexDataList);
+                            updateSearchAndScroll(searchBar.getValue());
 
                             switch (showAgainState) {
                                 case WORLD_DISABLED -> {
@@ -416,7 +439,7 @@ public class SavedCommandsScreen extends Screen {
                         }, !SettingsManager.globalSettings.deleteWarning));
                     } else {
                         commandManager.removeCommand(indexDataList);
-                        updateSearch(SearchBar.getValue());
+                        updateSearchAndScroll(searchBar.getValue());
                     }
                 }, Component.translatable("selectWorld.deleteButton"));
 
@@ -560,6 +583,7 @@ public class SavedCommandsScreen extends Screen {
                                 if (commandManager.data.customCategories != null) {
                                     commandManager.data.customCategories.remove(customCategory);
                                 }
+                                updateSearchAndScroll(searchBar.getValue());
                                 switch (showAgainState) {
                                     case WORLD_DISABLED -> {
                                         commandManager.data.worldSettings.deleteWarning = false;
@@ -578,6 +602,7 @@ public class SavedCommandsScreen extends Screen {
                             if (commandManager.data.customCategories != null) {
                                 commandManager.data.customCategories.remove(customCategory);
                             }
+                            updateSearchAndScroll(searchBar.getValue());
                         }
                     }, Component.translatable("selectWorld.deleteButton"));
 

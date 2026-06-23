@@ -71,11 +71,10 @@ public class GlobalSettingsScreen extends Screen {
     @Override
     public void onClose() {
         SettingsManager.saveAsync();
-        if (lastScreen instanceof SavedCommandsScreen) {
-            minecraft.setScreen(new SavedCommandsScreen(false));
-        } else {
-            minecraft.setScreen(lastScreen);
+        if (lastScreen instanceof SavedCommandsScreen savedCommandsScreen) {
+            savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
         }
+        minecraft.setScreen(lastScreen);
     }
 
     public static class SettingsList extends ContainerObjectSelectionList<SettingsList.Entry> {

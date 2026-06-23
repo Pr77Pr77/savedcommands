@@ -34,7 +34,7 @@ public class EditCommandScreen extends PopupScreen {
     public EditBox commandTextField;
     private EditBox nameTextField;
     private Button addVariableButton;
-    private final List<ButtonVariablePair> variableButtons = new ArrayList<>();
+    private List<ButtonVariablePair> variableButtons = new ArrayList<>();
 
     private Button keybindButton;
     private Button removeKeybindButton;
@@ -216,29 +216,7 @@ public class EditCommandScreen extends PopupScreen {
                 .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.createvariable")).build();
         this.addRenderableWidget(addVariableButton);
 
-        if (data != null && data.variables != null) {
-            for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
-                int finalVariableIndex = variableIndex;
-                Button variableButton = Button.builder(Component.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), button -> {
-                            LOGGER.info("Adding Variable " + finalVariableIndex);
-                            commandTextField.setValue(commandTextField.getValue().substring(0, commandTextField.getCursorPosition()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getValue().substring(commandTextField.getCursorPosition()));
-                        }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 80, 20, 20)
-                        .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(variableIndex).name)))
-                        .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
-                this.addRenderableWidget(variableButton);
-
-                IconButton variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 80, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
-                    LOGGER.info("Editing Variable...");
-                    if (!save(true)) {
-                        return;
-                    }
-                    minecraft.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
-                }, Component.translatable("screen.savedcommands.editvariablebutton", data.variables.get(variableIndex).name));
-                this.addRenderableWidget(variableEditButton);
-
-                variableButtons.add(new ButtonVariablePair(variableButton, variableEditButton));
-            }
-        }
+        addVariableButtons();
 
         this.nameTextField = new EditBox(this.minecraft.font, popupX + 20, popupY + 115, popupW - 40, 20, translatable("screen.savedcommands.name"));
         this.nameTextField.setMaxLength(256);
@@ -401,6 +379,33 @@ public class EditCommandScreen extends PopupScreen {
     }
 
     record ButtonVariablePair(Button variableButton, IconButton editButton) {
+    }
+
+    void addVariableButtons() {
+        if (data != null && data.variables != null) {
+            variableButtons = new ArrayList<>();
+            for (int variableIndex = 0; variableIndex < data.variables.size(); variableIndex++) {
+                int finalVariableIndex = variableIndex;
+                Button variableButton = Button.builder(Component.literal(String.valueOf(data.variables.get(variableIndex).abbreviation)), button -> {
+                            LOGGER.info("Adding Variable " + finalVariableIndex);
+                            commandTextField.setValue(commandTextField.getValue().substring(0, commandTextField.getCursorPosition()) + VariablePlaceholder + data.variables.get(finalVariableIndex).abbreviation + commandTextField.getValue().substring(commandTextField.getCursorPosition()));
+                        }).bounds(popupX + 20 + 25 + 45 * variableIndex, popupY + 80, 20, 20)
+                        .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(variableIndex).name)))
+                        .createNarration((componentSupplier) -> Component.translatable("screen.savedcommands.insertvariablebutton", data.variables.get(finalVariableIndex).name)).build();
+                this.addRenderableWidget(variableButton);
+
+                IconButton variableEditButton = new IconButton(popupX + 20 + 45 + 45 * variableIndex, popupY + 80, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), button -> {
+                    LOGGER.info("Editing Variable...");
+                    if (!save(true)) {
+                        return;
+                    }
+                    minecraft.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
+                }, Component.translatable("screen.savedcommands.editvariablebutton", data.variables.get(variableIndex).name));
+                this.addRenderableWidget(variableEditButton);
+
+                variableButtons.add(new ButtonVariablePair(variableButton, variableEditButton));
+            }
+        }
     }
 
     private void createCategorySelectionButton(CustomComponentCategory defaultValue) {
@@ -691,7 +696,11 @@ public class EditCommandScreen extends PopupScreen {
         if (customCategoriesEnabled) {
             data.categoryId = categorySelectionButton.getValue().id;
         }
+        commandManager.cleanCustomCategories();
         commandManager.saveAsync();
+        if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+            savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
+        }
         return true;
     }
 
