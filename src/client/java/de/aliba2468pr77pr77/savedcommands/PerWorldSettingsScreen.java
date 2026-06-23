@@ -196,11 +196,20 @@ public class PerWorldSettingsScreen extends PopupScreen {
                     commandManager.saveAsync();
                 }));
                 commandManager.saveAsync();
+                if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                    savedCommandsScreen.manualCategories = SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories;
+                    savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
+                }
                 return;
             }
         }
 
         commandManager.saveAsync();
+
+        if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+            savedCommandsScreen.manualCategories = SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories;
+            savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
+        }
         super.exit();
     }
 }

@@ -302,6 +302,10 @@ public class EditVariableScreen extends PopupScreen {
             }
 
             commandManager.saveAsync();
+
+            if (parent instanceof EditCommandScreen editCommandScreen) {
+                editCommandScreen.addVariableButtons();
+            }
         }
         super.exit();
     }

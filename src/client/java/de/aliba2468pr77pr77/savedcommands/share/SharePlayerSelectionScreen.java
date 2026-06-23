@@ -46,7 +46,7 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         this.searchBar = new TextFieldPlaceholderAlways(this.minecraft.font, popupX + 10, popupY + 22, popupW - 135 - 20 - 5, 20, Component.translatable("screen.savedcommands.share.searchplayers"));
         this.searchBar.setMaxLength(16);
         this.searchBar.setBordered(true);
-        this.searchBar.setResponder(this::updateSearch);
+        this.searchBar.setResponder(this::updateSearchAndScroll);
         this.searchBar.setHint(Component.translatable("screen.savedcommands.share.searchplayers"));
         this.addRenderableWidget(this.searchBar);
 
@@ -69,6 +69,13 @@ public class SharePlayerSelectionScreen extends PopupScreen {
     }
 
     @Override
+    public void added() {
+        if (searchBar != null) {
+            reloadPlayers();
+        }
+    }
+
+    @Override
     public void repositionElements() {
         super.repositionElements();
 
@@ -82,10 +89,22 @@ public class SharePlayerSelectionScreen extends PopupScreen {
         this.cancelButton.setPosition(popupX + (popupW - 100 + 5 + 100) / 2, popupY + popupH - 20 - 10);
     }
 
+    public void reloadPlayers() { // This does not scroll the list to the top
+        updateSearch(searchBar.getValue());
+
+        Collection<PlayerInfo> otherPlayers = getOtherPlayers();
+        chosenPlayers.removeIf(playerInfo -> !otherPlayers.contains(playerInfo));
+    }
+
     public void updateSearch(String search) {
         Collection<PlayerInfo> players = getOtherPlayers();
         players.removeIf((player) -> !player.getProfile().name().toLowerCase().contains(search.toLowerCase()));
         shareSelectionList.addPlayers(players);
+    }
+
+    public void updateSearchAndScroll(String search) {
+        updateSearch(search);
+        shareSelectionList.setScrollAmount(0);
     }
 
     public Collection<PlayerInfo> getOtherPlayers() {

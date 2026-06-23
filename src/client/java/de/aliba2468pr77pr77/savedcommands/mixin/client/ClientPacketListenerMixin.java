@@ -1,6 +1,7 @@
 package de.aliba2468pr77pr77.savedcommands.mixin.client;
 
 import de.aliba2468pr77pr77.savedcommands.SavedCommandsScreen;
+import de.aliba2468pr77pr77.savedcommands.share.SharePlayerSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
@@ -15,21 +16,25 @@ public class ClientPacketListenerMixin {
 
     @Inject(method = "handlePlayerInfoUpdate", at = @At("TAIL"))
     private void onPlayerInfoUpdate(ClientboundPlayerInfoUpdatePacket packet, CallbackInfo ci) {
-        if (!(packet.actions().contains(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER) && Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen)) {
+        if (!(packet.actions().contains(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER))) {
             return;
         }
 
-        savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
-                && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
+        if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+            savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
+                    && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
+        } else if (Minecraft.getInstance().screen instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
+            sharePlayerSelectionScreen.reloadPlayers();
+        }
     }
 
     @Inject(method = "handlePlayerInfoRemove", at = @At("TAIL"))
     private void onPlayerInfoRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
-        if (!(Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen)) {
-            return;
+        if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+            savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
+                    && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
+        } else if (Minecraft.getInstance().screen instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
+            sharePlayerSelectionScreen.reloadPlayers();
         }
-
-        savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
-                && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
     }
 }

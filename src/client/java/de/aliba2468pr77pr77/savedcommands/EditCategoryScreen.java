@@ -91,6 +91,10 @@ public class EditCategoryScreen extends PopupScreen {
             category.name = nameEditBox.getValue();
 
             commandManager.saveAsync();
+
+            if (parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                savedCommandsScreen.updateSearch(savedCommandsScreen.searchBar.getValue());
+            }
         }
         super.exit();
     }

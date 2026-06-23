@@ -10,7 +10,6 @@ import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -19,7 +18,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.LOGGER;
-import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.OpenCommandScreen;
 
 public class SharingManager {
@@ -255,12 +253,7 @@ public class SharingManager {
             Minecraft.getInstance().getToastManager().addToast(receivedToast);
 
             if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
-                savedCommandsScreen.notificationButton = new IconButton(20, 20, 20, 20, ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
-                        button -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(savedCommandsScreen)), Component.translatable("screen.savedcommands.share.notificationbutton"));
-                savedCommandsScreen.addRenderableWidget(savedCommandsScreen.notificationButton);
-
-                savedCommandsScreen.SearchBar.setPosition(20 + 20 + 5, 20);
-                savedCommandsScreen.SearchBar.setSize(savedCommandsScreen.width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+                savedCommandsScreen.addNotificationButton();
             }
 
             Minecraft.getInstance().execute(() -> {

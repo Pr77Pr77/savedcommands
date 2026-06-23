@@ -55,9 +55,9 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         }).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
-        this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
-        this.SearchBar.setPosition(20, 20);
-        this.SearchBar.setHint(Component.translatable("screen.savedcommands.share.searchcommands"));
+        this.searchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
+        this.searchBar.setPosition(20, 20);
+        this.searchBar.setHint(Component.translatable("screen.savedcommands.share.searchcommands"));
     }
 
     @Override
@@ -67,8 +67,8 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         this.selectPlayersButton.setPosition(width - 20 - 75 - 5 - 75, 20);
         this.cancelButton.setPosition(width - 20 - 75, 20);
 
-        this.SearchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
-        this.SearchBar.setPosition(20, 20);
+        this.searchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
+        this.searchBar.setPosition(20, 20);
     }
 
     @Override

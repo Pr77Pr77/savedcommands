@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
-import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.commandManager;
 
 public class SavedCommandManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -187,17 +186,18 @@ public class SavedCommandManager {
 
     public synchronized void removeCommand(int index) {
         if (index >= 0 && index < data.commands.size()) {
-            String categoryIdSearching = data.commands.get(index).categoryId;
             data.commands.remove(index);
-
-            // Custom category cleanup
-            if (categoryIdSearching != null && commandManager.data.customCategories != null &&
-                    commandManager.data.commands.stream().noneMatch(command -> Objects.equals(categoryIdSearching, command.categoryId))) {
-                commandManager.data.customCategories
-                        .removeIf((category) -> category.id.equals(categoryIdSearching));
-            }
+            cleanCustomCategories();
             saveAsync();
         }
+    }
+
+    public void cleanCustomCategories() {
+        if (data.customCategories == null) {
+            return;
+        }
+        data.customCategories.removeIf(customCategory ->
+                customCategory.id == null || data.commands.stream().noneMatch(command -> Objects.equals(customCategory.id, command.categoryId)));
     }
 
     public static void sendCommandAndInsertVariables(SavedCommandManager.CommandData command, Screen parentScreen) {
@@ -287,7 +287,7 @@ public class SavedCommandManager {
         }
     }
 
-    void saveAsync() {
+    public void saveAsync() {
         SavedCommandsData snapshot;
         synchronized (this) {
             snapshot = new SavedCommandsData();
