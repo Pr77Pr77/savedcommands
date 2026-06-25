@@ -17,7 +17,7 @@
   "screen.savedcommands.share.status.waiting": "Waiting for response",
   "screen.savedcommands.share.status.notavailable": "recipient's mod not available!",
   "screen.savedcommands.share.status.sending": "Sending data",
-  "screen.savedcommands.share.status.recipienterror": "Error on the recipient: %s",
+  "screen.savedcommands.share.status.recipienterror": "Error on the recipient!",
   "screen.savedcommands.share.status.sent": "Sent successfully",
   "screen.savedcommands.share.recievednotification.title": "You've got commands!",
   "screen.savedcommands.share.recievednotification.message": "%s has sent you commands. Press %s to view and save them!",

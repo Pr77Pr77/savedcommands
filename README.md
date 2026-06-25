@@ -53,25 +53,23 @@ to receive commands can be disabled in the settings.
 ## Screenshots
 
 ![Saved Commands screen](resources/saved-commands-screen-screenshot.png)
-*The Saved Commands screen with some example commands*
+*The Saved Commands screen with some example commands.*
 
 ![Search suggestion](resources/search-suggestion-screenshot.png)
-*In the top bar you can get command recommendations like in the chat*
+*In the top bar you can get command recommendations like in the chat. In this screenshot, custom categories are
+enabled.*
 
 ![Edit command screen](resources/edit-command-screen-screenshot.png)
-*In the edit command screen you can edit the name, command and keybind combination*
+*In the edit command screen you can edit the name, command and keybind combination.*
 
 ![Edit variable screen](resources/edit-variable-screen-screenshot.png)
-*In the edit variable screen you can edit the name, abbreviation, variable type and defult value*
+*In the edit variable screen you can edit the name, abbreviation, variable type and defult value.*
 
 ![Input variable screen](resources/input-variable-screen-screenshot.png)
-*Before sending a command or text containing a custom variable, you are prompted to input the values*
+*Before sending a command or text containing a custom variable, you are prompted to input the values.*
 
 ![Share select recepients screen](resources/share-select-recipients.png)
-*After clicking share, this screen to select the recipients opens*
-
-![Share select recepients screen](resources/share-select-recipients.png)
-*After clicking share, this screen to select the recipients opens*
+*After clicking share, this screen to select the recipients opens.*
 
 ![Share view and save screen](resources/share-view-save.png)
 *This screen lets you view, save and edit received commands. The circle shows, if you already have the command saved.*

@@ -17,7 +17,7 @@
   "screen.savedcommands.share.status.waiting": "Auf Antwort warten",
   "screen.savedcommands.share.status.notavailable": "Empfänger-Mod nicht erreichbar!",
   "screen.savedcommands.share.status.sending": "Daten senden",
-  "screen.savedcommands.share.status.recipienterror": "JSON Fehler beim Empfänger!",
+  "screen.savedcommands.share.status.recipienterror": "Fehler beim Empfänger!",
   "screen.savedcommands.share.status.sent": "Erfolgreich gesendet",
   "screen.savedcommands.share.recievednotification.title": "Du hast Befehle!",
   "screen.savedcommands.share.recievednotification.message": "%s hat dir Befehle gesendet. Drücke %s um sie anzusehen und zu speichern!",

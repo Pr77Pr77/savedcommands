@@ -159,7 +159,7 @@ public class SavedCommandManager {
         // Only if custom categories enabled
         public @Nullable List<CustomCategory> customCategories = new ArrayList<>();
 
-        SettingsManager.Settings worldSettings;
+        SettingsManager.Settings worldSettings = new SettingsManager.Settings();
 
         public class CustomCategory {
             public String id;
