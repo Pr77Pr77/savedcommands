@@ -55,15 +55,25 @@ public class InputVariableScreen extends PopupScreen {
                 int variableInputIndex = variableInputTextFields.size() - 1;
                 switch (Variable.type) { // String does not need a statement
                     case INT:
-                        variableInputTextFields.getLast().setResponder(text -> variableInputTextFields.get(variableInputIndex).setValue(
-                                text.replaceAll("[^0-9-]", "")
-                                        .replaceAll("(?<!^)-", "")));
+                        variableInputTextFields.getLast().setResponder(text -> {
+                            String sanitized = text.replaceAll("[^0-9-]", "")
+                                    .replaceAll("(?<!^)-", "");
+                            EditBox box = variableInputTextFields.get(variableInputIndex);
+                            if (!box.getValue().equals(sanitized)) {
+                                box.setValue(sanitized);
+                            }
+                        });
                         break;
                     case FLOAT:
-                        variableInputTextFields.getLast().setResponder(text -> variableInputTextFields.get(variableInputIndex).setValue(
-                                text.replaceAll("[^0-9.-]", "")
-                                        .replaceAll("(?<!^)-", "")
-                                        .replaceAll("(\\..*)\\.", "$1")));
+                        variableInputTextFields.getLast().setResponder(text -> {
+                            String sanitized = text.replaceAll("[^0-9.-]", "")
+                                    .replaceAll("(?<!^)-", "")
+                                    .replaceAll("(\\..*)\\.", "$1");
+                            EditBox box = variableInputTextFields.get(variableInputIndex);
+                            if (!box.getValue().equals(sanitized)) {
+                                box.setValue(sanitized);
+                            }
+                        });
                         break;
                 }
                 this.addRenderableWidget(variableInputTextFields.getLast());

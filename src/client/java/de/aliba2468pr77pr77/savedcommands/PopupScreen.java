@@ -64,7 +64,7 @@ public abstract class PopupScreen extends Screen {
     @Override
     public void renderBackground(@NonNull GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
         if (parent == null) {
-            super.render(context, mouseX, mouseY, deltaTicks);
+            super.renderBackground(context, mouseX, mouseY, deltaTicks);
         } else {
             this.parent.renderBackground(context, -2147483648, -2147483648, deltaTicks);
             this.parent.render(context, -2147483648, -2147483648, deltaTicks);
