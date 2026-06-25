@@ -12,6 +12,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -24,17 +25,122 @@ public class SharingManager {
     public static final String INITIAL_MESSAGE_TEXT = "%s tried to share commands with you, but you don't have the required mod. " +
             "Install '%s' (Fabric) to receive them properly. Commands: %s";
     public static final String SHARE_MAGIC_CODE = "Sаvеd Cоmmаnds";
-    public static final String SHARE_CODE_SEND = "SEND"; // Sent by recipient
-    public static final String SHARE_CODE_DATA_UNFINISHED = "DATA_UNFINISHED"; // Sent by sender + Unfinished data
-    public static final String SHARE_CODE_DATA_FINISHED = "DATA_FINISHED"; // Sent by sender + Finished data
-    public static final String SHARE_CODE_DONE = "DONE"; // Sent by recipient
-    public static final String SHARE_CODE_ERROR = "ERROR"; // Sent by recipient
+    public static final String SHARE_CODE_SEND = "send"; // Sent by recipient
+    public static final String SHARE_CODE_DATA_UNFINISHED = "data_unfinished"; // Sent by sender + Unfinished data
+    public static final String SHARE_CODE_DATA_FINISHED = "data_finished"; // Sent by sender + Finished data
+    public static final String SHARE_CODE_DONE = "done"; // Sent by recipient
+    public static final String SHARE_CODE_ERROR = "error"; // Sent by recipient
 
     private static final Gson GSON = new GsonBuilder().create();
 
     // recipient:
-    private final Map<String, StringBuilder> receivedDataByPlayerName = new HashMap<>(); // only unfinished data
+    private static final int DATA_UNFINISHED_RESEND_TIMEOUT_SECONDS = 3;
+    private final Map<String, ReceiveState> receiveStates = new HashMap<>();
     public Map<String, List<SavedCommandManager.CommandData>> receivedCommandsByPlayerName = new HashMap<>();
+
+    private static class ReceiveState {
+        final SortedMap<Integer, String> chunks = new TreeMap<>();
+        int totalPackets = -1;
+        boolean finishedReceived = false;
+        ScheduledFuture<?> timeout;
+
+
+        void addChunk(int index, int total, String payload) {
+            if (totalPackets < 0) {
+                totalPackets = total;
+            } else if (total > totalPackets) {
+                totalPackets = total;
+            }
+            if (!payload.isEmpty()) {
+                chunks.put(index, payload);
+            }
+        }
+
+        boolean isComplete() {
+            return totalPackets > 0 && chunks.size() == totalPackets;
+        }
+
+        String buildDataString() {
+            StringBuilder combined = new StringBuilder();
+            for (String chunk : chunks.values()) {
+                combined.append(chunk);
+            }
+            return combined.toString();
+        }
+    }
+
+    private record SeqPacket(int index, int total, String payload) {
+    }
+
+    private static String makeSequence(int index, int total) {
+        return index + "/" + total + " ";
+    }
+
+    private static SeqPacket parseSeqPacket(String messageString, String senderName, String code) {
+        int codeIndex = messageString.indexOf(code);
+        if (codeIndex < 0) {
+            return null;
+        }
+        int afterCode = codeIndex + code.length() + 1;
+        int nameEnd = messageString.indexOf(" ", afterCode);
+        if (nameEnd < 0) {
+            return null;
+        }
+        String actualName = messageString.substring(afterCode, nameEnd);
+        if (!actualName.equals(senderName)) {
+            return null;
+        }
+        int seqStart = nameEnd + 1;
+        int seqEnd = messageString.indexOf(" ", seqStart);
+        if (seqEnd < 0) {
+            return null;
+        }
+        String seq = messageString.substring(seqStart, seqEnd);
+        int slash = seq.indexOf('/');
+        if (slash < 0) {
+            return null;
+        }
+        int index;
+        int total;
+        try {
+            index = Integer.parseInt(seq.substring(0, slash));
+            total = Integer.parseInt(seq.substring(slash + 1));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        String payload = messageString.substring(seqEnd + 1);
+        return new SeqPacket(index, total, payload);
+    }
+
+    private static List<String> buildPacketLines(String jsonData, String unfinishedHeader, String finishedHeader) {
+        int total = 1;
+        while (true) {
+            int maxUnfinishedPayload = 255 - (unfinishedHeader.length() + makeSequence(total, total).length());
+            int maxFinishedPayload = 255 - (finishedHeader.length() + makeSequence(total, total).length());
+            if (jsonData.length() <= maxFinishedPayload) {
+                total = 1;
+                break;
+            }
+            int remainder = jsonData.length() - maxFinishedPayload;
+            int packetCount = 1 + ((remainder + maxUnfinishedPayload - 1) / maxUnfinishedPayload);
+            if (packetCount == total) {
+                break;
+            }
+            total = packetCount;
+        }
+        List<String> lines = new ArrayList<>();
+        int index = 1;
+        while (index < total) {
+            String sequence = makeSequence(index, total);
+            int chunkSize = Math.min(jsonData.length(), 255 - (unfinishedHeader.length() + sequence.length()));
+            lines.add(unfinishedHeader + sequence + jsonData.substring(0, chunkSize));
+            jsonData = jsonData.substring(chunkSize);
+            index++;
+        }
+        String sequence = makeSequence(total, total);
+        lines.add(finishedHeader + sequence + jsonData);
+        return lines;
+    }
 
     public enum States {
         WAITING_FOR_SENDING("screen.savedcommands.share.status.waiting"),
@@ -174,18 +280,16 @@ public class SharingManager {
                     c.categoryId = null;
                 });
                 String JSONdataLeft = GSON.toJson(commands);
+                JSONdataLeft = CaseEncoder.encode(JSONdataLeft);
                 commands.forEach(c -> c.categoryId = backup.get(c));
 
-                List<String> stringsToSend = new ArrayList<>();
                 assert Minecraft.getInstance().player != null;
                 String unfinishedHeader = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_UNFINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
                 String finishedHeader = SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_DATA_FINISHED + " " + Minecraft.getInstance().player.getName().getString() + " ";
-                while (JSONdataLeft.length() + finishedHeader.length() > 255) {
-                    stringsToSend.add(unfinishedHeader + JSONdataLeft.substring(0, 255 - unfinishedHeader.length()));
-                    JSONdataLeft = JSONdataLeft.substring(255 - unfinishedHeader.length());
-                }
-                stringsToSend.add(finishedHeader + JSONdataLeft);
-                for (String string : stringsToSend) {
+                List<String> packetLines = buildPacketLines(JSONdataLeft, unfinishedHeader, finishedHeader);
+
+                packetLines.forEach(line -> LOGGER.info("Sent share command: " + line));
+                for (String string : packetLines) {
                     Objects.requireNonNull(Minecraft.getInstance().getConnection())
                             .sendCommand(string);
                 }
@@ -199,12 +303,29 @@ public class SharingManager {
                 Minecraft.getInstance().getToastManager().addToast(receivedToast);
                 return false;
             }
-            int dataStart = messageString.indexOf(" ", messageString.indexOf(SHARE_CODE_DATA_UNFINISHED) + SHARE_CODE_DATA_UNFINISHED.length() + 1) + 1;
-            if (receivedDataByPlayerName.containsKey(senderName)) {
-                receivedDataByPlayerName.get(senderName).append(messageString.substring(dataStart));
-            } else {
-                receivedDataByPlayerName.put(senderName, new StringBuilder(messageString.substring(dataStart)));
+            SeqPacket seqPacket = parseSeqPacket(messageString, senderName, SHARE_CODE_DATA_UNFINISHED);
+            if (seqPacket == null) {
+                return false;
             }
+            ReceiveState state = receiveStates.computeIfAbsent(senderName, key -> new ReceiveState());
+            state.addChunk(seqPacket.index, seqPacket.total, seqPacket.payload);
+            state.finishedReceived = false;
+            if (state.timeout != null && !state.timeout.isDone()) {
+                state.timeout.cancel(false);
+            }
+            state.timeout = scheduler.schedule(() -> Minecraft.getInstance().execute(() -> {
+                ReceiveState timeoutState = receiveStates.get(senderName);
+                if (timeoutState == null || timeoutState.finishedReceived || timeoutState.isComplete()) {
+                    return;
+                }
+                Minecraft.getInstance().execute(() -> {
+                    assert Minecraft.getInstance().player != null;
+                    Objects.requireNonNull(Minecraft.getInstance().getConnection())
+                            .sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_ERROR + " " + Minecraft.getInstance().player.getName().getString());
+                });
+                receiveStates.remove(senderName);
+            }), DATA_UNFINISHED_RESEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            LOGGER.info(senderName + " sent unfinished chunk " + seqPacket.index + "/" + seqPacket.total);
         } else if (messageString.contains(SHARE_CODE_DATA_FINISHED)) { // recipient
             if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
                 SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
@@ -214,19 +335,35 @@ public class SharingManager {
                 Minecraft.getInstance().getToastManager().addToast(receivedToast);
                 return false;
             }
-            StringBuilder data;
-            if (receivedDataByPlayerName.containsKey(senderName)) {
-                data = receivedDataByPlayerName.get(senderName);
-                receivedDataByPlayerName.remove(senderName);
-            } else {
-                data = new StringBuilder();
+            SeqPacket seqPacket = parseSeqPacket(messageString, senderName, SHARE_CODE_DATA_FINISHED);
+            if (seqPacket == null) {
+                return false;
             }
-            int dataStart = messageString.indexOf(" ", messageString.indexOf(SHARE_CODE_DATA_FINISHED) + SHARE_CODE_DATA_FINISHED.length() + 1) + 1;
-            data.append(messageString.substring(dataStart));
+            ReceiveState state = receiveStates.computeIfAbsent(senderName, key -> new ReceiveState());
+            state.addChunk(seqPacket.index, seqPacket.total, seqPacket.payload);
+            state.finishedReceived = true;
+            if (state.timeout != null && !state.timeout.isDone()) {
+                state.timeout.cancel(false);
+            }
+            if (!state.isComplete()) {
+                // If not all packets are present when the final packet arrives, send an error and drop state
+                Minecraft.getInstance().execute(() -> {
+                    assert Minecraft.getInstance().player != null;
+                    Objects.requireNonNull(Minecraft.getInstance().getConnection())
+                            .sendCommand(SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).msgCommand + " " + senderName + " " + SHARE_MAGIC_CODE + " " + SHARE_CODE_ERROR + " " + Minecraft.getInstance().player.getName().getString());
+                });
+                receiveStates.remove(senderName);
+                return false;
+            }
+
+            String dataString = CaseEncoder.decode(state.buildDataString());
+            receiveStates.remove(senderName);
+
+            LOGGER.info(senderName + " sent last: " + seqPacket.payload);
 
             List<SavedCommandManager.CommandData> commandData;
             try {
-                commandData = GSON.fromJson(data.toString(), new TypeToken<List<SavedCommandManager.CommandData>>() {
+                commandData = GSON.fromJson(dataString, new TypeToken<List<SavedCommandManager.CommandData>>() {
                 }.getType());
             } catch (JsonSyntaxException e) {
                 Minecraft.getInstance().execute(() -> {
@@ -297,5 +434,47 @@ public class SharingManager {
             );
         }
         return false;
+    }
+
+    public static class CaseEncoder { // Make everything lowercase to prevent excessive caps filters flagging the messages
+        private static final char MARK = '~';
+
+        public static String encode(String input) {
+            StringBuilder out = new StringBuilder();
+            boolean inUpperRun = false;
+            for (char c : input.toCharArray()) {
+                if (c == MARK) {
+                    out.append(MARK).append(MARK); // Literal MARK, like "~~" encoded
+                    continue;
+                }
+                boolean isUpper = Character.isUpperCase(c);
+                if (isUpper != inUpperRun) {
+                    out.append(MARK);
+                    inUpperRun = isUpper;
+                }
+                out.append(isUpper ? Character.toLowerCase(c) : c);
+            }
+            if (inUpperRun) out.append(MARK);
+            return out.toString();
+        }
+
+        public static String decode(String input) {
+            StringBuilder out = new StringBuilder();
+            boolean inUpperRun = false;
+            for (int i = 0; i < input.length(); i++) {
+                char c = input.charAt(i);
+                if (c == MARK) {
+                    if (i + 1 < input.length() && input.charAt(i + 1) == MARK) {
+                        out.append(MARK); // Literal MARK, like "~~" encoded
+                        i++;
+                    } else {
+                        inUpperRun = !inUpperRun;
+                    }
+                    continue;
+                }
+                out.append(inUpperRun ? Character.toUpperCase(c) : c);
+            }
+            return out.toString();
+        }
     }
 }

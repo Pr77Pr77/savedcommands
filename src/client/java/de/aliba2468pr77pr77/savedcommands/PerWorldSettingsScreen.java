@@ -149,9 +149,6 @@ public class PerWorldSettingsScreen extends PopupScreen {
             super.exit();
             return;
         }
-        if (commandManager.data.worldSettings == null) {
-            commandManager.data.worldSettings = new SettingsManager.Settings();
-        }
 
         if (receiveSentCommandsButton.getValue().equals(BooleanObjectOptions.DEFAULT)) {
             commandManager.data.worldSettings.receiveCommands = null; // Back to default

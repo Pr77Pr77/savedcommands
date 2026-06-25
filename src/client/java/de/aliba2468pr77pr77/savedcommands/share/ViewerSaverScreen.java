@@ -267,6 +267,11 @@ public class ViewerSaverScreen extends PopupScreen {
 
                 saveButton = new IconButton(getContentX() + getContentWidth() - 30 * 3, getContentY() + (getContentHeight() - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/save.png"), _ -> {
                     commandManager.data.commands.add(this.command);
+                    commandManager.saveAsync();
+                    if (minecraft.screen instanceof ViewerSaverScreen viewerSaverScreen &&
+                            viewerSaverScreen.parent instanceof SavedCommandsScreen savedCommandsScreen) {
+                        savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
+                    }
 
                     delete();
                 }, Component.translatable("selectWorld.edit.save"));
