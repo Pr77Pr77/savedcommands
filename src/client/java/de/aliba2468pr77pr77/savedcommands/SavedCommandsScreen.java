@@ -160,25 +160,44 @@ public class SavedCommandsScreen extends Screen {
         commandSuggestor.updateCommandInfo();
     }
 
+    @Override
+    public void added() {
+        manualCategories = SettingsManager.getCombinedWorldAndGlobal(commandManager).manualCategories;
+
+        if (!sharingManager.receivedCommandsByPlayerName.isEmpty() && notificationButton == null) {
+            addNotificationButton();
+        } else if (sharingManager.receivedCommandsByPlayerName.isEmpty() && notificationButton != null) {
+            removeNotificationButton();
+        }
+
+        assert minecraft != null;
+        otherPlayersOnServer = minecraft.getConnection() != null
+                && minecraft.getConnection().getOnlinePlayers().size() > 1;
+    }
+
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
         this.otherPlayersOnServer = otherPlayersOnServer;
     }
 
     public void addNotificationButton() {
-        notificationButton = new IconButton(20, 20, 20, 20, ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
-                button -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
-        addRenderableWidget(notificationButton);
+        if (searchBar != null) {
+            notificationButton = new IconButton(20, 20, 20, 20, ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
+                    button -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+            addRenderableWidget(notificationButton);
 
-        searchBar.setPosition(20 + 20 + 5, 20);
-        searchBar.setSize(width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+            searchBar.setPosition(20 + 20 + 5, 20);
+            searchBar.setSize(width - 40 - 22 - 20 - 5 - 20 - 5, 20);
+        }
     }
 
     public void removeNotificationButton() {
-        removeWidget(notificationButton);
-        notificationButton = null;
+        if (searchBar != null) {
+            removeWidget(notificationButton);
+            notificationButton = null;
 
-        this.searchBar.setPosition(20, 20);
-        this.searchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+            this.searchBar.setPosition(20, 20);
+            this.searchBar.setSize(this.width - 40 - 22 - 20 - 5, 20);
+        }
     }
 
     @Override

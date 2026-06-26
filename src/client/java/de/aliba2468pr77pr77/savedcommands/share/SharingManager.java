@@ -165,7 +165,11 @@ public class SharingManager {
     public Map<PlayerInfo, States> recipients = new HashMap<>();
     public List<SavedCommandManager.CommandData> commands;
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
     ScheduledFuture<?> currentTimeout;
 
     private static String truncateCommandList(List<SavedCommandManager.CommandData> commands, int maxLength) {
