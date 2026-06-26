@@ -165,7 +165,11 @@ public class SharingManager {
     public Map<PlayerInfo, States> recipients = new HashMap<>();
     public List<SavedCommandManager.CommandData> commands;
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
     ScheduledFuture<?> currentTimeout;
 
     private static String truncateCommandList(List<SavedCommandManager.CommandData> commands, int maxLength) {
@@ -307,7 +311,7 @@ public class SharingManager {
             if (seqPacket == null) {
                 return false;
             }
-            ReceiveState state = receiveStates.computeIfAbsent(senderName, key -> new ReceiveState());
+            ReceiveState state = receiveStates.computeIfAbsent(senderName, _ -> new ReceiveState());
             state.addChunk(seqPacket.index, seqPacket.total, seqPacket.payload);
             state.finishedReceived = false;
             if (state.timeout != null && !state.timeout.isDone()) {
@@ -339,7 +343,7 @@ public class SharingManager {
             if (seqPacket == null) {
                 return false;
             }
-            ReceiveState state = receiveStates.computeIfAbsent(senderName, key -> new ReceiveState());
+            ReceiveState state = receiveStates.computeIfAbsent(senderName, _ -> new ReceiveState());
             state.addChunk(seqPacket.index, seqPacket.total, seqPacket.payload);
             state.finishedReceived = true;
             if (state.timeout != null && !state.timeout.isDone()) {
