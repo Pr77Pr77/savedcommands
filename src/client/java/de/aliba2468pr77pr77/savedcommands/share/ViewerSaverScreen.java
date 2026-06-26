@@ -118,7 +118,7 @@ public class ViewerSaverScreen extends PopupScreen {
 
                 commandManager.data.commands.add(commandData);
                 boolean emptyMap = deleteCommand(commandDataListEntry.getKey(), commandData, viewerSaverList);
-                minecraft.setScreen(new EditCommandScreen(emptyMap ? parent : this, commandData));
+                minecraft.gui.setScreen(new EditCommandScreen(emptyMap ? parent : this, commandData));
                 if (emptyMap && parent instanceof SavedCommandsScreen savedCommandsScreen) {
                     savedCommandsScreen.removeNotificationButton();
                 } else if (!emptyMap) {
@@ -268,7 +268,7 @@ public class ViewerSaverScreen extends PopupScreen {
                 saveButton = new IconButton(getContentX() + getContentWidth() - 30 * 3, getContentY() + (getContentHeight() - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/save.png"), _ -> {
                     commandManager.data.commands.add(this.command);
                     commandManager.saveAsync();
-                    if (minecraft.screen instanceof ViewerSaverScreen viewerSaverScreen &&
+                    if (minecraft.gui.screen() instanceof ViewerSaverScreen viewerSaverScreen &&
                             viewerSaverScreen.parent instanceof SavedCommandsScreen savedCommandsScreen) {
                         savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
                     }
@@ -278,10 +278,10 @@ public class ViewerSaverScreen extends PopupScreen {
 
                 editButton = new IconButton(getContentX() + getContentWidth() - 30 * 2, getContentY() + (getContentHeight() - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), _ -> {
                     commandManager.data.commands.add(this.command);
-                    if (delete() && minecraft.screen instanceof ViewerSaverScreen viewerSaverScreen) {
-                        minecraft.setScreen(new EditCommandScreen(viewerSaverScreen.parent, this.command));
+                    if (delete() && minecraft.gui.screen() instanceof ViewerSaverScreen viewerSaverScreen) {
+                        minecraft.gui.setScreen(new EditCommandScreen(viewerSaverScreen.parent, this.command));
                     } else {
-                        minecraft.setScreen(new EditCommandScreen(minecraft.screen, this.command));
+                        minecraft.gui.setScreen(new EditCommandScreen(minecraft.gui.screen(), this.command));
                     }
 
                 }, Component.translatable("screen.savedcommands.share.editandsave"));
@@ -306,11 +306,11 @@ public class ViewerSaverScreen extends PopupScreen {
                 if (SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.get(playerName).isEmpty()) {
                     SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.remove(playerName);
                     if (SavedCommandsClient.sharingManager.receivedCommandsByPlayerName.isEmpty()) {
-                        if (minecraft.screen instanceof ViewerSaverScreen viewerSaverScreen) {
+                        if (minecraft.gui.screen() instanceof ViewerSaverScreen viewerSaverScreen) {
                             if(viewerSaverScreen.parent instanceof SavedCommandsScreen savedCommandsScreen){
                                 savedCommandsScreen.removeNotificationButton();
                             }
-                            minecraft.setScreen(viewerSaverScreen.parent);
+                            minecraft.gui.setScreen(viewerSaverScreen.parent);
                             return true;
                         }
                     }

@@ -80,6 +80,6 @@ public abstract class PopupScreen extends Screen {
     }
 
     protected void exit() {
-        minecraft.setScreen(parent);
+        minecraft.gui.setScreen(parent);
     }
 }

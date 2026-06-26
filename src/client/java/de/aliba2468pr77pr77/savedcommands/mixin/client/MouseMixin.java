@@ -30,8 +30,8 @@ public class MouseMixin {
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
         if (Minecraft.getInstance().player == null ||
-                Minecraft.getInstance().screen instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
-                Minecraft.getInstance().screen instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null) {
+                Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
+                Minecraft.getInstance().gui.screen() instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null) {
             return;
         }
 
@@ -65,7 +65,7 @@ public class MouseMixin {
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                         if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
                             LOGGER.info("Combination released/pressed: " + command.command);
-                            SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.screen);
+                            SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.gui.screen());
                         }
                     }
                     pressedPartialCombination.remove(InputConstants.Type.valueOf("MOUSE").getOrCreate(input.button()));

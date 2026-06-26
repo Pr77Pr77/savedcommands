@@ -22,7 +22,7 @@ public abstract class SearchSuggestionWindow {
             )
     )
     private String savedcommands$replaceGetValue(EditBox instance) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getText();
         } else {
             return instance.getValue();
@@ -39,7 +39,7 @@ public abstract class SearchSuggestionWindow {
             )
     )
     private void savedcommands$replaceSetCursorPosition(EditBox instance, int cursor) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             instance.setCursorPosition(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
         } else {
             instance.setCursorPosition(cursor);
@@ -56,7 +56,7 @@ public abstract class SearchSuggestionWindow {
             )
     )
     private void savedcommands$replaceSetHighlightPos(EditBox instance, int cursor) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             instance.setHighlightPos(editCommandScreen.insertedVariables.getUninsertedIndex(cursor));
         } else {
             instance.setHighlightPos(cursor);
@@ -73,7 +73,7 @@ public abstract class SearchSuggestionWindow {
             )
     )
     private String savedcommands$replaceApplySuggestion(Suggestion instance, String input) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             Suggestion suggestionUninserted = new Suggestion(
                     new StringRange(editCommandScreen.insertedVariables.getUninsertedIndex(instance.getRange().getStart()),
                             editCommandScreen.insertedVariables.getUninsertedIndex(instance.getRange().getEnd())),

@@ -20,20 +20,20 @@ public class ClientPacketListenerMixin {
             return;
         }
 
-        if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof SavedCommandsScreen savedCommandsScreen) {
             savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
                     && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
-        } else if (Minecraft.getInstance().screen instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
+        } else if (Minecraft.getInstance().gui.screen() instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
             sharePlayerSelectionScreen.reloadPlayers();
         }
     }
 
     @Inject(method = "handlePlayerInfoRemove", at = @At("TAIL"))
     private void onPlayerInfoRemove(ClientboundPlayerInfoRemovePacket packet, CallbackInfo ci) {
-        if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof SavedCommandsScreen savedCommandsScreen) {
             savedCommandsScreen.setOtherPlayersOnServer(Minecraft.getInstance().getConnection() != null
                     && Minecraft.getInstance().getConnection().getOnlinePlayers().size() > 1);
-        } else if (Minecraft.getInstance().screen instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
+        } else if (Minecraft.getInstance().gui.screen() instanceof SharePlayerSelectionScreen sharePlayerSelectionScreen) {
             sharePlayerSelectionScreen.reloadPlayers();
         }
     }

@@ -136,10 +136,10 @@ public class SharePlayerSelectionScreen extends PopupScreen {
                 chosenPlayers.forEach(player -> SavedCommandsClient.sharingManager.recipients.put(player, SharingManager.States.WAITING_FOR_SENDING));
                 SavedCommandsClient.sharingManager.commands = commands;
                 SavedCommandsClient.sharingManager.sendInitialMessage();
-                minecraft.setScreen(new ShareStatusScreen(parent));
+                minecraft.gui.setScreen(new ShareStatusScreen(parent));
                 break;
             case SELECT_MORE_COMMANDS:
-                minecraft.setScreen(new ShareCommandsSelectionScreen(this));
+                minecraft.gui.setScreen(new ShareCommandsSelectionScreen(this));
                 break;
             case CANCEL:
                 super.exit();

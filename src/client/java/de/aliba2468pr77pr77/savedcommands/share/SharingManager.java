@@ -204,7 +204,7 @@ public class SharingManager {
                 }
                 if (recipients.values().stream()
                         .noneMatch(entry -> entry == States.WAITING_FOR_RESPONSE) &&
-                        Minecraft.getInstance().screen instanceof ShareStatusScreen shareStatusScreen) {
+                        Minecraft.getInstance().gui.screen() instanceof ShareStatusScreen shareStatusScreen) {
                     shareStatusScreen.closeButton.setMessage(CommonComponents.GUI_DONE);
                 }
             }
@@ -231,11 +231,10 @@ public class SharingManager {
         } else if (messageString.contains(SHARE_CODE_ERROR + " ")) {
             code = SHARE_CODE_ERROR;
         } else {
-            SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+            SystemToast.add(Minecraft.getInstance().gui.toastManager(),
                     new SystemToast.SystemToastId(7500L),
                     Component.translatable("screen.savedcommands.share.sendernotrecognizable.title"),
                     Component.translatable("screen.savedcommands.share.sendernotrecognizable.message"));
-            Minecraft.getInstance().getToastManager().addToast(receivedToast);
             return false;
         }
 
@@ -267,7 +266,7 @@ public class SharingManager {
                 if (currentTimeout != null && !currentTimeout.isDone()) {
                     currentTimeout.cancel(false);
                 }
-                if (Minecraft.getInstance().screen instanceof ShareStatusScreen shareStatusScreen) {
+                if (Minecraft.getInstance().gui.screen() instanceof ShareStatusScreen shareStatusScreen) {
                     shareStatusScreen.closeButton.setMessage(CommonComponents.GUI_DONE);
                 }
             }
@@ -296,11 +295,10 @@ public class SharingManager {
             });
         } else if (messageString.contains(SHARE_CODE_DATA_UNFINISHED)) { // recipient
             if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
-                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                SystemToast.add(Minecraft.getInstance().gui.toastManager(),
                         new SystemToast.SystemToastId(7500L),
                         Component.translatable("screen.savedcommands.share.disabled.title"),
                         Component.translatable("screen.savedcommands.share.disabled.message"));
-                Minecraft.getInstance().getToastManager().addToast(receivedToast);
                 return false;
             }
             SeqPacket seqPacket = parseSeqPacket(messageString, senderName, SHARE_CODE_DATA_UNFINISHED);
@@ -328,11 +326,10 @@ public class SharingManager {
             LOGGER.info(senderName + " sent unfinished chunk " + seqPacket.index + "/" + seqPacket.total);
         } else if (messageString.contains(SHARE_CODE_DATA_FINISHED)) { // recipient
             if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
-                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                SystemToast.add(Minecraft.getInstance().gui.toastManager(),
                         new SystemToast.SystemToastId(7500L),
                         Component.translatable("screen.savedcommands.share.disabled.title"),
                         Component.translatable("screen.savedcommands.share.disabled.message"));
-                Minecraft.getInstance().getToastManager().addToast(receivedToast);
                 return false;
             }
             SeqPacket seqPacket = parseSeqPacket(messageString, senderName, SHARE_CODE_DATA_FINISHED);
@@ -382,14 +379,13 @@ public class SharingManager {
                 receivedCommandsByPlayerName.put(senderName, commandData);
             }
 
-            SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+            SystemToast.add(Minecraft.getInstance().gui.toastManager(),
                     new SystemToast.SystemToastId(7500L),
                     Component.translatable("screen.savedcommands.share.recievednotification.title"),
                     Component.translatable("screen.savedcommands.share.recievednotification.message",
                             senderName, OpenCommandScreen.getTranslatedKeyMessage()));
-            Minecraft.getInstance().getToastManager().addToast(receivedToast);
 
-            if (Minecraft.getInstance().screen instanceof SavedCommandsScreen savedCommandsScreen) {
+            if (Minecraft.getInstance().gui.screen() instanceof SavedCommandsScreen savedCommandsScreen) {
                 savedCommandsScreen.addNotificationButton();
             }
 
@@ -419,11 +415,10 @@ public class SharingManager {
             recipients.put(found, States.RECIPIENT_ERROR);
         } else { // recipient
             if (!SettingsManager.getCombinedWorldAndGlobal(SavedCommandsClient.commandManager).receiveCommands) {
-                SystemToast receivedToast = SystemToast.multiline(Minecraft.getInstance(),
+                SystemToast.add(Minecraft.getInstance().gui.toastManager(),
                         new SystemToast.SystemToastId(7500L),
                         Component.translatable("screen.savedcommands.share.disabled.title"),
                         Component.translatable("screen.savedcommands.share.disabled.message"));
-                Minecraft.getInstance().getToastManager().addToast(receivedToast);
                 return false;
             }
             Minecraft.getInstance().execute(() -> {

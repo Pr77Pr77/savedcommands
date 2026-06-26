@@ -210,7 +210,7 @@ public class EditCommandScreen extends PopupScreen {
                     if (!save(true)) {
                         return;
                     }
-                    minecraft.setScreen(new EditVariableScreen(this, data));
+                    minecraft.gui.setScreen(new EditVariableScreen(this, data));
                 }).bounds(popupX + 20, popupY + 80, 20, 20)
                 .tooltip(Tooltip.create(Component.translatable("screen.savedcommands.createvariable")))
                 .createNarration((_) -> Component.translatable("screen.savedcommands.createvariable")).build();
@@ -399,7 +399,7 @@ public class EditCommandScreen extends PopupScreen {
                     if (!save(true)) {
                         return;
                     }
-                    minecraft.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
+                    minecraft.gui.setScreen(new EditVariableScreen(this, data.variables.get(finalVariableIndex), data));
                 }, Component.translatable("screen.savedcommands.editvariablebutton", data.variables.get(variableIndex).name));
                 this.addRenderableWidget(variableEditButton);
 
@@ -678,7 +678,7 @@ public class EditCommandScreen extends PopupScreen {
             if (!commandTextField.getValue().isEmpty()) {
                 data = commandManager.addCommand(commandTextField.getValue(), nameTextField.getValue());
             } else if (warnOnEmptyCommandIfNull) {
-                minecraft.setScreen(new PopupWarningScreen(Component.translatable("screen.savedcommands.emptyCommandHeader"),
+                minecraft.gui.setScreen(new PopupWarningScreen(Component.translatable("screen.savedcommands.emptyCommandHeader"),
                         Component.translatable("screen.savedcommands.emptyCommandMessage"), this));
                 return false;
             } else {

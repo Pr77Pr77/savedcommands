@@ -67,7 +67,7 @@ public class SavedCommandsScreen extends Screen {
 
         if (!sharingManager.receivedCommandsByPlayerName.isEmpty()) {
             notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
-                    _ -> minecraft.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+                    _ -> minecraft.gui.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
             this.addRenderableWidget(notificationButton);
             if (this.searchBar == null) {
                 this.searchBar = new TextFieldPlaceholderAlways(this.minecraft.font, 20 + 20 + 5, 20, this.width - 40 - 22 - 20 - 5 - 20 - 5, 20, Component.translatable("screen.savedcommands.searchsavebar"));
@@ -103,7 +103,7 @@ public class SavedCommandsScreen extends Screen {
         this.addRenderableWidget(this.addButton);
 
         settingsButton = new IconButton(20 + this.width - 40 - 20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/settings.png"),
-                _ -> minecraft.setScreen(new PerWorldSettingsScreen(this)), Component.translatable("screen.savedcommands.settings"));
+                _ -> minecraft.gui.setScreen(new PerWorldSettingsScreen(this)), Component.translatable("screen.savedcommands.settings"));
         this.addRenderableWidget(settingsButton);
 
         otherPlayersOnServer = minecraft.getConnection() != null
@@ -124,7 +124,7 @@ public class SavedCommandsScreen extends Screen {
         commandSuggestor.updateCommandInfo();
 
         if (!sharingManager.receivedCommandsByPlayerName.isEmpty() && showReceivedCommands) {
-            minecraft.setScreen(new ViewerSaverScreen(this));
+            minecraft.gui.setScreen(new ViewerSaverScreen(this));
             showReceivedCommands = false;
         }
     }
@@ -161,7 +161,7 @@ public class SavedCommandsScreen extends Screen {
 
     public void addNotificationButton() {
         notificationButton = new IconButton(20, 20, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/notification.png"),
-                _ -> Minecraft.getInstance().setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
+                _ -> Minecraft.getInstance().gui.setScreen(new ViewerSaverScreen(this)), Component.translatable("screen.savedcommands.share.notificationbutton"));
         addRenderableWidget(notificationButton);
 
         searchBar.setPosition(20 + 20 + 5, 20);
@@ -356,7 +356,7 @@ public class SavedCommandsScreen extends Screen {
     }
 
     public void addCommand() {
-        minecraft.setScreen(new EditCommandScreen(this, commandManager.addCommand(searchBar.getValue(), null)));
+        minecraft.gui.setScreen(new EditCommandScreen(this, commandManager.addCommand(searchBar.getValue(), null)));
         searchBar.setValue("");
     }
 
@@ -423,7 +423,7 @@ public class SavedCommandsScreen extends Screen {
                 deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
                     LOGGER.info("Clicked on delete " + this.command + " index " + indexDataList);
                     if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
-                        minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commanddeletequestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
+                        minecraft.gui.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.commanddeletequestion"), Component.translatable("selectWorld.deleteWarning", name != null ? name : command), minecraft.gui.screen(), Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
                             commandManager.removeCommand(indexDataList);
                             updateSearchAndScroll(searchBar.getValue());
 
@@ -446,12 +446,12 @@ public class SavedCommandsScreen extends Screen {
 
                 editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"), _ -> {
                     LOGGER.info("Clicked on edit " + this.command + " index " + indexDataList);
-                    minecraft.setScreen(new EditCommandScreen(minecraft.screen, commandManager.data.commands.get(indexDataList)));
+                    minecraft.gui.setScreen(new EditCommandScreen(minecraft.gui.screen(), commandManager.data.commands.get(indexDataList)));
                 }, Component.translatable("selectWorld.edit"));
 
                 shareButton = new IconButton(entryWidth - 80, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/share.png"), _ -> {
                     LOGGER.info("Clicked on share " + this.command + " index " + indexDataList);
-                    minecraft.setScreen(new SharePlayerSelectionScreen(minecraft.screen, new ArrayList<>(List.of(commandManager.data.commands.get(indexDataList)))));
+                    minecraft.gui.setScreen(new SharePlayerSelectionScreen(minecraft.gui.screen(), new ArrayList<>(List.of(commandManager.data.commands.get(indexDataList)))));
                 }, Component.translatable("screen.savedcommands.share"));
                 shareButton.active = otherPlayersOnServer;
             }
@@ -469,7 +469,7 @@ public class SavedCommandsScreen extends Screen {
                 }
                 LOGGER.info("Clicked on command " + this.command);
                 minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-                minecraft.setScreen(null);
+                minecraft.gui.setScreen(null);
                 SavedCommandManager.sendCommandAndInsertVariables(commandManager.data.commands.get(indexDataList), null);
                 return true;
             }
@@ -575,9 +575,9 @@ public class SavedCommandsScreen extends Screen {
                 if (customCategory != null && buttonExtraction) {
                     deleteButton = new IconButton(entryWidth - 20, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/trash_can.png"), _ -> {
                         if (SettingsManager.getCombinedWorldAndGlobal(commandManager).deleteWarning) {
-                            minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.categorydeletequestion"),
+                            minecraft.gui.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.categorydeletequestion"),
                                     Component.translatable("screen.savedcommands.categorydeletemessage", categoryTitle),
-                                    minecraft.screen, Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
+                                    minecraft.gui.screen(), Component.translatable("selectWorld.deleteButton"), Component.translatable("gui.cancel"), showAgainState -> {
                                 commandManager.data.commands.stream()
                                         .filter(commandData -> Objects.equals(commandData.categoryId, customCategory.id))
                                         .forEach(commandData -> commandData.categoryId = null);
@@ -608,7 +608,7 @@ public class SavedCommandsScreen extends Screen {
                     }, Component.translatable("selectWorld.deleteButton"));
 
                     editButton = new IconButton(entryWidth - 50, y + (entryHeight - 20) / 2, 20, 20, Identifier.fromNamespaceAndPath(MOD_ID, "textures/gui/edit.png"),
-                            _ -> minecraft.setScreen(new EditCategoryScreen(customCategory, minecraft.screen)), Component.translatable("selectWorld.edit"));
+                            _ -> minecraft.gui.setScreen(new EditCategoryScreen(customCategory, minecraft.gui.screen())), Component.translatable("selectWorld.edit"));
                 }
             }
 

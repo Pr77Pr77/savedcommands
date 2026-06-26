@@ -111,7 +111,7 @@ public class PerWorldSettingsScreen extends PopupScreen {
 
         generalSettingsButton = Button.builder(Component.translatable("screen.savedcommands.globalsettings"), _ -> {
             exit();
-            minecraft.setScreen(new GlobalSettingsScreen(parent));
+            minecraft.gui.setScreen(new GlobalSettingsScreen(parent));
         }).bounds(popupX + (popupW - 100 - 150 - 5) / 2 + 100 + 5, popupY + popupH - 20 - 20, 150, 20).build();
         addRenderableWidget(generalSettingsButton);
     }
@@ -179,7 +179,7 @@ public class PerWorldSettingsScreen extends PopupScreen {
             if (commandManager.data.customCategories.isEmpty()) {
                 commandManager.data.customCategories = null;
             } else {
-                minecraft.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.settings.manualcategories.clearquestion"), Component.translatable("screen.savedcommands.settings.manualcategories.clearmessage"),
+                minecraft.gui.setScreen(new PopupConfirmScreen(Component.translatable("screen.savedcommands.settings.manualcategories.clearquestion"), Component.translatable("screen.savedcommands.settings.manualcategories.clearmessage"),
                         parent, Component.translatable("screen.savedcommands.clear"), Component.translatable("screen.savedcommands.keep"), () -> {
                     commandManager.data.customCategories = null;
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {

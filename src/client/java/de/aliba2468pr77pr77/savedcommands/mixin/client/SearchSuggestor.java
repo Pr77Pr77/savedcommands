@@ -152,7 +152,7 @@ public class SearchSuggestor {
             )
     )
     private static int savedcommands$replaceGetEnd(StringRange instance) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getUninsertedIndex(instance.getEnd());
         } else {
             return instance.getEnd();
@@ -167,7 +167,7 @@ public class SearchSuggestor {
             )
     )
     private static int savedcommands$replaceGetStart(StringRange instance) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getUninsertedIndex(instance.getStart());
         } else {
             return instance.getStart();
@@ -182,7 +182,7 @@ public class SearchSuggestor {
             )
     )
     private static int savedcommands$replaceStringReaderGetCursor(ImmutableStringReader instance) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getUninsertedIndex(instance.getCursor());
         } else {
             return instance.getCursor();
@@ -197,7 +197,7 @@ public class SearchSuggestor {
             )
     )
     private static int savedcommands$replaceStringReaderGetRemainingLength(ImmutableStringReader instance) {
-        if (Minecraft.getInstance().screen instanceof EditCommandScreen editCommandScreen) {
+        if (Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editCommandScreen) {
             return editCommandScreen.insertedVariables.getUninsertedIndex(instance.getRemainingLength());
         } else {
             return instance.getRemainingLength();

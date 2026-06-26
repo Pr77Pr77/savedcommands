@@ -34,12 +34,12 @@ public class KeyboardMixin {
     private void onKey(long handle, int action, KeyEvent input, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null ||
-                mc.screen instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
-                mc.screen instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null ||
-                (mc.screen != null && (mc.screen.getFocused() instanceof EditBox eb && eb.canConsumeInput() ||
-                        mc.screen.getFocused() instanceof MultiLineEditBox ||
-                        mc.screen instanceof AbstractSignEditScreen ||
-                        mc.screen.getClass().getName().startsWith("fi.dy.masa")))) {
+                mc.gui.screen() instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
+                mc.gui.screen() instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null ||
+                (mc.gui.screen() != null && (mc.gui.screen().getFocused() instanceof EditBox eb && eb.canConsumeInput() ||
+                        mc.gui.screen().getFocused() instanceof MultiLineEditBox ||
+                        mc.gui.screen() instanceof AbstractSignEditScreen ||
+                        mc.gui.screen().getClass().getName().startsWith("fi.dy.masa")))) {
             return;
         }
 
@@ -72,7 +72,7 @@ public class KeyboardMixin {
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
                         if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
                             LOGGER.info("Combination released/pressed: " + command.command);
-                            SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.screen);
+                            SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.gui.screen());
                         }
                     }
                     pressedPartialCombination.remove(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()));

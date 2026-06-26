@@ -42,8 +42,8 @@ public class SavedCommandsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OpenCommandScreen.consumeClick()) {
                 client.execute(() -> {
-                    if (client.screen == null) {
-                        client.setScreen(new SavedCommandsScreen());
+                    if (client.gui.screen() == null) {
+                        client.gui.setScreen(new SavedCommandsScreen());
                     }
                 });
             }

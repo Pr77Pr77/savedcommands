@@ -74,7 +74,7 @@ public class GlobalSettingsScreen extends Screen {
         if (lastScreen instanceof SavedCommandsScreen savedCommandsScreen) {
             savedCommandsScreen.updateSearchAndScroll(savedCommandsScreen.searchBar.getValue());
         }
-        minecraft.setScreen(lastScreen);
+        minecraft.gui.setScreen(lastScreen);
     }
 
     public static class SettingsList extends ContainerObjectSelectionList<SettingsList.Entry> {

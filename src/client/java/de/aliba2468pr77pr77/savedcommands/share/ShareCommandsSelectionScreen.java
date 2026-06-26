@@ -40,13 +40,13 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
         this.removeWidget(this.settingsButton);
 
         if (this.selectPlayersButton == null) {
-            this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, _ -> minecraft.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
+            this.selectPlayersButton = Button.builder(CommonComponents.GUI_CONTINUE, _ -> minecraft.gui.setScreen(playerSelectionScreen)).bounds(width - 20 - 75 - 5 - 75, 20, 75, 20).build();
         } else {
             this.selectPlayersButton.setPosition(width - 20 - 75 - 5 - 75, 20);
         }
         this.addRenderableWidget(this.selectPlayersButton);
 
-        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> minecraft.setScreen(playerSelectionScreen.parent)).bounds(width - 20 - 75, 20, 75, 20).build();
+        this.cancelButton = Button.builder(CommonComponents.GUI_CANCEL, _ -> minecraft.gui.setScreen(playerSelectionScreen.parent)).bounds(width - 20 - 75, 20, 75, 20).build();
         this.addRenderableWidget(this.cancelButton);
 
         this.searchBar.setSize(width - 20 - 75 - 5 - 75 - 5 - 20, 20);
@@ -72,7 +72,7 @@ public class ShareCommandsSelectionScreen extends SavedCommandsScreen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(new SavedCommandsScreen(false));
+        minecraft.gui.setScreen(new SavedCommandsScreen(false));
     }
 
     @Override

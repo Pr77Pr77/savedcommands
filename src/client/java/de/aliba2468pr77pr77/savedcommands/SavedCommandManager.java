@@ -243,7 +243,7 @@ public class SavedCommandManager {
             insertedCommand.append(command.command.substring(ContinuingIndex));
 
             if (!userEditableVariablesLeft.isEmpty()) {
-                Minecraft.getInstance().setScreen(new InputVariableScreen(insertedCommand.toString(), userEditableVariablesLeft, parentScreen));
+                Minecraft.getInstance().gui.setScreen(new InputVariableScreen(insertedCommand.toString(), userEditableVariablesLeft, parentScreen));
             } else {
                 sendCommand(insertedCommand.toString());
             }
