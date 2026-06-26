@@ -170,9 +170,10 @@ public class SavedCommandsScreen extends Screen {
             removeNotificationButton();
         }
 
-        assert minecraft != null;
-        otherPlayersOnServer = minecraft.getConnection() != null
-                && minecraft.getConnection().getOnlinePlayers().size() > 1;
+        if (minecraft != null) {
+            otherPlayersOnServer = minecraft.getConnection() != null
+                    && minecraft.getConnection().getOnlinePlayers().size() > 1;
+        }
     }
 
     public void setOtherPlayersOnServer(boolean otherPlayersOnServer) {
