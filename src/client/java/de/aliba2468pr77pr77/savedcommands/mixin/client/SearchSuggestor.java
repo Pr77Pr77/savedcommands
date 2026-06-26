@@ -74,7 +74,7 @@ public class SearchSuggestor {
                 int y = editCommandScreen.commandTextField.getY() + editCommandScreen.commandTextField.getHeight() + 1 + 12 * i;
                 graphics.fill(editCommandScreen.popupX + 6, y, editCommandScreen.popupX + editCommandScreen.popupW - 6, y + 12, this.fillColor);
                 StringBuilder sb = new StringBuilder();
-                this.commandUsage.get(i).accept((index, style, codePoint) -> {
+                this.commandUsage.get(i).accept((_, _, codePoint) -> {
                     sb.appendCodePoint(codePoint);
                     return true;
                 });

@@ -40,6 +40,7 @@ public class KeyboardMixin {
                         mc.gui.screen().getFocused() instanceof MultiLineEditBox ||
                         mc.gui.screen() instanceof AbstractSignEditScreen ||
                         mc.gui.screen().getClass().getName().startsWith("fi.dy.masa")))) {
+            pressedPartialCombination = null;
             return;
         }
 

@@ -32,6 +32,7 @@ public class MouseMixin {
         if (Minecraft.getInstance().player == null ||
                 Minecraft.getInstance().gui.screen() instanceof EditCommandScreen editScreen && editScreen.keybindSetting ||
                 Minecraft.getInstance().gui.screen() instanceof KeyBindsScreen keyBindsScreen && keyBindsScreen.selectedKey != null) {
+            pressedPartialCombination = null;
             return;
         }
 
