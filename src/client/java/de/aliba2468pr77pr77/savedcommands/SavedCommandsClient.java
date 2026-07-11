@@ -49,12 +49,22 @@ public class SavedCommandsClient implements ClientModInitializer {
             }
         });
 
-        ClientReceiveMessageEvents.ALLOW_GAME.register((message, _) -> sharingManager.shareHandler(message.getString()));
-        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, _, sender, _, _) -> {
-            if (sender != null) {
-                return sharingManager.shareHandler(message.getString(), sender.name());
-            } else {
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, _) -> {
+            if (sharingManager != null) {
                 return sharingManager.shareHandler(message.getString());
+            } else {
+                return true;
+            }
+        });
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((message, _, sender, _, _) -> {
+            if (sharingManager != null) {
+                if (sender != null) {
+                    return sharingManager.shareHandler(message.getString(), sender.name());
+                } else {
+                    return sharingManager.shareHandler(message.getString());
+                }
+            } else {
+                return true;
             }
         });
 
