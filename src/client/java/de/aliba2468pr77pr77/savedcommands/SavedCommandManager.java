@@ -14,6 +14,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,6 +43,15 @@ public class SavedCommandManager {
         load();
     }
 
+    public static String getWorldOrServerIdLegacy() { // Get path string with colons
+        ServerData server = Minecraft.getInstance().getCurrentServer();
+        if (server != null) {
+            return "multiplayer/" + server.ip;
+        } else {
+            return null;
+        }
+    }
+
     public static String getWorldOrServerId() {
         Minecraft minecraft = Minecraft.getInstance();
 
@@ -54,7 +64,7 @@ public class SavedCommandManager {
         // External multiplayer
         ServerData server = minecraft.getCurrentServer();
         if (server != null) {
-            return "multiplayer/" + server.ip;
+            return "multiplayer/" + server.ip.replace(":", "%3A");
         }
 
         // No world open
@@ -268,8 +278,25 @@ public class SavedCommandManager {
                 this.data = GSON.fromJson(json, SavedCommandsData.class);
                 if (this.data == null) this.data = new SavedCommandsData();
             } else {
-                this.data = new SavedCommandsData();
-                save();
+                boolean legacyMigrated = false;
+                try {
+                    String legacyId = getWorldOrServerIdLegacy();
+                    if (legacyId != null) {
+                        Path legacyPath = FabricLoader.getInstance().getConfigDir()
+                                .resolve(MOD_ID).resolve(legacyId + ".json");
+                        if (Files.exists(legacyPath)) {
+                            Files.move(legacyPath, filePath);
+                            load();
+                            legacyMigrated = true;
+                        }
+                    }
+                } catch (InvalidPathException ignored) {
+                    // Windows: ":" in the file name is ignored
+                }
+                if (!legacyMigrated) {
+                    this.data = new SavedCommandsData();
+                    save();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
