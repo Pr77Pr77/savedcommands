@@ -24,7 +24,10 @@ import static de.aliba2468pr77pr77.savedcommands.SavedCommands.MOD_ID;
 import static de.aliba2468pr77pr77.savedcommands.SavedCommandsClient.VariablePlaceholder;
 
 public class SavedCommandManager {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
+            .registerTypeAdapter(InputConstants.Key.class, new GsonTypeAdapters.InputConstantsKeyAdapter())
+            .registerTypeAdapterFactory(new GsonTypeAdapters.KeybindCombinationMigrater())
+            .create();
 
     private final Path filePath;
     public SavedCommandsData data;
@@ -86,19 +89,20 @@ public class SavedCommandManager {
         }
 
         public static class KeybindCombination {
-            public List<String> keybindType = new ArrayList<>();
-            public List<Integer> keybindCode = new ArrayList<>();
+            private final transient boolean migrated;
 
-            public List<InputConstants.Key> toKeys() {
-                List<InputConstants.Key> keybinds = new ArrayList<>();
-                for (int i = 0; i < keybindCode.size(); i++) {
-                    keybinds.add(InputConstants.Type.valueOf(keybindType.get(i)).getOrCreate(keybindCode.get(i)));
-                }
-                return keybinds;
+            KeybindCombination() {
+                migrated = false;
             }
 
+            KeybindCombination(boolean migrated) {
+                this.migrated = migrated;
+            }
+
+            public List<InputConstants.Key> keys = new ArrayList<>();
+
             public boolean isEmptyOrNull() {
-                return this.keybindCode == null || this.keybindType == null || this.keybindCode.isEmpty() || this.keybindType.isEmpty();
+                return this.keys == null || this.keys.isEmpty();
             }
         }
 
@@ -277,6 +281,9 @@ public class SavedCommandManager {
                 String json = Files.readString(filePath);
                 this.data = GSON.fromJson(json, SavedCommandsData.class);
                 if (this.data == null) this.data = new SavedCommandsData();
+                if (this.data.commands.stream().anyMatch(command -> command.keybinds != null && command.keybinds.migrated)) {
+                    saveAsync();
+                }
             } else if (getWorldOrServerIdLegacy() != null &&
                     Files.exists(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve(getWorldOrServerIdLegacy() + ".json"))) {
                 Files.move(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve(getWorldOrServerIdLegacy() + ".json"), filePath);
