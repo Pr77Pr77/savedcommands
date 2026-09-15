@@ -284,10 +284,6 @@ public class SavedCommandManager {
                 if (this.data.commands.stream().anyMatch(command -> command.keybinds != null && command.keybinds.migrated)) {
                     saveAsync();
                 }
-            } else if (getWorldOrServerIdLegacy() != null &&
-                    Files.exists(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve(getWorldOrServerIdLegacy() + ".json"))) {
-                Files.move(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve(getWorldOrServerIdLegacy() + ".json"), filePath);
-                load();
             } else {
                 boolean legacyMigrated = false;
                 try {
