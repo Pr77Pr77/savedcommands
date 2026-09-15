@@ -75,19 +75,16 @@ public class EditCommandScreen extends PopupScreen {
         if (data != null && data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             // Checking Keybinds of this mod (Only first one)
             for (SavedCommandManager.CommandData command : commandManager.data.commands) {
-                if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && Objects.equals(command.keybinds.keybindCode.getFirst(), data.keybinds.keybindCode.getFirst()) &&
-                        Objects.equals(command.keybinds.keybindType.getFirst(), data.keybinds.keybindType.getFirst()) &&
-                        !Objects.equals(command, data)) {
+                if (command.keybinds != null && !command.keybinds.isEmptyOrNull() &&
+                        Objects.equals(command.keybinds.keys.getFirst(), data.keybinds.keys.getFirst()) && !Objects.equals(command, data)) {
                     conflictSavedCommands conflict = new conflictSavedCommands();
                     conflict.conflictingCommand = command;
 
                     conflict.conflictingKeys = new SavedCommandManager.CommandData.KeybindCombination();
                     boolean differentEndings = false;
-                    for (int keybindIndex = 0; keybindIndex < command.keybinds.keybindType.size() && keybindIndex < data.keybinds.keybindType.size(); keybindIndex++) {
-                        if (Objects.equals(command.keybinds.keybindCode.get(keybindIndex), data.keybinds.keybindCode.get(keybindIndex)) &&
-                                Objects.equals(command.keybinds.keybindType.get(keybindIndex), data.keybinds.keybindType.get(keybindIndex))) {
-                            conflict.conflictingKeys.keybindType.add(keybindIndex, data.keybinds.keybindType.get(keybindIndex));
-                            conflict.conflictingKeys.keybindCode.add(keybindIndex, data.keybinds.keybindCode.get(keybindIndex));
+                    for (int keybindIndex = 0; keybindIndex < command.keybinds.keys.size() && keybindIndex < data.keybinds.keys.size(); keybindIndex++) {
+                        if (Objects.equals(command.keybinds.keys.get(keybindIndex), data.keybinds.keys.get(keybindIndex))) {
+                            conflict.conflictingKeys.keys.add(keybindIndex, data.keybinds.keys.get(keybindIndex));
                         } else {
                             differentEndings = true;
                             break;
@@ -102,9 +99,9 @@ public class EditCommandScreen extends PopupScreen {
             // Checking Minecraft keybinds
             for (KeyMapping keybind : Minecraft.getInstance().options.keyMappings) {
                 if (!keybind.isUnbound() &&
-                        Objects.equals(((KeyBindingAccessor) keybind).getBoundKey(), data.keybinds.toKeys().getFirst())) {
+                        Objects.equals(((KeyBindingAccessor) keybind).getBoundKey(), data.keybinds.keys.getFirst())) {
                     conflictMinecraftKB conflict = new conflictMinecraftKB();
-                    conflict.conflictingKey = data.keybinds.toKeys().getFirst();
+                    conflict.conflictingKey = data.keybinds.keys.getFirst();
                     conflict.conflictingKeybind = keybind;
                     KeybindConflictsMinecraft.add(conflict);
                 }
@@ -119,7 +116,7 @@ public class EditCommandScreen extends PopupScreen {
                         tooltipContent.append(Component.literal("\n"));
                         boolean OneElemAlreadyAdded = false;
                         MutableComponent KeyText = Component.empty();
-                        for (InputConstants.Key Key : keybindConflictSavedCommands.conflictingKeys.toKeys()) {
+                        for (InputConstants.Key Key : keybindConflictSavedCommands.conflictingKeys.keys) {
                             if (OneElemAlreadyAdded) {
                                 KeyText.append(Component.literal(" + "));
                             }
@@ -170,7 +167,7 @@ public class EditCommandScreen extends PopupScreen {
         }
         if (data != null && data.keybinds != null && !data.keybinds.isEmptyOrNull()) {
             boolean OneElemAlreadyAdded = false;
-            for (InputConstants.Key Key : data.keybinds.toKeys()) {
+            for (InputConstants.Key Key : data.keybinds.keys) {
                 if (OneElemAlreadyAdded) {
                     buttonContent.append(Component.literal(" + "));
                 }
@@ -607,12 +604,12 @@ public class EditCommandScreen extends PopupScreen {
 
     @Override
     public boolean mouseClicked(final @NonNull MouseButtonEvent click, final boolean doubled) {
-        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())))) {
+        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() ||
+                data.keybinds.keys.stream().noneMatch(key -> key.getValue() == click.button() && key.getType() == InputConstants.Type.MOUSE))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.KeybindCombination();
             }
-            data.keybinds.keybindType.add("MOUSE");
-            data.keybinds.keybindCode.add(click.button());
+            data.keybinds.keys.add(InputConstants.Type.MOUSE.getOrCreate(click.button()));
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         }
@@ -624,7 +621,8 @@ public class EditCommandScreen extends PopupScreen {
 
     @Override
     public boolean mouseReleased(final @NonNull MouseButtonEvent click) {
-        if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("MOUSE") && data.keybinds.keybindCode.contains(click.button())) {
+        if (keybindSetting && data != null && data.keybinds != null &&
+                data.keybinds.keys.stream().anyMatch(key -> key.getValue() == click.button() && key.getType() == InputConstants.Type.MOUSE)) {
             keybindSetting = false;
             commandManager.saveAsync();
             searchConflicts();
@@ -645,12 +643,12 @@ public class EditCommandScreen extends PopupScreen {
 
     @Override
     public boolean keyPressed(final @NonNull KeyEvent input) {
-        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() || !(data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())))) {
+        if (keybindSetting && data != null && (data.keybinds == null || data.keybinds.isEmptyOrNull() ||
+                data.keybinds.keys.stream().noneMatch(key -> key.getValue() == input.key() && key.getType() == InputConstants.Type.KEYBOARD))) {
             if (data.keybinds == null) {
                 data.keybinds = new SavedCommandManager.CommandData.KeybindCombination();
             }
-            data.keybinds.keybindType.add("KEYSYM");
-            data.keybinds.keybindCode.add(input.key());
+            data.keybinds.keys.add(InputConstants.Type.KEYBOARD.getOrCreate(input.key()));
             keybindButton.setMessage(getKeybindButtonText());
             return true;
         }
@@ -662,7 +660,8 @@ public class EditCommandScreen extends PopupScreen {
 
     @Override
     public boolean keyReleased(final @NonNull KeyEvent input) {
-        if (keybindSetting && data != null && data.keybinds != null && data.keybinds.keybindType.contains("KEYSYM") && data.keybinds.keybindCode.contains(input.key())) {
+        if (keybindSetting && data != null && data.keybinds != null &&
+                data.keybinds.keys.stream().anyMatch(key -> key.getValue() == input.key() && key.getType() == InputConstants.Type.KEYBOARD)) {
             keybindSetting = false;
             commandManager.saveAsync();
             searchConflicts();

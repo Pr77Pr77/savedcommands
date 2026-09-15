@@ -482,7 +482,7 @@ public class SavedCommandsScreen extends Screen {
                 if (shareButton.isHovered()) { // Ignore clicks on share if the button is not active.
                     return false;
                 }
-                if (click.button() != 0) {
+                if (click.button() != 1) {
                     return false;
                 }
                 LOGGER.info("Clicked on command " + this.command);
