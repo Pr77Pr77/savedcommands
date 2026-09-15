@@ -10,7 +10,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.input.KeyEvent;
 import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,39 +44,46 @@ public class KeyboardMixin {
         }
 
         if (commandManager != null) {
-            if (action == GLFW.GLFW_PRESS) {
+            if (action == InputConstants.PRESS) {
                 for (SavedCommandManager.CommandData command : commandManager.data.commands) {
-                    if (command.keybinds != null && !command.keybinds.isEmptyOrNull()) {
-                        if (pressedPartialCombination != null && pressedPartialCombination.size() < command.keybinds.keybindCode.size() && command.keybinds.keybindCode.get(pressedPartialCombination.size()) == input.key()) {
-                            pressedPartialCombination.add(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()));
+                    if (command.keybinds == null || command.keybinds.isEmptyOrNull()) {
+                        continue;
+                    }
+                    if (pressedPartialCombination != null && pressedPartialCombination.size() < command.keybinds.keys.size()) {
+                        InputConstants.Key key = command.keybinds.keys.get(pressedPartialCombination.size());
+                        if (key.getValue() == input.key() && key.getType() == InputConstants.Type.KEYSYM) {
+                            pressedPartialCombination.add(InputConstants.Type.KEYSYM.getOrCreate(input.key()));
                             break;
                         }
-                        if (command.keybinds.keybindCode.getFirst() == input.key() && pressedPartialCombination == null) {
-                            pressedPartialCombination = new ArrayList<>();
-                            pressedPartialCombination.add(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()));
-                            break;
-                        }
+                    }
+                    if (command.keybinds.keys.getFirst().getValue() == input.key() &&
+                            command.keybinds.keys.getFirst().getType() == InputConstants.Type.KEYSYM && pressedPartialCombination == null) {
+                        pressedPartialCombination = new ArrayList<>();
+                        pressedPartialCombination.add(InputConstants.Type.KEYSYM.getOrCreate(input.key()));
+                        break;
                     }
                 }
             }
 
             if (commandManager != null && pressedPartialCombination != null &&
-                    pressedPartialCombination.contains(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()))) {
+                    pressedPartialCombination.contains(InputConstants.Type.KEYSYM.getOrCreate(input.key()))) {
                 ci.cancel();
             }
 
-            if (action == GLFW.GLFW_RELEASE) {
+            if (action == InputConstants.RELEASE) {
                 if (pressedPartialCombination != null &&
-                        pressedPartialCombination.contains(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()))) {
+                        pressedPartialCombination.contains(InputConstants.Type.KEYSYM.getOrCreate(input.key()))) {
                     // after releasing the first key of the combination, search for it in commandManager.data.commands.keybinds:
                     for (SavedCommandManager.CommandData command : commandManager.data.commands) {
-                        if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.toKeys().equals(pressedPartialCombination)) {
+                        if (command.keybinds != null && !command.keybinds.isEmptyOrNull() && command.keybinds.keys.equals(pressedPartialCombination)) {
                             LOGGER.info("Combination released/pressed: " + command.command);
                             SavedCommandManager.sendCommandAndInsertVariables(command, minecraft.screen);
                         }
                     }
-                    pressedPartialCombination.remove(InputConstants.Type.valueOf("KEYSYM").getOrCreate(input.key()));
-                    if (pressedPartialCombination.isEmpty()) {
+                    if (pressedPartialCombination.getLast().equals(InputConstants.Type.KEYSYM.getOrCreate(input.key())) &&
+                            pressedPartialCombination.size() > 1) {
+                        pressedPartialCombination.removeLast();
+                    } else {
                         pressedPartialCombination = null;
                     }
                 }

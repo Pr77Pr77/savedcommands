@@ -14,7 +14,6 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class SavedCommandsClient implements ClientModInitializer {
         OpenCommandScreen = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.savedcommands.opencommandscreen",
                 InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_Y, // Y on QWERTY and Z on QWERTZ (key next to T)
+                InputConstants.KEY_Y, // Y on QWERTY and Z on QWERTZ (key next to T)
                 SavedcommandsKeyindCategory
         ));
 

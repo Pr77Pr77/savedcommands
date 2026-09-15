@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.mojang.blaze3d.platform.InputConstants;
 import de.aliba2468pr77pr77.savedcommands.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
@@ -31,7 +32,10 @@ public class SharingManager {
     public static final String SHARE_CODE_DONE = "done"; // Sent by recipient
     public static final String SHARE_CODE_ERROR = "error"; // Sent by recipient
 
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(InputConstants.Key.class, new GsonTypeAdapters.InputConstantsKeyAdapter())
+            .registerTypeAdapterFactory(new GsonTypeAdapters.KeybindCombinationMigrater())
+            .create();
 
     // recipient:
     private static final int DATA_UNFINISHED_RESEND_TIMEOUT_SECONDS = 3;
